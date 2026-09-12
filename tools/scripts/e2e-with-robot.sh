@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Starts example-robot (NT server), waits for readiness, runs example-client E2E, then stops the robot.
-# Builds are run by Nx when using: nx run example-client:e2e:local  or  npm run e2e:local
+# Builds are run by Turbo when using: npm run e2e:local
 # Set E2E_HEADLESS=1 (e.g. in CI) to run the robot under xvfb.
 
 set -e
@@ -66,7 +66,7 @@ else
 fi
 
 echo "Running E2E tests..."
-# Run vitest directly so test output is shown (Nx vitest executor buffers output)
+# Run vitest directly so test output is shown
 set +e
 npx vitest run --config apps/example-client/vitest.e2e.config.mts
 E2E_EXIT=$?

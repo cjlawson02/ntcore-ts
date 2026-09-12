@@ -130,7 +130,7 @@ if (process.env.NT_DUMP_ALL === '1') {
   // Create a protobuf topic with the proto file path
   // The schema will be automatically registered to NetworkTables when publishing
   const customProtoTopic = ntcore.getProtobufTopic<TestData>('/MyTable/CustomProto', {
-    // The build copies `customproto.proto` next to the output JS file
+    // Proto lives next to this file under src/
     protoFilePath: path.join(currentDir, 'customproto.proto'),
   });
 

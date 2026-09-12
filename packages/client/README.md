@@ -8,11 +8,11 @@ For a quick start guide on how to use the library, see the [repository README](.
 
 ## Building
 
-Run `nx build client` to build the library.
+Run `npm run build -w @ntcore-ts/client` (or `npx turbo run build --filter=@ntcore-ts/client`) to build the library.
 
 ## Running unit tests
 
-Run `nx run client:test` (or `npm test` from the repo root) to execute the unit tests via [Vitest](https://vitest.dev).
+Run `npm run test -w @ntcore-ts/client` (or `npm test` from the repo root) to execute the unit tests via [Vitest](https://vitest.dev).
 
 ## Benchmarks
 
@@ -20,7 +20,7 @@ Benchmarks measure how fast the client processes WebSocket messages. They are **
 
 **How to run**
 
-- From the repo root: `npm run bench` or `nx run client:bench`
+- From the repo root: `npm run bench`
 - From the package: `npx vitest bench --run` (in `packages/client`)
 
 **What is measured**

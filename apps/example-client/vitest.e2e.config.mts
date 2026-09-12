@@ -1,7 +1,15 @@
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
 import { defineConfig } from 'vitest/config';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
   root: __dirname,
+  resolve: {
+    tsconfigPaths: true,
+  },
   test: {
     globals: true,
     environment: 'node',
@@ -9,12 +17,6 @@ export default defineConfig({
     testTimeout: 30_000,
     hookTimeout: 30_000,
     watch: false,
-    // E2E specs talk to the same live NT server (example-robot) and some
-    // tests toggle the connection (changeURI). Run spec files sequentially
-    // to avoid cross-file interference.
     fileParallelism: false,
-  },
-  resolve: {
-    tsconfigPaths: true,
   },
 });

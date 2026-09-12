@@ -4,7 +4,7 @@ import vitest from '@vitest/eslint-plugin';
 export default [
   ...baseConfig,
   {
-    files: ['**/*.spec.ts', '**/*.test.ts'], // or any other pattern
+    files: ['**/*.spec.ts', '**/*.test.ts'],
     plugins: {
       vitest,
     },

@@ -166,4 +166,4 @@ Re-exports from @ntcore-ts/client: `NetworkTables`, `NetworkTablesTypeInfos`, `L
 
 ## Running unit tests
 
-Run `nx test react` to execute the unit tests via [Vitest](https://vitest.dev/).
+Run `npm run test -w @ntcore-ts/react` to execute the unit tests via [Vitest](https://vitest.dev/).

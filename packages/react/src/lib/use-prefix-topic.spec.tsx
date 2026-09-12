@@ -186,7 +186,7 @@ describe('usePrefixTopicMap', () => {
   it('cancels pending rAF when prefix changes before flush', async () => {
     const cancelSpy = vi.spyOn(global, 'cancelAnimationFrame').mockImplementation(() => undefined);
     let rafId = 0;
-    vi.stubGlobal('requestAnimationFrame', (cb: () => void) => {
+    vi.stubGlobal('requestAnimationFrame', (_cb: () => void) => {
       rafId += 1;
       return rafId;
     });

@@ -1,7 +1,0 @@
-{
-  "name": "example-react",
-  "$schema": "../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "apps/example-react/src",
-  "projectType": "application",
-  "tags": ["type:app"]
-}

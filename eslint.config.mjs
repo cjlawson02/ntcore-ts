@@ -1,11 +1,10 @@
-import nx from '@nx/eslint-plugin';
-
+import eslint from '@eslint/js';
+import reactPlugin from 'eslint-plugin-react';
+import reactHooks from 'eslint-plugin-react-hooks';
 import tseslint from 'typescript-eslint';
 
-export default [
-  ...nx.configs['flat/base'],
-  ...nx.configs['flat/typescript'],
-  ...nx.configs['flat/javascript'],
+export default tseslint.config(
+  eslint.configs.recommended,
   ...tseslint.configs.recommended,
   {
     ignores: [
@@ -14,36 +13,14 @@ export default [
       '**/vitest.config.*.timestamp*',
       '**/rollup.config-*.mjs',
       '**/test-output',
+      'apps/example-robot/**',
+      'coverage/**',
+      'docs/**',
     ],
   },
   {
-    files: ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx'],
+    files: ['**/*.{ts,tsx,js,jsx,mjs,cjs,mts,cts}'],
     rules: {
-      '@nx/enforce-module-boundaries': [
-        'warn',
-        {
-          enforceBuildableLibDependency: true,
-          allow: ['^.*/eslint(\\.base)?\\.config\\.[cm]?[jt]s$'],
-          depConstraints: [
-            {
-              sourceTag: 'type:app',
-              onlyDependOnLibsWithTags: ['type:lib'],
-            },
-            {
-              sourceTag: 'type:lib',
-              onlyDependOnLibsWithTags: ['type:lib'],
-            },
-            {
-              sourceTag: 'scope:react',
-              onlyDependOnLibsWithTags: ['scope:client', 'scope:react'],
-            },
-            {
-              sourceTag: 'scope:client',
-              onlyDependOnLibsWithTags: ['scope:client'],
-            },
-          ],
-        },
-      ],
       '@typescript-eslint/no-unused-vars': [
         'error',
         {
@@ -54,4 +31,20 @@ export default [
       ],
     },
   },
-];
+  {
+    files: ['**/*.{tsx,jsx}'],
+    plugins: {
+      react: reactPlugin,
+      'react-hooks': reactHooks,
+    },
+    settings: {
+      react: { version: 'detect' },
+    },
+    rules: {
+      ...reactPlugin.configs.flat.recommended.rules,
+      ...reactPlugin.configs.flat['jsx-runtime'].rules,
+      ...reactHooks.configs.recommended.rules,
+      'no-redeclare': 'off',
+    },
+  }
+);

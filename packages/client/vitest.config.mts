@@ -9,6 +9,15 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export default defineConfig(() => ({
   root: __dirname,
   cacheDir: '../../node_modules/.vite/packages/client',
+  resolve: {
+    tsconfigPaths: true,
+    // One mock-socket instance: WSMock's Server and the isomorphic-ws alias must share it.
+    dedupe: ['mock-socket'],
+    alias: {
+      'isomorphic-ws': path.resolve(__dirname, 'src/__mocks__/isomorphic-ws.ts'),
+      'mock-socket': path.resolve(__dirname, '../../node_modules/mock-socket'),
+    },
+  },
   test: {
     name: 'client',
     watch: false,
@@ -28,14 +37,5 @@ export default defineConfig(() => ({
   benchmark: {
     include: ['src/**/*.{bench,benchmark}.{ts,mts,cts}'],
     exclude: ['node_modules', 'dist', '.idea', '.git', '.cache'],
-  },
-  resolve: {
-    tsconfigPaths: true,
-    // One mock-socket instance: WSMock's Server and the isomorphic-ws alias must share it.
-    dedupe: ['mock-socket'],
-    alias: {
-      'isomorphic-ws': path.resolve(__dirname, 'src/__mocks__/isomorphic-ws.ts'),
-      'mock-socket': path.resolve(__dirname, '../../node_modules/mock-socket'),
-    },
   },
 }));

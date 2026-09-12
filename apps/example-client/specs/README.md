@@ -61,11 +61,11 @@ Every spec file MUST follow this shape:
 These tests require a live NT server on `localhost:5810`. Run them end-to-end (starts the robot, waits for it, then runs the e2e suite):
 
 ```bash
-nx run example-client:e2e:local
+npm run e2e:local
 ```
 
 Or, if you already have a robot running, just:
 
 ```bash
-nx run example-client:e2e
+npm run e2e -w @ntcore-ts/example-client
 ```

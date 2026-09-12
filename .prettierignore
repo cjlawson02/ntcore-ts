@@ -5,8 +5,7 @@
 /package-lock.json
 /docs
 
-/.nx/cache
-/.nx/workspace-data
+/.turbo
 
 # Gradle (example-robot)
 apps/example-robot/build
@@ -14,3 +13,8 @@ apps/example-robot/.gradle
 
 # Generated code (e.g. protoc output)
 **/src/generated
+
+.nx
+apps/example-robot/simgui.json
+apps/example-robot/simgui-ds.json
+apps/example-robot/simgui-window.json

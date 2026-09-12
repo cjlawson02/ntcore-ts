@@ -38,9 +38,8 @@ jobs:
           node-version: 24
           cache: 'npm'
       - run: npm ci
-      - uses: nrwl/nx-set-shas@v5
       - name: Build docs
-        run: npx nx run client:docs
+        run: npm run docs
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v5
         with:

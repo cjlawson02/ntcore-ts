@@ -10,12 +10,12 @@ A minimal React dashboard that uses [@ntcore-ts/react](../../packages/react) to 
    cd apps/example-robot && ./gradlew run
    ```
 
-   Or from the repo root: `nx run example-robot:serve` (if that target is configured).
+   Or from the repo root: `npm run serve -w @ntcore-ts/example-robot`.
 
 2. **Serve the dashboard**:
 
    ```bash
-   nx run example-react:serve
+   npm run serve -w @ntcore-ts/example-react
    ```
 
    Open the URL shown (e.g. http://localhost:4200).
@@ -35,4 +35,4 @@ A minimal React dashboard that uses [@ntcore-ts/react](../../packages/react) to 
 - `VITE_NT_URI` – NetworkTables server host (default: `localhost`).
 - `VITE_NT_PORT` – NetworkTables server port (default: `5810`).
 
-Example for a real robot: `VITE_NT_URI=10.9.73.2 nx run example-react:serve` (SystemCore) or `VITE_NT_URI=roborio-973-frc.local nx run example-react:serve` (RoboRIO).
+Example for a real robot: `VITE_NT_URI=10.9.73.2 npm run serve -w @ntcore-ts/example-react` (SystemCore) or `VITE_NT_URI=roborio-973-frc.local npm run serve -w @ntcore-ts/example-react` (RoboRIO).

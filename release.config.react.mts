@@ -26,13 +26,13 @@ const config: GlobalConfig = {
     [
       '@semantic-release/exec',
       {
-        prepareCmd: 'nx run react:build',
+        prepareCmd: 'npm run build',
       },
     ],
     [
       '@semantic-release/npm',
       {
-        pkgRoot: '../../dist/packages/react',
+        pkgRoot: '.',
         npmPublish: true,
       },
     ],

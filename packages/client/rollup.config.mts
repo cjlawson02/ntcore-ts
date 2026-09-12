@@ -1,7 +1,9 @@
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 
-import { withNx } from '@nx/rollup/with-nx';
+import commonjs from '@rollup/plugin-commonjs';
+import resolve from '@rollup/plugin-node-resolve';
+import typescript from '@rollup/plugin-typescript';
 import type { Plugin, RollupOptions } from 'rollup';
 
 const require = createRequire(import.meta.url);
@@ -22,8 +24,8 @@ function protobufDescriptorJson(): Plugin {
     load(id) {
       if (id !== VIRTUAL_DESCRIPTOR_ID) return null;
       try {
-        const path = require.resolve('protobufjs/google/protobuf/descriptor.json');
-        const data = JSON.parse(readFileSync(path, 'utf8'));
+        const descriptorPath = require.resolve('protobufjs/google/protobuf/descriptor.json');
+        const data = JSON.parse(readFileSync(descriptorPath, 'utf8'));
         return `export default ${JSON.stringify(data)};`;
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
@@ -33,15 +35,33 @@ function protobufDescriptorJson(): Plugin {
   };
 }
 
-const options = {
-  outputPath: '../../dist/packages/client',
-  main: './src/index.ts',
-  tsConfig: './tsconfig.lib.json',
-  format: ['esm'] as ('esm' | 'cjs')[],
-  generateExportsField: true,
-  sourceMap: true,
+const externalNames = ['@msgpack/msgpack', 'isomorphic-ws', 'protobufjs', 'tslog', 'zod'];
+
+const config: RollupOptions = {
+  input: 'src/index.ts',
+  output: {
+    dir: 'dist',
+    entryFileNames: 'index.esm.js',
+    format: 'esm',
+    sourcemap: true,
+  },
+  external: (id) => externalNames.some((name) => id === name || id.startsWith(`${name}/`)),
+  plugins: [
+    protobufDescriptorJson(),
+    resolve({ preferBuiltins: true, extensions: ['.mjs', '.js', '.json', '.ts'] }),
+    commonjs(),
+    typescript({
+      tsconfig: './tsconfig.lib.json',
+      compilerOptions: {
+        declaration: true,
+        declarationMap: true,
+        declarationDir: 'dist',
+        outDir: 'dist',
+        rootDir: 'src',
+        composite: false,
+      },
+    }),
+  ],
 };
 
-export default withNx(options, {
-  plugins: [protobufDescriptorJson()],
-}) as RollupOptions;
+export default config;
