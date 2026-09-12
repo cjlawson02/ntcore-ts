@@ -8,8 +8,8 @@ import org.wpilib.framework.TimedRobot;
 import org.wpilib.math.geometry.Pose2d;
 import org.wpilib.math.geometry.Rotation2d;
 import org.wpilib.networktables.*;
-import org.wpilib.smartdashboard.SendableChooser;
-import org.wpilib.smartdashboard.SmartDashboard;
+import org.wpilib.tunable.Selectable;
+import org.wpilib.tunable.Tunables;
 
 /**
  * The methods in this class are called automatically corresponding to each mode, as described in
@@ -17,10 +17,11 @@ import org.wpilib.smartdashboard.SmartDashboard;
  * this project, you must also update the Main.java file in the project.
  */
 public class Robot extends TimedRobot {
-  private static final String kDefaultAuto = "Default";
-  private static final String kCustomAuto = "My Auto";
+  private static final String DEFAULT_AUTO = "Default";
+  private static final String CUSTOM_AUTO = "My Auto";
   private String autoSelected;
-  private final SendableChooser<String> chooser = new SendableChooser<>();
+  private final Selectable<String> chooser = new Selectable<>();
+
   private static final NetworkTableInstance nt = NetworkTableInstance.getDefault();
 
   private DoublePublisher xPub;
@@ -50,23 +51,23 @@ public class Robot extends TimedRobot {
   private StructPublisher<Waypoint> waypointPub;
 
   private double demoTime = 0;
-  private static final double kDemoFigure8ScaleX = 1.8;
-  private static final double kDemoFigure8ScaleY = 1.2;
+  private static final double DEMO_FIGURE8_SCALE_X = 1.8;
+  private static final double DEMO_FIGURE8_SCALE_Y = 1.2;
   /** Y offset so path sits higher on pose grid (+Y = up on grid). */
-  private static final double kDemoPoseOffsetY = 1.5;
-  private static final double kDemoFigure8PeriodSec = 10.0;
+  private static final double DEMO_POSE_OFFSET_Y = 1.5;
+  private static final double DEMO_FIGURE8_PERIOD_SEC = 10.0;
 
   /**
    * This function is run when the robot is first started up and should be used for any
    * initialization code.
    */
   public Robot() {
-    chooser.setDefaultOption("Default Auto", kDefaultAuto);
-    chooser.addOption("My Auto", kCustomAuto);
-    SmartDashboard.putData("Auto choices", chooser);
+    chooser.addDefault("Default Auto", DEFAULT_AUTO);
+    chooser.add("My Auto", CUSTOM_AUTO);
+    Tunables.publish("Auto choices", chooser);
 
     // AutoMode string topic (example-react / e2e)
-    autoSub = nt.getStringTopic("/MyTable/AutoMode").subscribe(kDefaultAuto);
+    autoSub = nt.getStringTopic("/MyTable/AutoMode").subscribe(DEFAULT_AUTO);
 
     // Accelerometer values
     xPub = nt.getDoubleTopic("/MyTable/Accelerometer/X").publish();
@@ -136,13 +137,13 @@ public class Robot extends TimedRobot {
    * uncomment the getString line to get the auto name from the text box below the Gyro
    *
    * <p>You can add additional auto modes by adding additional comparisons to the switch structure
-   * below with additional strings. If using the SendableChooser make sure to add them to the
-   * chooser code above as well.
+   * below with additional strings. If using Selectable make sure to add them to the chooser code
+   * above as well.
    */
   @Override
   public void autonomousInit() {
     autoSelected = chooser.getSelected();
-    // autoSelected = SmartDashboard.getString("Auto Selector", kDefaultAuto);
+    // autoSelected = SmartDashboard.getString("Auto Selector", DEFAULT_AUTO);
     System.out.println("Auto selected: " + autoSelected);
   }
 
@@ -150,10 +151,10 @@ public class Robot extends TimedRobot {
   @Override
   public void autonomousPeriodic() {
     switch (autoSelected) {
-      case kCustomAuto:
+      case CUSTOM_AUTO:
         // Put custom auto code here
         break;
-      case kDefaultAuto:
+      case DEFAULT_AUTO:
       default:
         // Put default auto code here
         break;
@@ -193,15 +194,15 @@ public class Robot extends TimedRobot {
   public void utilityPeriodic() {
     demoTime += getPeriod();
     double t = demoTime;
-    double omega = 2 * Math.PI / kDemoFigure8PeriodSec;
+    double omega = 2 * Math.PI / DEMO_FIGURE8_PERIOD_SEC;
 
     // Pose: figure-8 (Lissajous) with Y offset so path sits higher on pose grid
-    double x = kDemoFigure8ScaleX * Math.sin(omega * t);
-    double y = kDemoPoseOffsetY + kDemoFigure8ScaleY * Math.sin(2 * omega * t);
-    double vx = kDemoFigure8ScaleX * omega * Math.cos(omega * t);
-    double vy = kDemoFigure8ScaleY * 2 * omega * Math.cos(2 * omega * t);
-    double axWorld = -kDemoFigure8ScaleX * omega * omega * Math.sin(omega * t);
-    double ayWorld = -kDemoFigure8ScaleY * 4 * omega * omega * Math.sin(2 * omega * t);
+    double x = DEMO_FIGURE8_SCALE_X * Math.sin(omega * t);
+    double y = DEMO_POSE_OFFSET_Y + DEMO_FIGURE8_SCALE_Y * Math.sin(2 * omega * t);
+    double vx = DEMO_FIGURE8_SCALE_X * omega * Math.cos(omega * t);
+    double vy = DEMO_FIGURE8_SCALE_Y * 2 * omega * Math.cos(2 * omega * t);
+    double axWorld = -DEMO_FIGURE8_SCALE_X * omega * omega * Math.sin(omega * t);
+    double ayWorld = -DEMO_FIGURE8_SCALE_Y * 4 * omega * omega * Math.sin(2 * omega * t);
 
     double thetaRad = Math.atan2(vy, vx);
     Pose2d pose = new Pose2d(x, y, new Rotation2d(thetaRad));

@@ -7,7 +7,7 @@ A minimal React dashboard that uses [@ntcore-ts/react](../../packages/react) to 
 1. **Start the robot** (NT server on port 5810):
 
    ```bash
-   cd apps/example-robot && ./gradlew simulateJava
+   cd apps/example-robot && ./gradlew run
    ```
 
    Or from the repo root: `nx run example-robot:serve` (if that target is configured).

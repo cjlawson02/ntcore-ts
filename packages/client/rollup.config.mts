@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 
 import { withNx } from '@nx/rollup/with-nx';
-import type { Plugin } from 'rollup';
+import type { Plugin, RollupOptions } from 'rollup';
 
 const require = createRequire(import.meta.url);
 
@@ -37,11 +37,11 @@ const options = {
   outputPath: '../../dist/packages/client',
   main: './src/index.ts',
   tsConfig: './tsconfig.lib.json',
-  format: ['esm', 'cjs'] as ('esm' | 'cjs')[],
+  format: ['esm'] as ('esm' | 'cjs')[],
   generateExportsField: true,
   sourceMap: true,
 };
 
 export default withNx(options, {
   plugins: [protobufDescriptorJson()],
-});
+}) as RollupOptions;

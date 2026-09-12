@@ -34,6 +34,8 @@ $ARGUMENTS
 
 Parse any overrides from `$ARGUMENTS` and merge with defaults.
 
+**Unit conversion for `ci-poll-decide.mjs`:** Config `--timeout` and `--new-cipe-timeout` are in **minutes**. When invoking the poll script, pass **seconds** (`minutes * 60`). The script compares against poll delays (also in seconds). Example: defaults → `--timeout 7200 --new-cipe-timeout 600`.
+
 ## Nx Cloud Connection Check
 
 Before starting the monitoring loop, verify the workspace is connected to Nx Cloud. Without this connection, no CI data is available and the entire skill is inoperable.
@@ -135,7 +137,30 @@ The decision script returns one of the following statuses. This table defines th
 
 - **Git safety**: Stage specific files by name — `git add -A` or `git add .` risks committing the user's unrelated work-in-progress or secrets
 - **Environment failures** (OOM, command not found, permission denied): bail immediately. These aren't code bugs, so spending local-fix budget on them is wasteful
-- **Gate check**: Run `ci-state-update.mjs gate` before local fix attempts — if budget exhausted, print message and exit
+- **Gate check**: Before every local-fix or env-rerun attempt, run `ci-state-update.mjs gate` with the **current** counters (see Gate Protocol below). If not allowed, print `message` and exit. If allowed, **immediately** persist the returned `localVerifyCount` / `envRerunCount` into session state — skipping this lets budgets be bypassed forever.
+
+## Gate Protocol
+
+Always pass current counters; always write back incremented counters from the script output.
+
+```bash
+# Before local fix / enhance / reject+fix-from-scratch:
+node <skill_dir>/scripts/ci-state-update.mjs gate \
+  --gate-type local-fix \
+  --local-verify-count <local_verify_count> \
+  --local-verify-attempts <local_verify_attempts>
+# → { allowed, localVerifyCount, message }
+# If allowed: local_verify_count = output.localVerifyCount
+
+# Before environment rerun:
+node <skill_dir>/scripts/ci-state-update.mjs gate \
+  --gate-type env-rerun \
+  --env-rerun-count <env_rerun_count>
+# → { allowed, envRerunCount, message }
+# If allowed: env_rerun_count = output.envRerunCount
+```
+
+`ci-poll-decide.mjs` only **echoes** `envRerunCount` (it does not increment). Incrementing is solely the gate script's job. Pass the persisted `env_rerun_count` into every poll-decide and cycle-check invocation.
 
 ## Main Loop
 
@@ -175,13 +200,14 @@ Call the `ci_information` tool with the determined `select` fields for the curre
 #### 2b. Run decision script
 
 ```bash
+# Convert config minutes → seconds for --timeout and --new-cipe-timeout
 node <skill_dir>/scripts/ci-poll-decide.mjs '<subagent_result_json>' <poll_count> <verbosity> \
   [--wait-mode] \
   [--prev-cipe-url <last_cipe_url>] \
   [--expected-sha <expected_commit_sha>] \
   [--prev-status <prev_status>] \
-  [--timeout <timeout_seconds>] \
-  [--new-cipe-timeout <new_cipe_timeout_seconds>] \
+  [--timeout <timeout_minutes * 60>] \
+  [--new-cipe-timeout <new_cipe_timeout_minutes * 60>] \
   [--env-rerun-count <env_rerun_count>] \
   [--no-progress-count <no_progress_count>] \
   [--prev-cipe-status <prev_cipe_status>] \
@@ -191,6 +217,8 @@ node <skill_dir>/scripts/ci-poll-decide.mjs '<subagent_result_json>' <poll_count
 ```
 
 The script outputs a single JSON line: `{ action, code, message, delay?, noProgressCount, envRerunCount, fields?, newCipeDetected?, verifiableTaskIds? }`
+
+`--timeout` / `--new-cipe-timeout` here are **seconds** (config table values × 60). Do not pass the raw minute defaults.
 
 #### 2c. Process script output
 
@@ -262,7 +290,7 @@ node <skill_dir>/scripts/ci-state-update.mjs cycle-check \
   --env-rerun-count <env_rerun_count>
 ```
 
-The script returns `{ cycleCount, agentTriggered, envRerunCount, approachingLimit, message }`. Update tracking state from the output.
+The script returns `{ cycleCount, agentTriggered, envRerunCount, approachingLimit, message }`. Update tracking state from the output (`env_rerun_count = output.envRerunCount`, etc.).
 
 - If `approachingLimit` → ask user whether to continue (with 5 or 10 more cycles) or stop monitoring
 - If previous cycle was NOT agent-triggered (human pushed), log that human-initiated push was detected
@@ -270,8 +298,8 @@ The script returns `{ cycleCount, agentTriggered, envRerunCount, approachingLimi
 #### Progress Tracking
 
 - `no_progress_count`, circuit breaker (5 polls), and backoff reset are handled by ci-poll-decide.mjs (progress = any change in cipeStatus, selfHealingStatus, verificationStatus, or failureClassification)
-- `env_rerun_count` reset on non-environment status is handled by ci-state-update.mjs cycle-check
-- On new CI Attempt detected (poll script returns `newCipeDetected`) → reset `local_verify_count = 0`, `env_rerun_count = 0`
+- `env_rerun_count` reset on non-environment status is handled by ci-state-update.mjs cycle-check — apply `output.envRerunCount` after every cycle-check
+- On new CI Attempt detected (poll script returns `newCipeDetected`) → reset `local_verify_count = 0` only. **Do not** reset `env_rerun_count` here; the env-rerun cap must accumulate across CIPEs until cycle-check clears it on a non-environment status
 
 ## Error Handling
 

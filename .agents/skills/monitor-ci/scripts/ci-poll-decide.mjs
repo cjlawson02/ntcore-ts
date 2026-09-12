@@ -17,6 +17,11 @@
  *     [--env-rerun-count <n>] [--no-progress-count <n>] \
  *     [--prev-cipe-status <status>] [--prev-sh-status <status>] \
  *     [--prev-verification-status <status>] [--prev-failure-classification <status>]
+ *
+ * Note: --timeout and --new-cipe-timeout are SECONDS. The skill config table uses
+ * minutes; the orchestrator must multiply by 60 before invoking this script.
+ * --env-rerun-count is echoed only (not incremented); gate in ci-state-update.mjs
+ * owns increments and the orchestrator must persist/pass the updated value.
  */
 
 // --- Arg parsing ---

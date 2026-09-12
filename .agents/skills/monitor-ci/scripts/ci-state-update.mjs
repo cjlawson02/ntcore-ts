@@ -10,6 +10,11 @@
  *   node ci-state-update.mjs gate --gate-type <local-fix|env-rerun> [counter args]
  *   node ci-state-update.mjs post-action --action <type> [--cipe-url <url>] [--commit-sha <sha>]
  *   node ci-state-update.mjs cycle-check --code <code> [--agent-triggered] [counter args]
+ *
+ * Gate counter args (required for budgets to work):
+ *   local-fix: --local-verify-count <n> [--local-verify-attempts <n>]
+ *   env-rerun:   --env-rerun-count <n>
+ * Orchestrator MUST persist returned localVerifyCount / envRerunCount into session state.
  */
 
 // --- Arg parsing ---

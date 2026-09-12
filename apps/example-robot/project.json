@@ -15,7 +15,7 @@
     "serve": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "./gradlew simulateJava",
+        "command": "./gradlew run",
         "cwd": "apps/example-robot"
       }
     }

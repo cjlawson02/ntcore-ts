@@ -14,9 +14,9 @@ chmod +x apps/example-robot/gradlew 2>/dev/null || true
 # Run in process group so we can kill the whole tree (gradlew + Java simulation)
 set -m
 if [ -n "$E2E_HEADLESS" ] && command -v xvfb-run >/dev/null 2>&1; then
-  (cd apps/example-robot && xvfb-run ./gradlew simulateJava) &
+  (cd apps/example-robot && xvfb-run ./gradlew run) &
 else
-  (cd apps/example-robot && ./gradlew simulateJava) &
+  (cd apps/example-robot && ./gradlew run) &
 fi
 ROBOT_PID=$!
 set +m

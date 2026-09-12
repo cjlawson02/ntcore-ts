@@ -3,6 +3,7 @@
   "version": "1.0.0-beta.1",
   "description": "TypeScript client for WPILib NetworkTables 4.1 protocol",
   "license": "MIT",
+  "type": "module",
   "repository": {
     "type": "git",
     "url": "https://github.com/cjlawson02/ntcore-ts.git",
@@ -11,9 +12,9 @@
   "dependencies": {
     "@msgpack/msgpack": "^3.1.3",
     "isomorphic-ws": "^5.0.0",
-    "protobufjs": "^8.7.2",
-    "tslog": "^4.11.0",
-    "zod": "^4.4.3"
+    "protobufjs": "^8.8.0",
+    "tslog": "^5.2.0",
+    "zod": "^4.6.2"
   },
   "publishConfig": {
     "access": "public"

@@ -4,6 +4,10 @@
 
 First stable release of `@ntcore-ts/react` — React bindings for `@ntcore-ts/client`. Hooks throw outside `NtcoreProvider`, struct/protobuf APIs match the client factories, and writer hooks unpublish on unmount by default.
 
+### Breaking Changes
+
+- **ESM-only.** The package is published as `"type": "module"` with no CommonJS build. Use `import` (bundlers and Node ESM); `require('@ntcore-ts/react')` is not supported.
+
 ### Hooks
 
 - **`useTopic`** — subscribe to a NetworkTables topic and get the latest value as React state. Supports optional publishing with `publish: true` or `publish: { retained: true }`, with `isReadyToWrite` guard. For JSON, pass `NetworkTablesTypeInfos.kJson` with an object `T` (uses `getJsonTopic`).
