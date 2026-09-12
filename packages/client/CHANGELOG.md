@@ -8,6 +8,7 @@ First stable release of `@ntcore-ts/client` under the `@ntcore-ts` scope. This i
 
 ### Breaking Changes (from `ntcore-ts-client` 3.x)
 
+- **ESM-only.** The package is published as `"type": "module"` with no CommonJS build. Use `import` (bundlers and Node ESM); `require('@ntcore-ts/client')` is not supported.
 - **Package renamed** from `ntcore-ts-client` to `@ntcore-ts/client`. Update your imports accordingly.
 - **Removed `client` getter** from `NetworkTables`. The underlying `PubSubClient` is now private.
 - **Renamed `NetworkTablesTypeInfos.kArrayBuffer`** to `kUint8Array` to match the actual value type (`Uint8Array`).

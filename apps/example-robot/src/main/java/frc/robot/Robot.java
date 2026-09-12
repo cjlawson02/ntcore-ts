@@ -8,8 +8,6 @@ import org.wpilib.framework.TimedRobot;
 import org.wpilib.math.geometry.Pose2d;
 import org.wpilib.math.geometry.Rotation2d;
 import org.wpilib.networktables.*;
-import org.wpilib.smartdashboard.SendableChooser;
-import org.wpilib.smartdashboard.SmartDashboard;
 
 /**
  * The methods in this class are called automatically corresponding to each mode, as described in
@@ -18,9 +16,7 @@ import org.wpilib.smartdashboard.SmartDashboard;
  */
 public class Robot extends TimedRobot {
   private static final String kDefaultAuto = "Default";
-  private static final String kCustomAuto = "My Auto";
-  private String autoSelected;
-  private final SendableChooser<String> chooser = new SendableChooser<>();
+  private String autoSelected = kDefaultAuto;
   private static final NetworkTableInstance nt = NetworkTableInstance.getDefault();
 
   private DoublePublisher xPub;
@@ -61,10 +57,6 @@ public class Robot extends TimedRobot {
    * initialization code.
    */
   public Robot() {
-    chooser.setDefaultOption("Default Auto", kDefaultAuto);
-    chooser.addOption("My Auto", kCustomAuto);
-    SmartDashboard.putData("Auto choices", chooser);
-
     // AutoMode string topic (example-react / e2e)
     autoSub = nt.getStringTopic("/MyTable/AutoMode").subscribe(kDefaultAuto);
 
@@ -118,8 +110,7 @@ public class Robot extends TimedRobot {
    * This function is called every 20 ms, no matter the mode. Use this for items like diagnostics
    * that you want ran during disabled, autonomous, teleoperated and utility.
    *
-   * <p>This runs after the mode specific periodic functions, but before LiveWindow and
-   * SmartDashboard integrated updating.
+   * <p>This runs after the mode specific periodic functions, but before LiveWindow updating.
    */
   @Override
   public void robotPeriodic() {
@@ -129,35 +120,17 @@ public class Robot extends TimedRobot {
     }
   }
 
-  /**
-   * This autonomous (along with the chooser code above) shows how to select between different
-   * autonomous modes using the dashboard. The sendable chooser code works with the Java
-   * SmartDashboard. If you prefer the LabVIEW Dashboard, remove all of the chooser code and
-   * uncomment the getString line to get the auto name from the text box below the Gyro
-   *
-   * <p>You can add additional auto modes by adding additional comparisons to the switch structure
-   * below with additional strings. If using the SendableChooser make sure to add them to the
-   * chooser code above as well.
-   */
+  /** This function is called once when autonomous is enabled. */
   @Override
   public void autonomousInit() {
-    autoSelected = chooser.getSelected();
-    // autoSelected = SmartDashboard.getString("Auto Selector", kDefaultAuto);
+    autoSelected = kDefaultAuto;
     System.out.println("Auto selected: " + autoSelected);
   }
 
   /** This function is called periodically during autonomous. */
   @Override
   public void autonomousPeriodic() {
-    switch (autoSelected) {
-      case kCustomAuto:
-        // Put custom auto code here
-        break;
-      case kDefaultAuto:
-      default:
-        // Put default auto code here
-        break;
-    }
+    // Default auto placeholder — NT demo publishers run in teleopPeriodic / other modes.
   }
 
   /** This function is called once when teleop is enabled. */

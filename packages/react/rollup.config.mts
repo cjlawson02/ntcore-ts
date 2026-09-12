@@ -4,7 +4,7 @@ const options = {
   outputPath: '../../dist/packages/react',
   main: './src/index.ts',
   tsConfig: './tsconfig.lib.json',
-  format: ['esm', 'cjs'] as ('esm' | 'cjs')[],
+  format: ['esm'] as ('esm' | 'cjs')[],
   generateExportsField: true,
   sourceMap: true,
   external: ['react', 'react-dom', 'react/jsx-runtime', '@ntcore-ts/client'],

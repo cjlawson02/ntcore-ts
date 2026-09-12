@@ -47,8 +47,11 @@ function createBaseLogger(minLevel: number): Logger<ILogObj> {
   return new Logger<ILogObj>({
     minLevel,
     type: 'pretty',
-    hideLogPositionForProduction: true,
-    prettyLogTemplate: '{{yyyy}}.{{mm}}.{{dd}} {{hh}}:{{MM}}:{{ss}}:{{ms}}\t[{{logLevelName}}]\t{{name}}\t',
+    // v5: hideLogPositionForProduction → stack.capture; prettyLogTemplate → pretty.template
+    stack: { capture: 'off' },
+    pretty: {
+      template: '{{yyyy}}.{{mm}}.{{dd}} {{hh}}:{{MM}}:{{ss}}:{{ms}}\t[{{logLevelName}}]\t{{name}}\t',
+    },
   });
 }
 
@@ -81,7 +84,7 @@ export function setLogLevel(level: LogLevel): void {
   // Recreate base logger with new level
   baseLogger = createBaseLogger(numericLevel);
   // Recreate all module loggers to inherit new settings
-  moduleLoggers.forEach((logger, module) => {
+  moduleLoggers.forEach((_logger, module) => {
     const newLogger = baseLogger.getSubLogger({
       name: module.toUpperCase(),
     });
