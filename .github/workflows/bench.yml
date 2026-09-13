@@ -1,0 +1,44 @@
+name: Bench
+
+on:
+  push:
+    branches:
+      - main
+      - beta
+  pull_request:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  bench:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+
+      - name: Run client and React benches
+        run: npm run bench:ci
+
+      - name: Store history and alert on regression
+        uses: benchmark-action/github-action-benchmark@v1
+        with:
+          name: ntcore-ts
+          tool: customBiggerIsBetter
+          output-file-path: tmp/github-bench.json
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          gh-pages-branch: gh-bench
+          benchmark-data-dir-path: bench
+          auto-push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+          comment-always: ${{ github.event.pull_request.head.repo.full_name == github.repository || github.event_name == 'push' }}
+          summary-always: true
+          comment-on-alert: ${{ github.event.pull_request.head.repo.full_name == github.repository || github.event_name == 'push' }}
+          fail-on-alert: true
+          alert-threshold: '150%'
+          fail-threshold: '200%'
+          max-items-in-chart: 40

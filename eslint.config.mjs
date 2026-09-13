@@ -49,7 +49,7 @@ export default tseslint.config(
     },
   },
   {
-    files: ['**/*.{mjs,cjs,js,mts,cts}', '**/*.bench.ts', '**/__mocks__/**'],
+    files: ['**/*.{mjs,cjs,js,mts,cts}', '**/*.bench.ts', '**/*.bench.tsx', '**/__mocks__/**'],
     extends: [tseslint.configs.disableTypeChecked],
     rules: {
       '@typescript-eslint/no-deprecated': 'off',

@@ -20,6 +20,7 @@ This is an npm workspaces + Turborepo monorepo. Prefer `npx turbo run <task>` or
 | `npm run typecheck`    | Typecheck workspaces              |
 | `npm run format:check` | Prettier check                    |
 | `npm run e2e:local`    | E2E against example-robot         |
+| `npm run bench`        | Client + React processing benches |
 | `npm run docs`         | Build the docs site               |
 | `npm run docs:dev`     | Docs site with live reload        |
 
@@ -28,6 +29,7 @@ This is an npm workspaces + Turborepo monorepo. Prefer `npx turbo run <task>` or
 - Open an issue for bugs with enough detail to reproduce.
 - Keep PRs focused; match existing code style and patterns.
 - Add or update tests when behavior changes.
+- Processing-speed benches (`npm run bench`) run in CI on every PR. A large drop vs `main` fails the Bench check; see [the performance guide](https://ntcore.chrislawson.dev/guide/performance).
 - For e2e features, keep specs and tests in sync (`apps/example-client/specs/` ↔ `apps/example-client/src/e2e/`). See [AGENTS.md](AGENTS.md) and [apps/example-client/specs/README.md](apps/example-client/specs/README.md).
 
 ## Docs

@@ -1,4 +1,4 @@
-import { beforeAll, bench } from 'vitest';
+import { beforeAll, test } from 'vitest';
 import { encode } from '@msgpack/msgpack';
 import WSMock from 'vitest-websocket-mock';
 
@@ -15,7 +15,7 @@ const serverUrl = 'ws://localhost:5811/nt/bench';
 const noop = () => {
   /* empty */
 };
-let socket: NetworkTablesSocket;
+let processFrame: (frame: Uint8Array) => void;
 let singleFrame: Uint8Array;
 let frame10: Uint8Array;
 let frame100: Uint8Array;
@@ -53,22 +53,30 @@ beforeAll(async () => {
   NetworkTablesSocket['instances'].clear();
 
   const server = new WSMock(serverUrl);
-  socket = NetworkTablesSocket.getInstance(serverUrl, noop, noop, noop, noop, noop, noop, false);
+  const socket = NetworkTablesSocket.getInstance(serverUrl, noop, noop, noop, noop, noop, noop, false);
   await server.connected;
 
+  processFrame = socket['handleBinaryFrame'].bind(socket);
   singleFrame = encode(buildBinaryMessage(0, 1.0));
   frame10 = buildMultiMessageFrame(10);
   frame100 = buildMultiMessageFrame(100);
 });
 
-bench('process one binary frame (1 message)', () => {
-  socket['handleBinaryFrame'](singleFrame);
-});
+test('binary frame processing (hot path)', async ({ bench }) => {
+  const handle = processFrame;
+  const one = singleFrame;
+  const ten = frame10;
+  const hundred = frame100;
 
-bench('process one binary frame (10 messages)', () => {
-  socket['handleBinaryFrame'](frame10);
-});
-
-bench('process one binary frame (100 messages)', () => {
-  socket['handleBinaryFrame'](frame100);
+  await bench.compare(
+    bench('1 message per frame', () => {
+      handle(one);
+    }),
+    bench('10 messages per frame', () => {
+      handle(ten);
+    }),
+    bench('100 messages per frame', () => {
+      handle(hundred);
+    })
+  );
 });

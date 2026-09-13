@@ -20,11 +20,16 @@ export default defineConfig(() => ({
     globals: true,
     environment: 'jsdom',
     include: ['src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
+    exclude: ['**/*.{bench,benchmark}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
     reporters: ['default'],
     coverage: {
       reportsDirectory: '../../coverage/packages/react',
       provider: 'v8' as const,
       include: ['src/**/*.{ts,tsx}'],
     },
+  },
+  benchmark: {
+    include: ['src/**/*.{bench,benchmark}.{ts,mts,cts,tsx}'],
+    exclude: ['node_modules', 'dist', '.idea', '.git', '.cache'],
   },
 }));

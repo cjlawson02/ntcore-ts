@@ -155,4 +155,4 @@ NetworkTables.setLogLevel(LogLevel.DEBUG);
 
 Re-exports from `@ntcore-ts/client`: `NetworkTables`, `NetworkTablesTypeInfos`, `LogLevel`, `getRobotAddress`, `getTeamIpAddress`, `parseRobotAddress`, `SYSTEMCORE_MDNS_HOST`, and related types. Geometry types are imported from `@ntcore-ts/client`.
 
-Full generated docs: [API reference](/api/).
+Full generated docs: [API reference](/api/). Hook update rates and CI regression checks: [Performance](/guide/performance).
