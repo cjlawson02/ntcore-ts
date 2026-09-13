@@ -86,7 +86,7 @@ export class NetworkTables {
    * Creates a new NetworkTables instance if it does not exist.
    * @param team - The team number of the robot.
    * @param port - The port to connect to the robot on. Defaults to 5810.
-   * @param platform - RoboRIO mDNS (`roborio-<team>-frc.local`, default) or SystemCore team IP (`10.TE.AM.2`).
+   * @param platform - RoboRIO mDNS (`roborio-{team}-frc.local`, default) or SystemCore team IP (`10.TE.AM.2`).
    * @returns The NetworkTables instance.
    * @throws Error if the team number is not provided.
    */
@@ -291,50 +291,112 @@ export class NetworkTables {
     return new NetworkTablesTopic(this._client, name, typeInfo, defaultValue as NetworkTablesTypes | undefined);
   }
 
+  /**
+   * Creates a boolean topic.
+   * @param name - Topic name (e.g. `/MyTable/Enabled`).
+   * @param defaultValue - Optional value shown before the first server update.
+   */
   getBooleanTopic(name: string, defaultValue?: boolean): NetworkTablesTopic<boolean> {
     return this.createTopic(name, NetworkTablesTypeInfos.kBoolean, defaultValue);
   }
 
+  /**
+   * Creates a double (IEEE-754) topic.
+   * @param name - Topic name (e.g. `/MyTable/Gyro`).
+   * @param defaultValue - Optional value shown before the first server update.
+   */
   getDoubleTopic(name: string, defaultValue?: number): NetworkTablesTopic<number> {
     return this.createTopic(name, NetworkTablesTypeInfos.kDouble, defaultValue);
   }
 
+  /**
+   * Creates an integer topic.
+   * @param name - Topic name.
+   * @param defaultValue - Optional value shown before the first server update.
+   */
   getIntegerTopic(name: string, defaultValue?: number): NetworkTablesTopic<number> {
     return this.createTopic(name, NetworkTablesTypeInfos.kInteger, defaultValue);
   }
 
+  /**
+   * Creates a float topic.
+   * @param name - Topic name.
+   * @param defaultValue - Optional value shown before the first server update.
+   */
   getFloatTopic(name: string, defaultValue?: number): NetworkTablesTopic<number> {
     return this.createTopic(name, NetworkTablesTypeInfos.kFloat, defaultValue);
   }
 
+  /**
+   * Creates a string topic.
+   * @param name - Topic name (e.g. `/MyTable/AutoMode`).
+   * @param defaultValue - Optional value shown before the first server update.
+   */
   getStringTopic(name: string, defaultValue?: string): NetworkTablesTopic<string> {
     return this.createTopic(name, NetworkTablesTypeInfos.kString, defaultValue);
   }
 
+  /**
+   * Creates a boolean-array topic.
+   * @param name - Topic name.
+   * @param defaultValue - Optional value shown before the first server update.
+   */
   getBooleanArrayTopic(name: string, defaultValue?: boolean[]): NetworkTablesTopic<boolean[]> {
     return this.createTopic(name, NetworkTablesTypeInfos.kBooleanArray, defaultValue);
   }
 
+  /**
+   * Creates a double-array topic.
+   * @param name - Topic name.
+   * @param defaultValue - Optional value shown before the first server update.
+   */
   getDoubleArrayTopic(name: string, defaultValue?: number[]): NetworkTablesTopic<number[]> {
     return this.createTopic(name, NetworkTablesTypeInfos.kDoubleArray, defaultValue);
   }
 
+  /**
+   * Creates an integer-array topic.
+   * @param name - Topic name.
+   * @param defaultValue - Optional value shown before the first server update.
+   */
   getIntegerArrayTopic(name: string, defaultValue?: number[]): NetworkTablesTopic<number[]> {
     return this.createTopic(name, NetworkTablesTypeInfos.kIntegerArray, defaultValue);
   }
 
+  /**
+   * Creates a float-array topic.
+   * @param name - Topic name.
+   * @param defaultValue - Optional value shown before the first server update.
+   */
   getFloatArrayTopic(name: string, defaultValue?: number[]): NetworkTablesTopic<number[]> {
     return this.createTopic(name, NetworkTablesTypeInfos.kFloatArray, defaultValue);
   }
 
+  /**
+   * Creates a string-array topic.
+   * @param name - Topic name.
+   * @param defaultValue - Optional value shown before the first server update.
+   */
   getStringArrayTopic(name: string, defaultValue?: string[]): NetworkTablesTopic<string[]> {
     return this.createTopic(name, NetworkTablesTypeInfos.kStringArray, defaultValue);
   }
 
+  /**
+   * Creates a raw (`uint8[]`) topic. Values are `Uint8Array`.
+   * @param name - Topic name.
+   * @param defaultValue - Optional value shown before the first server update.
+   */
   getRawTopic(name: string, defaultValue?: Uint8Array): NetworkTablesTopic<Uint8Array> {
     return this.createTopic(name, NetworkTablesTypeInfos.kUint8Array, defaultValue);
   }
 
+  /**
+   * Creates a JSON topic with optional Zod validation.
+   * If a topic with the same name already exists, the existing instance is returned and options are applied.
+   * @param name - Topic name.
+   * @param defaultValue - Optional value shown before the first server update.
+   * @param options - Optional `validator` schema.
+   */
   getJsonTopic<T extends object>(
     name: string,
     defaultValue?: T,
@@ -366,7 +428,7 @@ export class NetworkTables {
 
   /**
    * Creates a struct topic from a WPILib-style type descriptor (e.g. `Pose2d`).
-   * Infers `NetworkTablesStructTopic<Pose2d>` from `nt.getStructTopic(name, Pose2d)`.
+   * Infers `NetworkTablesStructTopic` for `Pose2d` from `nt.getStructTopic(name, Pose2d)`.
    */
   getStructTopic<T extends object>(
     name: string,

@@ -25,8 +25,7 @@
     "build": "rm -rf dist && rollup -c rollup.config.mts",
     "test": "vitest run",
     "bench": "vitest bench --run",
-    "lint": "eslint .",
-    "docs": "typedoc src/index.ts --tsconfig tsconfig.lib.json --excludeExternals true --readme none --out ../../docs"
+    "lint": "eslint ."
   },
   "dependencies": {
     "@msgpack/msgpack": "^3.1.3",

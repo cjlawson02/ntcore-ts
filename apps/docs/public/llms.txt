@@ -1,0 +1,14 @@
+# ntcore-ts
+
+> TypeScript and React clients for WPILib NetworkTables 4.1 (Node.js and browser).
+
+- Docs: https://ntcore.chrislawson.dev
+- Getting started: https://ntcore.chrislawson.dev/guide/getting-started
+- React: https://ntcore.chrislawson.dev/guide/react
+- API: https://ntcore.chrislawson.dev/api/
+- GitHub: https://github.com/cjlawson02/ntcore-ts
+
+## Packages
+
+- `@ntcore-ts/client` — core NetworkTables client
+- `@ntcore-ts/react` — `NtcoreProvider` and hooks

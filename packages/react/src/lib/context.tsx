@@ -6,8 +6,23 @@ export const NtcoreContext = createContext<NetworkTables | null>(null);
 export type NtcoreProviderProps = {
   children: ReactNode;
 } & (
-  | { team: number; uri?: never; port?: number; platform?: RobotPlatform }
-  | { uri: string; team?: never; port?: number; platform?: never }
+  | {
+      /** FRC team number used to resolve the robot host. */
+      team: number;
+      uri?: never;
+      /** NT server port (default `5810`). */
+      port?: number;
+      /** RoboRIO mDNS (default) or SystemCore team IP. */
+      platform?: RobotPlatform;
+    }
+  | {
+      /** Hostname or IP (e.g. `localhost`, `roborio-973-frc.local`). */
+      uri: string;
+      team?: never;
+      /** NT server port (default `5810`). */
+      port?: number;
+      platform?: never;
+    }
 );
 
 const DEFAULT_PORT = 5810;

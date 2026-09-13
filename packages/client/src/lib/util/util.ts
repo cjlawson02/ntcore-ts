@@ -26,7 +26,7 @@ export function getTeamIpAddress(team: number): string {
 
 /**
  * Hostname used for a team-number connection.
- * RoboRIO (default): `roborio-<team>-frc.local`.
+ * RoboRIO (default): `roborio-{team}-frc.local`.
  * SystemCore: `10.TE.AM.2` (WPILib `SetServerTeam`). Use {@link SYSTEMCORE_MDNS_HOST} as a URI for `robot.local`.
  */
 export function getRobotAddress(team: number, platform: RobotPlatform = 'roborio'): string {

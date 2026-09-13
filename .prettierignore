@@ -3,7 +3,11 @@
 /dist
 /coverage
 /package-lock.json
-/docs
+/notes
+
+apps/docs/api
+apps/docs/.vitepress/dist
+apps/docs/.vitepress/cache
 
 /.turbo
 

@@ -13,6 +13,7 @@ export type PrefixTopicUpdate = {
   type: string;
 };
 
+/** Entry in the map returned by {@link usePrefixTopicMap}. */
 export type PrefixTopicMapEntry = {
   value: NetworkTablesTypes | null;
   type: string;

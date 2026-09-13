@@ -7,7 +7,7 @@ import type { ZodSchema } from 'zod';
 
 /**
  * Options for useProtobufTopic (defaultValue, validator, protoFilePath, protoSource, messageType, subscribeOptions, publish).
- * validator is compatible with ZodSchema<T> from 'zod'.
+ * `validator` is a Zod schema for the decoded message type.
  */
 export type UseProtobufTopicOptions<T extends object> = {
   defaultValue?: T;

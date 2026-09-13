@@ -4,7 +4,7 @@
 
 This is an npm workspaces + Turborepo monorepo.
 
-- Prefer `turbo run <task>` (or root `npm run` scripts) for build, lint, test, e2e, and typecheck.
+- Prefer `turbo run <task>` (or root `npm run` scripts) for build, lint, test, e2e, docs, and typecheck.
 - Prefix with the package manager: `npx turbo run test`, `npm run build`.
 - Filter packages with `--filter=@ntcore-ts/client` (or other workspace names).
 - Package scripts live in each package's `package.json`; Turbo orchestrates them via `turbo.json`.
@@ -15,6 +15,7 @@ This is an npm workspaces + Turborepo monorepo.
 - Unit tests: `npx turbo run test --filter=@ntcore-ts/client` (or `@ntcore-ts/react`). For a single file: `npx vitest run --config packages/client/vitest.config.mts <name>`
 - Multiple package tests: `npm test` (client + react)
 - Format check: `npm run format:check`
+- Docs site: `npm run docs` (build) or `npm run docs:dev` (VitePress + TypeDoc). Guides live in `apps/docs/`; API is generated into `apps/docs/api/`.
 
 ## Spec-driven E2E tests
 

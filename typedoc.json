@@ -1,0 +1,25 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "name": "ntcore-ts",
+  "entryPoints": ["packages/client", "packages/react"],
+  "entryPointStrategy": "packages",
+  "packageOptions": {
+    "entryPoints": ["src/index.ts"],
+    "tsconfig": "tsconfig.lib.json",
+    "excludeExternals": true,
+    "excludeInternal": true,
+    "readme": "none"
+  },
+  "plugin": ["typedoc-plugin-markdown", "typedoc-vitepress-theme"],
+  "out": "apps/docs/api",
+  "docsRoot": "./apps/docs",
+  "readme": "none",
+  "sanitizeComments": true,
+  "useHTMLEncodedBrackets": true,
+  "sidebar": {
+    "autoConfiguration": true,
+    "format": "vitepress",
+    "collapsed": true,
+    "pretty": true
+  }
+}

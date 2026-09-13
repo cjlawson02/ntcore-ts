@@ -1,10 +1,24 @@
 # @ntcore-ts/client
 
-A TypeScript library for communication over [WPILib's NetworkTables 4.1 protocol](https://github.com/wpilibsuite/allwpilib/blob/main/ntcore/doc/networktables4.adoc).
+TypeScript client for [WPILib's NetworkTables 4.1 protocol](https://github.com/wpilibsuite/allwpilib/blob/main/ntcore/doc/networktables4.adoc).
 
-## Usage
+## Documentation
 
-For a quick start guide on how to use the library, see the [repository README](../../README.md) and the [documentation website](https://ntcore.chrislawson.dev).
+Full guides and API reference: [https://ntcore.chrislawson.dev](https://ntcore.chrislawson.dev)
+
+## Install
+
+```bash
+npm install --save @ntcore-ts/client
+```
+
+```typescript
+import { NetworkTables } from '@ntcore-ts/client';
+
+const ntcore = NetworkTables.getInstanceByTeam(973);
+const gyro = ntcore.getDoubleTopic('/MyTable/Gyro');
+gyro.subscribe((value) => console.log(value));
+```
 
 ## Building
 
