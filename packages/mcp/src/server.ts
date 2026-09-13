@@ -2,6 +2,7 @@ import { LogLevel, NetworkTables } from '@ntcore-ts/client';
 import { McpServer } from '@modelcontextprotocol/server';
 import * as z from 'zod/v4';
 
+import { mcpPackageVersion } from './package-info.js';
 import { NtMcpService } from './service.js';
 
 export interface CreateNtMcpServerOptions {
@@ -15,7 +16,7 @@ export function createNtMcpServer(options?: CreateNtMcpServerOptions): McpServer
   NetworkTables.setLogLevel(LogLevel.SILENT);
 
   const service = options?.service ?? new NtMcpService();
-  const server = new McpServer({ name: 'ntcore-ts', version: '1.0.0-beta.2' });
+  const server = new McpServer({ name: 'ntcore-ts', version: mcpPackageVersion });
 
   server.registerTool(
     'nt_guide',
