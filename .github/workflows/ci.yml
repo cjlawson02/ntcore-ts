@@ -64,8 +64,8 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: 24
-          cache: 'npm'
           registry-url: 'https://registry.npmjs.org'
+          package-manager-cache: false
       - run: npm ci
 
       - name: Install protoc
@@ -74,13 +74,14 @@ jobs:
       - name: Release @ntcore-ts/client
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: npm run release:client
 
       - name: Release @ntcore-ts/react
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: npm run release:react
+
+      - name: Release @ntcore-ts/mcp
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm run release:mcp

@@ -15,7 +15,7 @@ export function createNtMcpServer(options?: CreateNtMcpServerOptions): McpServer
   NetworkTables.setLogLevel(LogLevel.SILENT);
 
   const service = options?.service ?? new NtMcpService();
-  const server = new McpServer({ name: 'ntcore-ts', version: '1.0.0-beta.1' });
+  const server = new McpServer({ name: 'ntcore-ts', version: '1.0.0-beta.2' });
 
   server.registerTool(
     'nt_guide',

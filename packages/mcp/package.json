@@ -1,6 +1,6 @@
 {
   "name": "@ntcore-ts/mcp",
-  "version": "1.0.0-beta.1",
+  "version": "1.0.0-beta.2",
   "description": "Model Context Protocol server for NetworkTables, built on @ntcore-ts/client",
   "license": "MIT",
   "type": "module",
@@ -33,7 +33,7 @@
   },
   "dependencies": {
     "@modelcontextprotocol/server": "^2.0.0",
-    "@ntcore-ts/client": "^1.0.0-beta.1",
+    "@ntcore-ts/client": "^1.0.0-beta.2",
     "zod": "^4.6.4"
   },
   "publishConfig": {
