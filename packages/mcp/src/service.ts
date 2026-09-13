@@ -47,7 +47,7 @@ export class NtMcpService {
         nt_set_multiple: 'Publish several topics (gated + allowlist).',
       },
       safety: [
-        'Never use NT writes as a substitute for Driver Station enable/disable.',
+        'NT writes cannot enable/disable the robot (FMS/DS). Do not let an agent command a live robot.',
         'Default allowlist: /SmartDashboard/**, /Tuning/**, /MyTable/** (override with NT_WRITE_ALLOWLIST).',
         'Set NT_REQUIRE_LOCALHOST=1 to refuse writes to non-local hosts.',
         'One sample is not root cause — prefer nt_subscribe summaries for live evidence.',
