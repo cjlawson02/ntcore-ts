@@ -20,6 +20,7 @@ const guideSidebar = [
       { text: 'Protobuf', link: '/guide/protobuf' },
       { text: 'Struct', link: '/guide/struct' },
       { text: 'React', link: '/guide/react' },
+      { text: 'MCP server', link: '/guide/mcp' },
       { text: 'Logging', link: '/guide/logging' },
     ],
   },

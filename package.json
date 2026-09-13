@@ -10,7 +10,7 @@
   "scripts": {
     "prepare": "husky",
     "build": "turbo run build",
-    "test": "turbo run test --filter=@ntcore-ts/client --filter=@ntcore-ts/react",
+    "test": "turbo run test --filter=@ntcore-ts/client --filter=@ntcore-ts/react --filter=@ntcore-ts/mcp",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
     "format": "prettier --write .",
@@ -19,9 +19,10 @@
     "e2e:local": "turbo run e2e:local --filter=@ntcore-ts/example-client",
     "docs": "turbo run docs --filter=@ntcore-ts/docs",
     "docs:dev": "npm run docs:dev -w @ntcore-ts/docs",
-    "release": "npm run release:client && npm run release:react",
+    "release": "npm run release:client && npm run release:react && npm run release:mcp",
     "release:client": "cd packages/client && npx -p semantic-release@25 -p semantic-release-monorepo@8 -p @semantic-release/changelog -p @semantic-release/exec -p @semantic-release/git -p @semantic-release/github -p @semantic-release/npm -- semantic-release -e semantic-release-monorepo -c ../../release.config.client.mts",
-    "release:react": "cd packages/react && npx -p semantic-release@25 -p semantic-release-monorepo@8 -p @semantic-release/changelog -p @semantic-release/exec -p @semantic-release/git -p @semantic-release/github -p @semantic-release/npm -- semantic-release -e semantic-release-monorepo -c ../../release.config.react.mts"
+    "release:react": "cd packages/react && npx -p semantic-release@25 -p semantic-release-monorepo@8 -p @semantic-release/changelog -p @semantic-release/exec -p @semantic-release/git -p @semantic-release/github -p @semantic-release/npm -- semantic-release -e semantic-release-monorepo -c ../../release.config.react.mts",
+    "release:mcp": "cd packages/mcp && npx -p semantic-release@25 -p semantic-release-monorepo@8 -p @semantic-release/changelog -p @semantic-release/exec -p @semantic-release/git -p @semantic-release/github -p @semantic-release/npm -- semantic-release -e semantic-release-monorepo -c ../../release.config.mcp.mts"
   },
   "devDependencies": {
     "@commitlint/cli": "^21.2.2",

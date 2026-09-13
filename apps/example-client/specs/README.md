@@ -13,6 +13,7 @@ This folder contains **feature specs** for the `@ntcore-ts/client` library as ex
 | [`retained-values.md`](./retained-values.md)           | [`../src/e2e/retained-values.spec.ts`](../src/e2e/retained-values.spec.ts)           |
 | [`topic-lifecycle.md`](./topic-lifecycle.md)           | [`../src/e2e/topic-lifecycle.spec.ts`](../src/e2e/topic-lifecycle.spec.ts)           |
 | [`custom-struct-schema.md`](./custom-struct-schema.md) | [`../src/e2e/custom-struct-schema.spec.ts`](../src/e2e/custom-struct-schema.spec.ts) |
+| [`mcp-live.md`](./mcp-live.md)                         | [`../src/e2e/mcp-live.spec.ts`](../src/e2e/mcp-live.spec.ts)                         |
 
 ## Spec template
 

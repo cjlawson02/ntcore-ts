@@ -1,10 +1,6 @@
 # ntcore-ts
 
-TypeScript and React libraries for [WPILib's NetworkTables 4.1 protocol](https://github.com/wpilibsuite/allwpilib/blob/main/ntcore/doc/networktables4.adoc).
-
-https://github.com/user-attachments/assets/eddf89b3-25c1-441b-aea5-357e49edd20e
-
-> Live subscribe/publish dashboard (`apps/example-react`) talking to `apps/example-robot` over NT 4.1. Try it locally: start the robot (`npm run serve -w @ntcore-ts/example-robot`), then the dashboard (`npm run serve -w @ntcore-ts/example-react`).
+TypeScript and React libraries for [WPILib's NetworkTables 4.1 protocol](https://github.com/wpilibsuite/allwpilib/blob/main/ntcore/doc/networktables4.adoc), plus an optional MCP server for agent tooling.
 
 https://github.com/user-attachments/assets/eddf89b3-25c1-441b-aea5-357e49edd20e
 
@@ -25,6 +21,7 @@ https://github.com/user-attachments/assets/eddf89b3-25c1-441b-aea5-357e49edd20e
 - Client-side data validation using [Zod](https://github.com/colinhacks/zod)
 - Server-matching timestamping using RTT calculation
 - Granular logging with configurable log levels per module
+- MCP server (`@ntcore-ts/mcp`) for agent live NT introspection with gated writes
 
 ## Documentation
 
@@ -42,6 +39,15 @@ React dashboards:
 npm install @ntcore-ts/react @ntcore-ts/client react react-dom
 ```
 
+MCP (Cursor / Claude Desktop):
+
+```bash
+npm install -g @ntcore-ts/mcp
+# or: npx ntcore-ts-mcp
+```
+
+See the [MCP guide](https://ntcore.chrislawson.dev/guide/mcp) (or [`packages/mcp/README.md`](packages/mcp/README.md)) for `mcp.json` examples and write-gate env vars.
+
 ```typescript
 import { NetworkTables } from '@ntcore-ts/client';
 
@@ -54,10 +60,11 @@ More detail: [Getting started](https://ntcore.chrislawson.dev/guide/getting-star
 
 ## Packages
 
-| Package                                | Description                   |
-| -------------------------------------- | ----------------------------- |
-| [`@ntcore-ts/client`](packages/client) | Core NetworkTables 4.1 client |
-| [`@ntcore-ts/react`](packages/react)   | React provider and hooks      |
+| Package                                | Description                    |
+| -------------------------------------- | ------------------------------ |
+| [`@ntcore-ts/client`](packages/client) | Core NetworkTables 4.1 client  |
+| [`@ntcore-ts/react`](packages/react)   | React provider and hooks       |
+| [`@ntcore-ts/mcp`](packages/mcp)       | MCP server for live NT (stdio) |
 
 ## Contributing
 

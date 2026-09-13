@@ -13,6 +13,7 @@
     "e2e:local": "bash ../../tools/scripts/e2e-with-robot.sh"
   },
   "dependencies": {
-    "@ntcore-ts/client": "*"
+    "@ntcore-ts/client": "*",
+    "@ntcore-ts/mcp": "^1.0.0-beta.1"
   }
 }

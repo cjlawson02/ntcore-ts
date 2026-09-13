@@ -12,16 +12,16 @@ This is an npm workspaces + Turborepo monorepo. Prefer `npx turbo run <task>` or
 
 ## Common commands
 
-| Command                | Purpose                     |
-| ---------------------- | --------------------------- |
-| `npm run build`        | Build packages              |
-| `npm test`             | Unit tests (client + react) |
-| `npm run lint`         | ESLint                      |
-| `npm run typecheck`    | Typecheck workspaces        |
-| `npm run format:check` | Prettier check              |
-| `npm run e2e:local`    | E2E against example-robot   |
-| `npm run docs`         | Build the docs site         |
-| `npm run docs:dev`     | Docs site with live reload  |
+| Command                | Purpose                           |
+| ---------------------- | --------------------------------- |
+| `npm run build`        | Build packages                    |
+| `npm test`             | Unit tests (client + react + mcp) |
+| `npm run lint`         | ESLint                            |
+| `npm run typecheck`    | Typecheck workspaces              |
+| `npm run format:check` | Prettier check                    |
+| `npm run e2e:local`    | E2E against example-robot         |
+| `npm run docs`         | Build the docs site               |
+| `npm run docs:dev`     | Docs site with live reload        |
 
 ## Pull requests
 
