@@ -23,6 +23,37 @@ https://github.com/user-attachments/assets/eddf89b3-25c1-441b-aea5-357e49edd20e
 - Granular logging with configurable log levels per module
 - MCP server (`@ntcore-ts/mcp`) for agent live NT introspection with gated writes
 
+## Performance
+
+The client can decode about **1 million** NT frames per second. React `useTopic` applies about **87 thousand** updates per second. A 50-widget dashboard, all updating in one React batch, still does about **3,800** full refreshes per second.
+
+Typical FRC traffic is tens to low thousands of updates per second. The network and NT server saturate first.
+
+```mermaid
+xychart-beta
+    title "Client messages per second (Apple M1 Pro)"
+    x-axis ["1 msg/frame", "10 msg/frame", "100 msg/frame"]
+    y-axis "thousands of messages/s" 0 --> 1800
+    bar [1006, 1643, 1740]
+```
+
+```mermaid
+xychart-beta
+    title "React hook updates per second (jsdom, Apple M1 Pro)"
+    x-axis ["useTopic", "usePrefixTopic", "50 hooks batched"]
+    y-axis "updates/s" 0 --> 90000
+    bar [87400, 88100, 3800]
+```
+
+| Workload                          |                       Rate |   Mean |
+| --------------------------------- | -------------------------: | -----: |
+| Client, 1 message / frame         |                    1.01M/s | 1.2 µs |
+| Client, 100 messages / frame      | 17k frames/s (1.74M msg/s) |  73 µs |
+| React `useTopic` (one update)     |                      87k/s |  12 µs |
+| React 50-hook dashboard (batched) |                     3.8k/s | 278 µs |
+
+Numbers are from `npm run bench` on an Apple M1 Pro, Node 24. CI re-runs the same suite on every PR and fails if throughput drops to half of `main`. Details: [performance guide](https://ntcore.chrislawson.dev/guide/performance).
+
 ## Documentation
 
 Guides and API reference: [https://ntcore.chrislawson.dev](https://ntcore.chrislawson.dev)

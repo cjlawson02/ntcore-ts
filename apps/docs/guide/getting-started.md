@@ -48,6 +48,7 @@ Call `ntcore.close()` to disconnect, unsubscribe/unpublish, and drop the singlet
 - [Topics](/guide/topics) — publish and subscribe
 - [React](/guide/react) — hooks and `NtcoreProvider`
 - [MCP server](/guide/mcp) — agent tooling over live NT
+- [Performance](/guide/performance) — client and React benches, CI regression checks
 - [API reference](/api/) — full generated docs
 
 ## Try the examples

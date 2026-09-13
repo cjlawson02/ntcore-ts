@@ -24,6 +24,7 @@
     "typecheck": "tsc -p tsconfig.spec.json --noEmit",
     "build": "rm -rf dist && rollup -c rollup.config.mts",
     "test": "vitest run",
+    "bench": "vitest bench --run",
     "lint": "eslint ."
   },
   "peerDependencies": {

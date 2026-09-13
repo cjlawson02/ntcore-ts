@@ -199,7 +199,7 @@ export function createNtMcpServer(options?: CreateNtMcpServerOptions): McpServer
     {
       title: 'Set / publish a topic value',
       description:
-        'Publish a value to one topic. Fails if write gate is off, topic is outside NT_WRITE_ALLOWLIST, or types mismatch. Prefer expected_type when known. Destructive — can affect robot behavior. Not for DS enable.',
+        'Publish a value to one topic. Fails if write gate is off, topic is outside NT_WRITE_ALLOWLIST, or types mismatch. Prefer expected_type when known. Destructive — can affect robot behavior if code is listening. Cannot enable/disable via FMS/DS.',
       inputSchema: z.object({
         topic: z.string().describe('Full topic name'),
         value: z.unknown().describe('Value to publish (JSON-compatible for scalars/structs)'),

@@ -85,7 +85,7 @@ Writes are off by default.
 - Path allowlist (default): `/SmartDashboard/**,/Tuning/**,/MyTable/**` via `NT_WRITE_ALLOWLIST`
 - Optional: `NT_REQUIRE_LOCALHOST=1` refuses writes when the NT host is not local
 
-Do not use NT writes to enable or disable a robot on the field.
+NetworkTables cannot enable or disable the robot (FMS/Driver Station does that). Do not let an agent command a live robot — published values can still move mechanisms if robot code is listening.
 
 ## Programmatic use
 

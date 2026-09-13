@@ -13,6 +13,7 @@ This is an npm workspaces + Turborepo monorepo.
 
 - E2E (against example-robot): `npm run e2e:local` (builds deps, starts the robot, runs the e2e suite)
 - Unit tests: `npx turbo run test --filter=@ntcore-ts/client` (or `@ntcore-ts/react`). For a single file: `npx vitest run --config packages/client/vitest.config.mts <name>`
+- Benchmarks: `npm run bench` (client + react). CI JSON: `npm run bench:ci`.
 - Multiple package tests: `npm test` (client + react)
 - Format check: `npm run format:check`
 - Docs site: `npm run docs` (build) or `npm run docs:dev` (VitePress + TypeDoc). Guides live in `apps/docs/`; API is generated into `apps/docs/api/`.
