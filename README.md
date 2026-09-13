@@ -1,6 +1,10 @@
-# ntcore-ts-client
+# ntcore-ts
 
-A TypeScript library for communication over [WPILib's NetworkTables 4.1 protocol](https://github.com/wpilibsuite/allwpilib/blob/main/ntcore/doc/networktables4.adoc).
+TypeScript and React libraries for [WPILib's NetworkTables 4.1 protocol](https://github.com/wpilibsuite/allwpilib/blob/main/ntcore/doc/networktables4.adoc), plus an optional MCP server for agent tooling.
+
+https://github.com/user-attachments/assets/eddf89b3-25c1-441b-aea5-357e49edd20e
+
+> Live subscribe/publish dashboard (`apps/example-react`) talking to `apps/example-robot` over NT 4.1. Try it locally: start the robot (`npm run serve -w @ntcore-ts/example-robot`), then the dashboard (`npm run serve -w @ntcore-ts/example-react`).
 
 ## Features
 
@@ -9,206 +13,59 @@ A TypeScript library for communication over [WPILib's NetworkTables 4.1 protocol
 - Callbacks for new data on subscriptions
 - Callbacks for connection listeners
 - Wildcard prefix listeners for multiple topics
+- Protobuf support with optional type generation and Zod validation
+- Struct support for WPILib types (`getStructTopic(name, Pose2d)`, `useStructTopic(name, Pose2d)`)
 - Retrying for messages queued during a connection loss
 - On-the-fly server switching with resubscribing and republishing
 - Generic types for Topics
 - Client-side data validation using [Zod](https://github.com/colinhacks/zod)
 - Server-matching timestamping using RTT calculation
+- Granular logging with configurable log levels per module
+- MCP server (`@ntcore-ts/mcp`) for agent live NT introspection with gated writes
 
 ## Documentation
 
-TypeDocs are available at [https://ntcore.chrislawson.dev](https://ntcore.chrislawson.dev)
+Guides and API reference: [https://ntcore.chrislawson.dev](https://ntcore.chrislawson.dev)
 
-## Quick Start
+## Install
 
-This section will help get you started with sending and receiving data over NetworkTables
-
-### Installation
-
-`npm install --save ntcore-ts-client`
-
-### Connecting to the NetworkTables Server
-
-The NetworkTables class is instance-based, but allows for connections to multiple teams/URIs.
-
-### Importing `NetworkTables`
-
-Use this at the top of your file:
-
-```typescript
-import { NetworkTables } from 'ntcore-ts-client';
+```bash
+npm install --save @ntcore-ts/client
 ```
 
-### With Team Number
+React dashboards:
 
-Use this function:
-
-```typescript
-NetworkTables.getInstanceByTeam(team: number, port = 5810)
+```bash
+npm install @ntcore-ts/react @ntcore-ts/client react react-dom
 ```
 
-> This creates the instance using the team number. Connects to `roborio-<team>-frc.local`
+MCP (Cursor / Claude Desktop):
 
-### With URI
-
-Use this function:
-
-```typescript
-NetworkTables.getInstanceByURI(uri: string, port?)
+```bash
+npm install -g @ntcore-ts/mcp
+# or: npx ntcore-ts-mcp
 ```
 
-> This creates the instance using a custom URI, i.e. 127.0.0.1, localhost, google.com, etc.
-
-### Publishing and Subscribing to a Topic
-
-To use a Topic, it must be created through the NetworkTables client using the function:
+See the [MCP guide](https://ntcore.chrislawson.dev/guide/mcp) (or [`packages/mcp/README.md`](packages/mcp/README.md)) for `mcp.json` examples and write-gate env vars.
 
 ```typescript
-createTopic<T extends NetworkTablesTypes>(name: string, typeInfo: NetworkTablesTypeInfo, defaultValue?: T)
-```
+import { NetworkTables } from '@ntcore-ts/client';
 
-> The valid `NetworkTablesTypes` are `string | number | boolean | string[] | ArrayBuffer | boolean[] | number[]`
->
-> The valid `NetworkTablesTypeInfo`s are:
->
-> - `NetworkTablesTypeInfos.kBoolean`
-> - `NetworkTablesTypeInfos.kDouble`
-> - `NetworkTablesTypeInfos.kInteger`
-> - `NetworkTablesTypeInfos.kString`
-> - `NetworkTablesTypeInfos.kArrayBuffer`
-> - `NetworkTablesTypeInfos.kBooleanArray`
-> - `NetworkTablesTypeInfos.kDoubleArray`
-> - `NetworkTablesTypeInfos.kIntegerArray`
-> - `NetworkTablesTypeInfos.kStringArray`
-
-Once a topic has been created, it can be used as a subscriber:
-
-```typescript
-subscribe(
-  callback: (value: T | null, params: AnnounceMessageParams) => void,
-  options: SubscribeOptions = {},
-  id?: number,
-  save = true
-)
-```
-
-and/or a publisher:
-
-```typescript
-await publish(properties: TopicProperties = {}, id?: number)
-```
-
-For example, here's a subscription for a Gyro:
-
-```typescript
-import { NetworkTables, NetworkTablesTypeInfos } from 'ntcore-ts-client';
-
-// Get or create the NT client instance
 const ntcore = NetworkTables.getInstanceByTeam(973);
-
-// Create the gyro topic
-const gyroTopic = ntcore.createTopic<number>('/MyTable/Gyro', NetworkTablesTypeInfos.kDouble);
-
-// Subscribe and immediately call the callback with the current value
-gyroTopic.subscribe((value) => {
-  console.log(`Got Gyro Value: ${value}`);
-});
-
-// Or you can use the topic's announce parameters to get more info, like the topic ID
-gyroTopic.subscribe((value, params) => {
-  console.log(`Got Gyro Value: ${value} at from topic id ${params.id}`);
-});
+const gyro = ntcore.getDoubleTopic('/MyTable/Gyro');
+gyro.subscribe((value) => console.log(value));
 ```
 
-Or a publisher for an auto mode:
+More detail: [Getting started](https://ntcore.chrislawson.dev/guide/getting-started) and the [React guide](https://ntcore.chrislawson.dev/guide/react).
 
-```typescript
-import { NetworkTables, NetworkTablesTypeInfos } from 'ntcore-ts-client';
+## Packages
 
-// Get or create the NT client instance
-const ntcore = NetworkTables.getInstanceByTeam(973);
-
-// Create the autoMode topic w/ a default return value of 'No Auto'
-const autoModeTopic = ntcore.createTopic<string>('/MyTable/autoMode', NetworkTablesTypeInfos.kString, 'No Auto');
-
-// Make us the publisher
-await autoModeTopic.publish();
-
-// Set a new value, this will error if we aren't the publisher!
-autoModeTopic.setValue('25 Ball Auto and Climb');
-```
-
-### Subscribing to Multiple Topics
-
-You can also subscribe to multiple topics by using a "wildcard" through creating a prefix topic.
-
-For example, here's a subscription for an Accelerometer with topics `/MyTable/Accelerometer/X`, `/MyTable/Accelerometer/Y`, and `/MyTable/Accelerometer/Z`:
-
-```typescript
-import { NetworkTables } from 'ntcore-ts-client';
-
-// Get or create the NT client instance
-const ntcore = NetworkTables.getInstanceByTeam(973);
-
-// Create the accelerator topic
-const accelerometerTopic = ntcore.createPrefixTopic('/MyTable/Accelerometer/');
-
-let x, y, z;
-
-// Subscribe to all topics under the prefix /MyTable/Accelerometer/
-accelerometerTopic.subscribe((value, params) => {
-  console.log(`Got Accelerometer Value: ${value} from topic ${params.name}`); // i.e. Got Accelerometer Value: 9.81 from topic /MyTable/Accelerometer/Y
-
-  // You can also use the topic name to determine which value to set
-  if (params.name.endsWith('X')) {
-    x = value;
-  } else if (params.name.endsWith('Y')) {
-    y = value;
-  } else if (params.name.endsWith('Z')) {
-    z = value;
-  }
-
-  // Since there can be many types in subtopics,
-  // you can use the type information for other checks...
-  if (params.type === 'int') {
-    console.warn('Hmm... the accelerometer seems low precision');
-  } else if (params.type === 'double') {
-    console.log('The accelerometer is high precision');
-  }
-});
-
-// x, y, and z will be updated as new values come in
-```
-
-### Subscribing to All Topics
-
-You can also subscribe to all topics by doing the above, but with a prefix of `/`.
-
-For example, here's a subscription for all topics:
-
-```typescript
-import { NetworkTables } from 'ntcore-ts-client';
-
-// Get or create the NT client instance
-const ntcore = NetworkTables.getInstanceByTeam(973);
-
-// Create a prefix for all topics
-const allTopics = ntcore.createPrefixTopic('/');
-
-// Subscribe to all topics
-allTopics.subscribe((value, params) => {
-  console.log(`Got Value: ${value} from topic ${params.name}`);
-});
-```
-
-### More Info
-
-The API for Topics is much more exhaustive than this quick example. Feel free to view the docs at [https://ntcore.chrislawson.dev](https://ntcore.chrislawson.dev).
-
-## Known Limitations
-
-- "Raw" type only supports ArrayBuffer
+| Package                                | Description                    |
+| -------------------------------------- | ------------------------------ |
+| [`@ntcore-ts/client`](packages/client) | Core NetworkTables 4.1 client  |
+| [`@ntcore-ts/react`](packages/react)   | React provider and hooks       |
+| [`@ntcore-ts/mcp`](packages/mcp)       | MCP server for live NT (stdio) |
 
 ## Contributing
 
-Contributions are welcome and encouraged! If you encounter a bug, please open an issue and provide as much information as possible. If you'd like to open a PR, I'll be more than happy to review it as soon as I can!
+Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for setup and PR guidelines.

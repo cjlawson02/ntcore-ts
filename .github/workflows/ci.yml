@@ -1,33 +1,87 @@
 name: CI
 
+permissions:
+  contents: read
+
 on:
   push:
     branches:
       - main
+      - beta
   pull_request:
 
 jobs:
   main:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       # Cache node_modules
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
-          node-version: 20
+          node-version: 24
           cache: 'npm'
+      - uses: actions/setup-java@v6
+        with:
+          distribution: 'temurin'
+          java-version: '25'
       - run: npm ci
-      - uses: nrwl/nx-set-shas@v4
 
-      - run: npx nx format:check
-      - run: npx nx run-many -t build
-      - run: npx nx run-many -t lint
-      - run: npx nx run-many -t test --coverage
+      - name: Install protoc and xvfb
+        run: sudo apt-get update && sudo apt-get install -y protobuf-compiler xvfb
+
+      - run: npm run format:check
+      - run: npx turbo run typecheck
+      - run: npx turbo run build
+      - run: npx turbo run lint
+      - run: npx turbo run test -- --coverage
+
+      - name: E2E against example-robot (NT server)
+        env:
+          E2E_HEADLESS: 1
+        run: npm run e2e:local
 
       - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v7
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
           flags: unittests
+
+  release:
+    needs: main
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          registry-url: 'https://registry.npmjs.org'
+          package-manager-cache: false
+      - run: npm ci
+
+      - name: Install protoc
+        run: sudo apt-get update && sudo apt-get install -y protobuf-compiler
+
+      - name: Release @ntcore-ts/client
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm run release:client
+
+      - name: Release @ntcore-ts/react
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm run release:react
+
+      - name: Release @ntcore-ts/mcp
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm run release:mcp

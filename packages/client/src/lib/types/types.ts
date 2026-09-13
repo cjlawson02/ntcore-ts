@@ -1,0 +1,184 @@
+import { z } from 'zod';
+
+import { finiteNumSchema, integerSchema } from './schemas';
+
+import type {
+  typeStringSchema,
+  announceMessageSchema,
+  msgPackSchema,
+  msgPackValueSchema,
+  propertiesMessageSchema,
+  publishMessageSchema,
+  setPropertiesMessageSchema,
+  subscribeMessageSchema,
+  subscriptionOptionsSchema,
+  topicPropertiesSchema,
+  unannounceMessageSchema,
+  unpublishMessageSchema,
+  unsubscribeMessageSchema,
+  typeNumSchema,
+} from './schemas';
+
+export type TypeString = z.infer<typeof typeStringSchema>;
+export type TypeNum = z.infer<typeof typeNumSchema>;
+export type NetworkTablesTypeInfo = [TypeNum, TypeString];
+
+export type PublishMessage = z.infer<typeof publishMessageSchema>;
+export type UnpublishMessage = z.infer<typeof unpublishMessageSchema>;
+export type SetPropertiesMessage = z.infer<typeof setPropertiesMessageSchema>;
+export type SubscribeMessage = z.infer<typeof subscribeMessageSchema>;
+export type SubscribeOptions = z.infer<typeof subscriptionOptionsSchema> & {
+  /**
+   * If true, invoke the callback once with the current value after registering.
+   * This is a client-side option and is not sent to the NT server.
+   */
+  immediateNotify?: boolean;
+};
+export type UnsubscribeMessage = z.infer<typeof unsubscribeMessageSchema>;
+export type AnnounceMessage = z.infer<typeof announceMessageSchema>;
+export type UnannounceMessage = z.infer<typeof unannounceMessageSchema>;
+export type PropertiesMessage = z.infer<typeof propertiesMessageSchema>;
+
+export type Message =
+  | PublishMessage
+  | UnpublishMessage
+  | SetPropertiesMessage
+  | SubscribeMessage
+  | UnsubscribeMessage
+  | AnnounceMessage
+  | UnannounceMessage
+  | PropertiesMessage;
+
+export type PublishMessageParams = PublishMessage['params'];
+export type UnpublishMessageParams = UnpublishMessage['params'];
+export type SetPropertiesMessageParams = SetPropertiesMessage['params'];
+export type SubscribeMessageParams = SubscribeMessage['params'];
+export type UnsubscribeMessageParams = UnsubscribeMessage['params'];
+export type AnnounceMessageParams = AnnounceMessage['params'];
+export type UnannounceMessageParams = UnannounceMessage['params'];
+export type PropertiesMessageParams = PropertiesMessage['params'];
+
+export type NetworkTablesTypes = z.infer<typeof msgPackValueSchema>;
+export type BinaryMessage = z.infer<typeof msgPackSchema>;
+export type TopicProperties = z.infer<typeof topicPropertiesSchema>;
+
+export class NetworkTablesTypeInfos {
+  static readonly kBoolean: NetworkTablesTypeInfo = [0, 'boolean'];
+  static readonly kDouble: NetworkTablesTypeInfo = [1, 'double'];
+  static readonly kInteger: NetworkTablesTypeInfo = [2, 'int'];
+  static readonly kFloat: NetworkTablesTypeInfo = [3, 'float'];
+  static readonly kString: NetworkTablesTypeInfo = [4, 'string'];
+  static readonly kJson = [4, 'json'] as const satisfies NetworkTablesTypeInfo;
+  static readonly kUint8Array: NetworkTablesTypeInfo = [5, 'raw'];
+  static readonly kRPC: NetworkTablesTypeInfo = [5, 'rpc'];
+  static readonly kMsgpack: NetworkTablesTypeInfo = [5, 'msgpack'];
+  static readonly kProtobuf: NetworkTablesTypeInfo = [5, 'protobuf'];
+  /** Type info for struct schema topics (/.schema/struct:TypeName). Wire type 5 (raw bytes), type string 'structschema'. */
+  static readonly kStructSchema: NetworkTablesTypeInfo = [5, 'structschema'];
+  static readonly kBooleanArray: NetworkTablesTypeInfo = [16, 'boolean[]'];
+  static readonly kDoubleArray: NetworkTablesTypeInfo = [17, 'double[]'];
+  static readonly kIntegerArray: NetworkTablesTypeInfo = [18, 'int[]'];
+  static readonly kFloatArray: NetworkTablesTypeInfo = [19, 'float[]'];
+  static readonly kStringArray: NetworkTablesTypeInfo = [20, 'string[]'];
+
+  /**
+   * Validates and parses a value based on the expected NetworkTables type information.
+   * @param expectedTypeInfo - The expected type information from `NetworkTablesTypeInfo`.
+   * @param value - The value to validate and parse.
+   * @returns The parsed value, matching the expected type.
+   * @throws Will throw an error if the value does not match the expected type or if parsing fails.
+   */
+  static validateData(expectedTypeInfo: NetworkTablesTypeInfo, value: NetworkTablesTypes): NetworkTablesTypes {
+    switch (expectedTypeInfo) {
+      // 0
+      case NetworkTablesTypeInfos.kBoolean:
+        return z.boolean().parse(value);
+      // 1
+      case NetworkTablesTypeInfos.kDouble:
+        return finiteNumSchema.parse(value);
+      // 2
+      case NetworkTablesTypeInfos.kInteger:
+        return integerSchema.parse(value);
+      // 3
+      case NetworkTablesTypeInfos.kFloat:
+        return finiteNumSchema.parse(value);
+      // 4
+      case NetworkTablesTypeInfos.kString:
+        return z.string().parse(value);
+      case NetworkTablesTypeInfos.kJson: {
+        const parsedString = z.string().parse(value);
+        const parsedJson = JSON.parse(parsedString);
+        if (typeof parsedJson === 'object' && parsedJson !== null) {
+          return parsedString;
+        } else {
+          throw new Error(`Bad JSON value: ${value}`);
+        }
+      }
+      // 5
+      case NetworkTablesTypeInfos.kUint8Array:
+        if (value instanceof Uint8Array) {
+          return value;
+        } else {
+          throw new Error(`Invalid Uint8Array value: ${value}`);
+        }
+      case NetworkTablesTypeInfos.kRPC:
+        if (value instanceof Uint8Array) {
+          return value;
+        } else {
+          throw new Error(`Invalid RPC value: ${value}`);
+        }
+      case NetworkTablesTypeInfos.kMsgpack:
+        if (value instanceof Uint8Array) {
+          return value;
+        } else {
+          throw new Error(`Invalid Msgpack value: ${value}`);
+        }
+      case NetworkTablesTypeInfos.kProtobuf:
+        if (value instanceof Uint8Array) {
+          return value;
+        } else {
+          throw new Error(`Invalid Protobuf value: ${value}`);
+        }
+      case NetworkTablesTypeInfos.kStructSchema:
+        if (value instanceof Uint8Array) {
+          return value;
+        } else {
+          throw new Error(`Invalid struct schema value: ${value}`);
+        }
+      // 16
+      case NetworkTablesTypeInfos.kBooleanArray:
+        return z.array(z.boolean()).parse(value);
+      // 17
+      case NetworkTablesTypeInfos.kDoubleArray:
+        return z.array(finiteNumSchema).parse(value);
+      // 18
+      case NetworkTablesTypeInfos.kIntegerArray:
+        return z.array(integerSchema).parse(value);
+      // 19
+      case NetworkTablesTypeInfos.kFloatArray:
+        return z.array(finiteNumSchema).parse(value);
+      // 20
+      case NetworkTablesTypeInfos.kStringArray:
+        return z.array(z.string()).parse(value);
+
+      default: {
+        // Type num 5: struct topics store full type in typeInfo (e.g. struct:Pose2d) for topic
+        // reuse/type identity, so we see struct: here. Protobuf topics use kProtobuf [5, 'protobuf']
+        // only; proto:MessageName is used in announce/decoding, not as topic typeInfo.
+        const typeString = expectedTypeInfo[1];
+        if (typeString.startsWith('struct:')) {
+          if (value instanceof Uint8Array) return value;
+          throw new Error(`Invalid struct value: expected Uint8Array`);
+        }
+        throw new Error(`Invalid type info: ${expectedTypeInfo}`);
+      }
+    }
+  }
+}
+
+export interface BinaryMessageData {
+  topicId: number;
+  serverTime: number;
+  typeNum: TypeNum;
+  value: NetworkTablesTypes;
+}

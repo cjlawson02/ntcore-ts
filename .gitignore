@@ -37,8 +37,18 @@ testem.log
 .DS_Store
 Thumbs.db
 
-.nx/cache
-.nx/workspace-data
 vite.config.*.timestamp*
 vitest.config.*.timestamp*
-docs/
+rollup.config-*.mjs
+# Local design notes (not published)
+notes/
+
+# Docs site generated output
+apps/docs/api/
+apps/docs/.vitepress/dist/
+apps/docs/.vitepress/cache/
+
+.claude/worktrees
+.claude/settings.local.json
+.nx/migrate-runs
+.turbo

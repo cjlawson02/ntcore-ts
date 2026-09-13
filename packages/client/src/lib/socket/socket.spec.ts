@@ -1,0 +1,702 @@
+import { decode, encode } from '@msgpack/msgpack';
+import WebSocket from 'isomorphic-ws';
+import WSMock from 'vitest-websocket-mock';
+
+import { completeRttHandshake } from '../../../tests/rtt-handshake';
+import { NetworkTablesTypeInfos } from '../types/types';
+import { LogLevel, setLogLevel } from '../util/logger';
+import { Util } from '../util/util';
+
+import { NetworkTablesSocket } from './socket';
+
+import type {
+  AnnounceMessage,
+  AnnounceMessageParams,
+  BinaryMessage,
+  PropertiesMessage,
+  PropertiesMessageParams,
+  UnannounceMessage,
+  UnannounceMessageParams,
+  UnsubscribeMessage,
+} from '../types/types';
+
+describe('NetworkTablesSocket', () => {
+  let socket: NetworkTablesSocket;
+  const serverUrl = 'ws://localhost:5810/nt/1234';
+  let server: WSMock;
+  const onSocketOpen = vi.fn();
+  const onSocketClose = vi.fn();
+  const onTopicUpdate = vi.fn();
+  const onAnnounce = vi.fn();
+  const onUnannounce = vi.fn();
+  const onProperties = vi.fn();
+
+  beforeEach(async () => {
+    // Clean up any existing instances first (this is a singleton keyed by URL).
+    NetworkTablesSocket['instances'].forEach((instance: NetworkTablesSocket) => {
+      instance.stopAutoConnect();
+      try {
+        instance.close();
+      } catch {
+        // Some tests override `websocket` with a plain object; best-effort cleanup.
+      }
+    });
+    NetworkTablesSocket['instances'].clear();
+
+    server = new WSMock(serverUrl);
+
+    // Create an instance of the NetworkTablesSocket class
+    socket = NetworkTablesSocket.getInstance(
+      serverUrl,
+      onSocketOpen,
+      onSocketClose,
+      onTopicUpdate,
+      onAnnounce,
+      onUnannounce,
+      onProperties
+    );
+
+    await server.connected;
+    await completeRttHandshake(server, socket);
+  });
+
+  afterEach(async () => {
+    socket.stopAutoConnect();
+    try {
+      socket.close();
+    } catch {
+      // Some tests override `websocket` with a plain object; best-effort cleanup.
+    }
+    WSMock.clean();
+    onSocketOpen.mockClear();
+    onSocketClose.mockClear();
+    onTopicUpdate.mockClear();
+    onAnnounce.mockClear();
+    onUnannounce.mockClear();
+    onProperties.mockClear();
+    vi.restoreAllMocks();
+  });
+
+  describe('constructor', () => {
+    it('should create a new WebSocket instance with the provided server URL', () => {
+      expect(socket.websocket).toBeInstanceOf(WebSocket);
+      expect(socket.websocket.url).toBe(serverUrl);
+    });
+  });
+
+  describe('isConnected', () => {
+    it('should return true if the WebSocket is open and the clock is synced', () => {
+      expect(socket.isConnected()).toBe(true);
+    });
+
+    it('should return false if the WebSocket is closed', () => {
+      socket['_websocket'] = {
+        ...socket.websocket,
+        readyState: WebSocket.CLOSED,
+      } as WebSocket;
+
+      expect(socket.isConnected()).toBe(false);
+    });
+
+    it('should return false while open but waiting for the first RTT', () => {
+      socket['clockSynced'] = false;
+      expect(socket.isConnected()).toBe(false);
+      expect(socket.isConnecting()).toBe(true);
+    });
+  });
+
+  describe('sendTextFrame', () => {
+    it('should queue messages when not connected', () => {
+      const send = vi.fn();
+      socket['_websocket'] = {
+        ...socket.websocket,
+        readyState: WebSocket.CONNECTING,
+        send,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any;
+
+      const msg: UnsubscribeMessage = { method: 'unsubscribe', params: { subuid: 1 } };
+      socket.sendTextFrame(msg);
+
+      expect(send).not.toHaveBeenCalled();
+      const queued = socket['messageQueue'][socket['messageQueue'].length - 1];
+      expect(typeof queued).toBe('string');
+      expect(queued).toBe(JSON.stringify([msg]));
+    });
+
+    it('should queue control frames until the first RTT completes', () => {
+      const send = vi.fn();
+      socket['_websocket'] = {
+        ...socket.websocket,
+        readyState: WebSocket.OPEN,
+        send,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any;
+      socket['clockSynced'] = false;
+
+      const msg: UnsubscribeMessage = { method: 'unsubscribe', params: { subuid: 1 } };
+      socket.sendTextFrame(msg);
+
+      expect(send).not.toHaveBeenCalled();
+      expect(socket['messageQueue'][socket['messageQueue'].length - 1]).toBe(JSON.stringify([msg]));
+    });
+  });
+
+  describe('waitForConnection', () => {
+    it('should resolve via listener once the socket becomes connected', async () => {
+      socket['_websocket'] = {
+        ...socket.websocket,
+        readyState: WebSocket.CONNECTING,
+      } as WebSocket;
+
+      const p = socket.waitForConnection();
+
+      // Not connected yet, so it should have registered a listener.
+      expect(socket['connectionListeners'].size).toBeGreaterThan(0);
+
+      // Flip to OPEN and notify listeners.
+      socket['_websocket'] = {
+        ...socket.websocket,
+        readyState: WebSocket.OPEN,
+      } as WebSocket;
+      socket['updateConnectionListeners']();
+
+      await expect(p).resolves.toBeUndefined();
+      // The listener created by waitForConnection should have removed itself.
+      expect(socket['connectionListeners'].size).toBe(0);
+    });
+  });
+
+  describe('addConnectionListener', () => {
+    it('should immediately notify when immediateNotify is true and remove via disposer', async () => {
+      const listener = vi.fn();
+      const dispose = socket.addConnectionListener(listener, true);
+
+      expect(listener).not.toHaveBeenCalled();
+      await Promise.resolve();
+      expect(listener).toHaveBeenCalledWith(true);
+
+      socket['_websocket'] = {
+        ...socket.websocket,
+        readyState: WebSocket.CLOSED,
+      } as WebSocket;
+      socket['updateConnectionListeners']();
+      expect(listener).toHaveBeenLastCalledWith(false);
+
+      dispose();
+      socket['_websocket'] = {
+        ...socket.websocket,
+        readyState: WebSocket.OPEN,
+      } as WebSocket;
+      socket['updateConnectionListeners']();
+
+      // No new calls after dispose.
+      expect(listener).toHaveBeenCalledTimes(2);
+    });
+
+    it('does not run deferred immediateNotify after dispose()', async () => {
+      const listener = vi.fn();
+      const dispose = socket.addConnectionListener(listener, true);
+      dispose();
+      await Promise.resolve();
+      expect(listener).not.toHaveBeenCalled();
+    });
+
+    it('allows calling disposer from the immediate-notify callback', async () => {
+      const listener = vi.fn();
+      const dispose = socket.addConnectionListener((connected) => {
+        if (connected) {
+          listener(connected);
+          dispose();
+        }
+      }, true);
+      expect(socket['connectionListeners'].size).toBe(1);
+      await Promise.resolve();
+      expect(listener).toHaveBeenCalledWith(true);
+      expect(socket['connectionListeners'].size).toBe(0);
+    });
+  });
+
+  describe('sendQueuedMessages', () => {
+    it('should send all queued messages through the WebSocket', async () => {
+      // Queue some messages
+      const messages = ['Hello, world!', 'Foo', 'Bar'];
+      socket['messageQueue'].push(...messages);
+
+      // Send the queued messages
+      socket['sendQueuedMessages']();
+
+      await expect(server).toReceiveMessage('Hello, world!');
+      await expect(server).toReceiveMessage('Foo');
+      await expect(server).toReceiveMessage('Bar');
+      expect(socket['messageQueue']).toHaveLength(0);
+    });
+
+    it('should not send any messages if the WebSocket is not open', async () => {
+      // Mock the WebSocket's `send` method
+      const send = vi.fn();
+      socket['_websocket'] = {
+        ...socket['_websocket'],
+        send,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any;
+
+      // Queue some messages
+      const messages = ['Hello, world!', 'Foo', 'Bar'];
+      socket['messageQueue'].push(...messages);
+
+      // Set the WebSocket's `readyState` property to be `WebSocket.CONNECTING`
+      socket['_websocket'] = {
+        ...socket.websocket,
+        readyState: WebSocket.CONNECTING,
+      } as WebSocket;
+
+      // Send the queued messages
+      socket['sendQueuedMessages']();
+
+      expect(send).not.toHaveBeenCalled();
+      expect(socket['messageQueue']).toHaveLength(messages.length);
+    });
+  });
+
+  describe('sendValueToTopic', () => {
+    it('should return -1 and not send when not connected', () => {
+      const send = vi.fn();
+      socket['_websocket'] = {
+        ...socket.websocket,
+        readyState: WebSocket.CONNECTING,
+        send,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any;
+
+      const result = socket.sendValueToTopic(123, 456, NetworkTablesTypeInfos.kInteger);
+      expect(result).toBe(-1);
+      expect(send).not.toHaveBeenCalled();
+      expect(socket['messageQueue']).toHaveLength(0);
+    });
+
+    it('should send and return a timestamp when connected', () => {
+      const send = vi.fn();
+      socket['_websocket'] = {
+        ...socket.websocket,
+        readyState: WebSocket.OPEN,
+        send,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any;
+      socket['clockSynced'] = true;
+      socket['bestRtt'] = 0;
+      socket['offset'] = 0;
+
+      const getMicrosSpy = vi.spyOn(Util, 'getMicros').mockReturnValue(1000);
+
+      const result = socket.sendValueToTopic(123, 456, NetworkTablesTypeInfos.kInteger);
+      expect(result).not.toBe(-1);
+      expect(send).toHaveBeenCalled();
+      getMicrosSpy.mockRestore();
+    });
+  });
+
+  describe('connection open ordering', () => {
+    it('should run onSocketOpen before notifying connection listeners, only after RTT', async () => {
+      const order: string[] = [];
+      const orderingServerUrl = 'ws://localhost:5810/nt/ordering-test';
+      const orderingServer = new WSMock(orderingServerUrl);
+
+      const orderingSocket = NetworkTablesSocket.getInstance(
+        orderingServerUrl,
+        () => order.push('onSocketOpen'),
+        () => {},
+        () => {},
+        () => {},
+        () => {},
+        () => {},
+        false
+      );
+
+      await orderingServer.connected;
+      expect(order).toEqual([]);
+      expect(orderingSocket.isConnected()).toBe(false);
+      expect(orderingSocket.isConnecting()).toBe(true);
+
+      orderingSocket.addConnectionListener(() => order.push('listener'));
+      await completeRttHandshake(orderingServer, orderingSocket);
+
+      expect(order).toEqual(['onSocketOpen', 'listener']);
+      expect(orderingSocket.isConnected()).toBe(true);
+
+      orderingSocket.stopAutoConnect();
+      orderingSocket.close();
+    });
+  });
+
+  describe('heartbeat', () => {
+    it('should send a heartbeat message through the WebSocket', () => {
+      // Mock the WebSocket's `send` method
+      const send = vi.fn();
+      socket['_websocket'] = {
+        ...socket.websocket,
+        readyState: WebSocket.OPEN,
+        send,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any;
+      vi.spyOn(Util, 'getMicros').mockReturnValue(12345.6);
+      socket['heartbeat']();
+
+      expect(send).toHaveBeenCalled();
+      const sent = send.mock.calls[0][0] as Uint8Array;
+      const decoded = decode(sent) as unknown[];
+      expect(decoded[0]).toBe(-1);
+      expect(decoded[1]).toBe(0);
+      expect(decoded[2]).toBe(2);
+      expect(decoded[3]).toBe(12346);
+    });
+
+    it('should start a periodic heartbeat when connected on NT 4.0', () => {
+      const setIntervalSpy = vi.spyOn(globalThis, 'setInterval').mockReturnValue({} as ReturnType<typeof setInterval>);
+      // Force protocol to NT 4.0 so `init()`'s open handler enables heartbeat.
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (socket.websocket as any).protocol = 'networktables.first.wpi.edu';
+      } catch {
+        Object.defineProperty(socket.websocket, 'protocol', {
+          value: 'networktables.first.wpi.edu',
+          configurable: true,
+        });
+      }
+
+      // Trigger open handler again under our controlled protocol.
+      socket.websocket.onopen?.(undefined as never);
+
+      expect(setIntervalSpy).toHaveBeenCalled();
+      expect(socket['heartbeatInterval']).toBeDefined();
+    });
+
+    it('should start periodic heartbeat when connected on NT 4.1 (Node/JS cannot send WS PING)', () => {
+      const setIntervalSpy = vi.spyOn(globalThis, 'setInterval').mockReturnValue({} as ReturnType<typeof setInterval>);
+      const sendSpy = vi.spyOn(socket.websocket, 'send');
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (socket.websocket as any).protocol = 'v4.1.networktables.first.wpi.edu';
+      } catch {
+        Object.defineProperty(socket.websocket, 'protocol', {
+          value: 'v4.1.networktables.first.wpi.edu',
+          configurable: true,
+        });
+      }
+
+      socket.websocket.onopen?.(undefined as never);
+
+      expect(sendSpy).toHaveBeenCalled();
+      expect(setIntervalSpy).toHaveBeenCalled();
+      expect(socket['heartbeatInterval']).toBeDefined();
+    });
+  });
+
+  describe('RTT handling', () => {
+    it('should process heartbeat messages (topicId=-1) without calling onTopicUpdate', () => {
+      socket['bestRtt'] = -1;
+      socket['offset'] = 0;
+
+      vi.spyOn(Util, 'getMicros').mockReturnValue(150);
+
+      const heartbeatMessage: BinaryMessage = [-1, 123, 2, 100];
+      const encoded = encode(heartbeatMessage);
+      socket['onMessage']({ data: encoded } as unknown as MessageEvent);
+
+      expect(onTopicUpdate).not.toHaveBeenCalled();
+      expect(socket['bestRtt']).toBe(50);
+      expect(socket['offset']).toBe(27);
+    });
+
+    it('should not update offset/bestRtt when RTT is worse than bestRtt', () => {
+      socket['bestRtt'] = 10;
+      socket['offset'] = 999;
+
+      vi.spyOn(Util, 'getMicros').mockReturnValue(150);
+
+      const heartbeatMessage: BinaryMessage = [-1, 123, 2, 100];
+      const encoded = encode(heartbeatMessage);
+      socket['onMessage']({ data: encoded } as unknown as MessageEvent);
+
+      expect(socket['bestRtt']).toBe(10);
+      expect(socket['offset']).toBe(999);
+    });
+
+    it('getBestRttMs returns -1 when not connected or RTT not yet measured', () => {
+      socket['bestRtt'] = -1;
+      expect(socket.getBestRttMs()).toBe(-1);
+    });
+
+    it('should skip strong value publishes until the clock is synced', () => {
+      socket['clockSynced'] = false;
+      const send = vi.fn();
+      socket['_websocket'] = {
+        ...socket.websocket,
+        readyState: WebSocket.OPEN,
+        send,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any;
+
+      const result = socket.sendValueToTopic(123, 456, NetworkTablesTypeInfos.kInteger);
+      expect(result).toBe(-1);
+      expect(send).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('idle timeout', () => {
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('closes the websocket if no data arrives within the idle timeout', () => {
+      socket.stopAutoConnect();
+      vi.useFakeTimers();
+      const closeSpy = vi.spyOn(socket.websocket, 'close');
+      socket['resetIdleTimer']();
+      vi.advanceTimersByTime(NetworkTablesSocket['IDLE_TIMEOUT_MS']);
+      expect(closeSpy).toHaveBeenCalled();
+    });
+
+    it('does not close if a frame arrives before the idle timeout', () => {
+      socket.stopAutoConnect();
+      vi.useFakeTimers();
+      const closeSpy = vi.spyOn(socket.websocket, 'close');
+      socket['resetIdleTimer']();
+      vi.advanceTimersByTime(NetworkTablesSocket['IDLE_TIMEOUT_MS'] - 1);
+      socket['resetIdleTimer']();
+      vi.advanceTimersByTime(NetworkTablesSocket['IDLE_TIMEOUT_MS'] - 1);
+      expect(closeSpy).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('init', () => {
+    it('should clear any existing heartbeat interval before re-initializing', () => {
+      // Use a dummy interval handle to avoid real timers.
+      socket['heartbeatInterval'] = 1 as unknown as ReturnType<typeof setInterval>;
+      expect(socket['heartbeatInterval']).toBeDefined();
+
+      socket['init']();
+
+      expect(socket['heartbeatInterval']).toBeUndefined();
+    });
+  });
+
+  describe('auto reconnect', () => {
+    it('should schedule a reconnect when auto-connect is enabled', () => {
+      socket.startAutoConnect();
+      const setTimeoutSpy = vi
+        .spyOn(globalThis, 'setTimeout')
+        // Don't actually schedule anything; we only want to observe that it would.
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .mockImplementation(((_fn: any, _ms?: any) => 1 as any) as any);
+
+      socket.websocket.onclose?.({
+        code: 1000,
+        reason: 'test',
+        target: socket.websocket,
+        wasClean: true,
+        type: 'close',
+      });
+
+      expect(setTimeoutSpy).toHaveBeenCalled();
+      const reconnectCall = setTimeoutSpy.mock.calls.find((c: [unknown, number?, ...unknown[]]) => c[1] === 1000);
+      expect(reconnectCall).toBeDefined();
+    });
+
+    it('should not schedule a reconnect when auto-connect is disabled', () => {
+      socket.stopAutoConnect();
+      const setTimeoutSpy = vi
+        .spyOn(globalThis, 'setTimeout')
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .mockImplementation(((_fn: any, _ms?: any) => 1 as any) as any);
+
+      socket.websocket.onclose?.({
+        code: 1000,
+        reason: 'test',
+        target: socket.websocket,
+        wasClean: true,
+        type: 'close',
+      });
+
+      const reconnectCall = setTimeoutSpy.mock.calls.find((c: [unknown, number?, ...unknown[]]) => c[1] === 1000);
+      expect(reconnectCall).toBeUndefined();
+    });
+
+    it('should not schedule a reconnect after close()', () => {
+      const onClose = socket.websocket.onclose;
+      const setTimeoutSpy = vi
+        .spyOn(globalThis, 'setTimeout')
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .mockImplementation(((_fn: any, _ms?: any) => 1 as any) as any);
+
+      socket.close();
+      onClose?.({
+        code: 1000,
+        reason: 'test',
+        target: socket.websocket,
+        wasClean: true,
+        type: 'close',
+      });
+
+      const reconnectCall = setTimeoutSpy.mock.calls.find((c: [unknown, number?, ...unknown[]]) => c[1] === 1000);
+      expect(reconnectCall).toBeUndefined();
+    });
+
+    it('should ignore onclose from the previous websocket after reinstantiate', () => {
+      const previous = socket.websocket;
+      const previousOnClose = previous.onclose;
+      socket.reinstantiate('ws://localhost:5810/nt/reinstantiate');
+      const setTimeoutSpy = vi
+        .spyOn(globalThis, 'setTimeout')
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .mockImplementation(((_fn: any, _ms?: any) => 1 as any) as any);
+
+      previousOnClose?.({
+        code: 1000,
+        reason: 'stale',
+        target: previous,
+        wasClean: true,
+        type: 'close',
+      });
+
+      const reconnectCall = setTimeoutSpy.mock.calls.find((c: [unknown, number?, ...unknown[]]) => c[1] === 1000);
+      expect(reconnectCall).toBeUndefined();
+      expect(socket.websocket).not.toBe(previous);
+    });
+  });
+
+  describe('updateConnectionListeners', () => {
+    it('should call all connection listeners with the current connection status', () => {
+      const listeners = [vi.fn(), vi.fn()];
+      listeners.forEach((listener) => socket['connectionListeners'].add(listener));
+
+      socket['updateConnectionListeners']();
+
+      expect(listeners[0]).toHaveBeenCalledWith(true);
+      expect(listeners[1]).toHaveBeenCalledWith(true);
+
+      // Simulate disconnect.
+      socket['_websocket'] = {
+        ...socket.websocket,
+        readyState: WebSocket.CLOSED,
+      } as WebSocket;
+      socket['updateConnectionListeners']();
+
+      expect(listeners[0]).toHaveBeenCalledWith(false);
+      expect(listeners[1]).toHaveBeenCalledWith(false);
+    });
+  });
+
+  describe('onmessage', () => {
+    it('should call the binary frame handler for a binary message', () => {
+      const message: BinaryMessage = [0, 0, 2, 1.0];
+      const encoded = encode(message);
+
+      // Manually trigger the onmessage event with binary data
+      // Pass Uint8Array directly (handleBinaryFrame accepts both ArrayBuffer and Uint8Array)
+      const event = {
+        data: encoded,
+      } as unknown as MessageEvent;
+      // Call the private onMessage method directly
+      socket['onMessage'](event);
+
+      expect(onTopicUpdate).toHaveBeenCalledWith({
+        topicId: message[0],
+        serverTime: message[1],
+        typeNum: message[2],
+        value: message[3],
+      });
+    });
+
+    it('should process remaining messages in frame when one message is malformed or invalid', () => {
+      onTopicUpdate.mockClear();
+
+      const valid1: BinaryMessage = [10, 1000, 2, 1.0];
+      const invalid = [0, 0, 99, 1.0] as unknown as BinaryMessage; // typeNum 99 fails schema
+      const valid2: BinaryMessage = [11, 1001, 4, 'hello'];
+
+      const frame = new Uint8Array([...encode(valid1), ...encode(invalid), ...encode(valid2)]);
+      socket['onMessage']({ data: frame } as unknown as MessageEvent);
+
+      expect(onTopicUpdate).toHaveBeenCalledTimes(2);
+      expect(onTopicUpdate).toHaveBeenNthCalledWith(1, {
+        topicId: 10,
+        serverTime: 1000,
+        typeNum: 2,
+        value: 1.0,
+      });
+      expect(onTopicUpdate).toHaveBeenNthCalledWith(2, {
+        topicId: 11,
+        serverTime: 1001,
+        typeNum: 4,
+        value: 'hello',
+      });
+    });
+
+    it('should not throw on unhandled (but schema-valid) message methods', () => {
+      // Silence logs; this path warns intentionally.
+      setLogLevel(LogLevel.SILENT);
+
+      expect(() => {
+        server.send(
+          JSON.stringify([
+            {
+              method: 'subscribe',
+              params: { topics: ['foo'], subuid: 1, options: {} },
+            },
+          ])
+        );
+      }).not.toThrow();
+    });
+
+    it('should call the onAnnounce handler for an announce message', () => {
+      const params: AnnounceMessageParams = {
+        type: 'boolean',
+        name: 'foo',
+        id: 0,
+        properties: {},
+      };
+      const message: AnnounceMessage = {
+        method: 'announce',
+        params,
+      };
+
+      server.send(JSON.stringify([message]));
+
+      expect(onAnnounce).toHaveBeenCalledWith(params);
+    });
+
+    it('should call the onUnannounce handler for an unannounce message', () => {
+      const params: UnannounceMessageParams = {
+        name: 'foo',
+        id: 0,
+      };
+
+      const message: UnannounceMessage = {
+        method: 'unannounce',
+        params,
+      };
+
+      server.send(JSON.stringify([message]));
+
+      expect(onUnannounce).toHaveBeenCalledWith(params);
+    });
+  });
+
+  it('should call the onProperties handler for an properties message', () => {
+    const params: PropertiesMessageParams = {
+      name: 'foo',
+      ack: true,
+      update: {},
+    };
+
+    const message: PropertiesMessage = {
+      method: 'properties',
+      params,
+    };
+
+    server.send(JSON.stringify([message]));
+
+    expect(onProperties).toHaveBeenCalledWith(params);
+  });
+});

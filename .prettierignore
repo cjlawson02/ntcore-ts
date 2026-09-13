@@ -3,7 +3,22 @@
 /dist
 /coverage
 /package-lock.json
-/docs
+/notes
 
-/.nx/cache
-/.nx/workspace-data
+apps/docs/api
+apps/docs/.vitepress/dist
+apps/docs/.vitepress/cache
+
+/.turbo
+
+# Gradle (example-robot)
+apps/example-robot/build
+apps/example-robot/.gradle
+
+# Generated code (e.g. protoc output)
+**/src/generated
+
+.nx
+apps/example-robot/simgui.json
+apps/example-robot/simgui-ds.json
+apps/example-robot/simgui-window.json

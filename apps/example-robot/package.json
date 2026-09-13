@@ -1,0 +1,9 @@
+{
+  "name": "@ntcore-ts/example-robot",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "build": "./gradlew build",
+    "serve": "./gradlew run"
+  }
+}

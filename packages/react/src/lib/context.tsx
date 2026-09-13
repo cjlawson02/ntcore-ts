@@ -1,0 +1,107 @@
+import { createContext, type ReactNode, useContext, useEffect, useMemo } from 'react';
+import { NetworkTables, type RobotPlatform } from '@ntcore-ts/client';
+
+export const NtcoreContext = createContext<NetworkTables | null>(null);
+
+export type NtcoreProviderProps = {
+  children: ReactNode;
+} & (
+  | {
+      /** FRC team number used to resolve the robot host. */
+      team: number;
+      uri?: never;
+      /** NT server port (default `5810`). */
+      port?: number;
+      /** RoboRIO mDNS (default) or SystemCore team IP. */
+      platform?: RobotPlatform;
+    }
+  | {
+      /** Hostname or IP (e.g. `localhost`, `roborio-973-frc.local`). */
+      uri: string;
+      team?: never;
+      /** NT server port (default `5810`). */
+      port?: number;
+      platform?: never;
+    }
+);
+
+const DEFAULT_PORT = 5810;
+
+const INVALID_PORT_MESSAGE =
+  'NtcoreProvider port must be a whole number between 1 and 65535 (e.g. 5810). Check your port value or environment variable.';
+
+const MISSING_PROVIDER_MESSAGE = 'useNtcore must be used within NtcoreProvider';
+
+function isValidPort(port: number): boolean {
+  return Number.isFinite(port) && port === Math.floor(port) && port >= 1 && port <= 65535;
+}
+
+/** @internal */
+export function toError(value: unknown): Error {
+  return value instanceof Error ? value : new Error(String(value));
+}
+
+function lookupNetworkTables(
+  team: number | undefined,
+  uri: string | undefined,
+  port: number,
+  platform: RobotPlatform | undefined
+): NetworkTables {
+  if (team != null) {
+    return platform != null
+      ? NetworkTables.getInstanceByTeam(team, port, platform)
+      : NetworkTables.getInstanceByTeam(team, port);
+  }
+  if (uri != null) {
+    return NetworkTables.getInstanceByURI(uri, port);
+  }
+  throw new Error('NtcoreProvider requires either team or uri.');
+}
+
+/**
+ * Provides a NetworkTables instance to the component tree. Must specify either
+ * `team` (robot team number) or `uri` (e.g. "localhost" or "roborio-973-frc.local").
+ * Use `useNtcore()` in descendants to access the instance.
+ * Invalid port (NaN, non-integer, or outside 1–65535) throws so misconfiguration is caught early.
+ *
+ * When using `team`, optional `platform` selects RoboRIO mDNS (default) or SystemCore `10.TE.AM.2`.
+ *
+ * Changing `team`, `uri`, `port`, or `platform` switches to the corresponding NetworkTables singleton.
+ * The previous instance is released (closed when no other provider still retains it).
+ */
+export function NtcoreProvider({ children, port = DEFAULT_PORT, ...rest }: NtcoreProviderProps) {
+  const effectivePort = useMemo(() => {
+    if (!isValidPort(port)) {
+      throw new Error(INVALID_PORT_MESSAGE);
+    }
+    return port;
+  }, [port]);
+
+  const team = 'team' in rest ? rest.team : undefined;
+  const uri = 'uri' in rest ? rest.uri : undefined;
+  const platform = 'platform' in rest ? rest.platform : undefined;
+
+  const nt = useMemo(
+    () => lookupNetworkTables(team, uri, effectivePort, platform),
+    [team, uri, effectivePort, platform]
+  );
+
+  useEffect(() => {
+    nt.retain();
+    return () => nt.release();
+  }, [nt]);
+
+  return <NtcoreContext.Provider value={nt}>{children}</NtcoreContext.Provider>;
+}
+
+/**
+ * Returns the NetworkTables instance from the nearest NtcoreProvider.
+ * Throws when used outside a provider.
+ */
+export function useNtcore(): NetworkTables {
+  const nt = useContext(NtcoreContext);
+  if (nt === null) {
+    throw new Error(MISSING_PROVIDER_MESSAGE);
+  }
+  return nt;
+}

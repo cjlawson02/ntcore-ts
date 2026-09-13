@@ -1,0 +1,44 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": ["../../dist/**", "dist/**", "build/**"]
+    },
+    "typecheck": {
+      "dependsOn": ["^build"]
+    },
+    "lint": {
+      "dependsOn": ["^build"]
+    },
+    "test": {
+      "dependsOn": ["^build"],
+      "outputs": ["../../coverage/**", "coverage/**"]
+    },
+    "bench": {
+      "cache": false
+    },
+    "docs": {
+      "outputs": [".vitepress/dist/**", "api/**"]
+    },
+    "docs:dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "serve": {
+      "cache": false,
+      "persistent": true
+    },
+    "e2e": {
+      "cache": false
+    },
+    "e2e:local": {
+      "dependsOn": ["@ntcore-ts/example-robot#build"],
+      "cache": false
+    }
+  }
+}

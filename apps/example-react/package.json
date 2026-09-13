@@ -1,0 +1,20 @@
+{
+  "name": "@ntcore-ts/example-react",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "serve": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc -p tsconfig.app.json --noEmit",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@ntcore-ts/client": "*",
+    "@ntcore-ts/react": "*",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
+  }
+}

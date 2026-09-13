@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "ntcore-ts": {
+      "command": "/Volumes/Workspace/GitHub/ntcore-ts/node_modules/.bin/tsx",
+      "args": ["packages/mcp/src/cli.ts"],
+      "cwd": "/Volumes/Workspace/GitHub/ntcore-ts",
+      "env": {
+        "NT_ALLOW_WRITES": "0",
+        "NT_REQUIRE_LOCALHOST": "1"
+      }
+    }
+  }
+}

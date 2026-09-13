@@ -1,0 +1,204 @@
+import WSMock from 'vitest-websocket-mock';
+
+import { completeRttHandshake, disableSocketIdleTimeout } from '../../../tests/rtt-handshake';
+import { NetworkTablesPrefixTopic } from './prefix-topic';
+import { PubSubClient } from './pubsub';
+
+import type { CallbackFn } from './base-topic';
+import type { AnnounceMessageParams, NetworkTablesTypes, SubscribeMessageParams } from '../types/types';
+
+describe('Prefix Topic', () => {
+  let topic: NetworkTablesPrefixTopic;
+  let server: WSMock;
+  let client: PubSubClient;
+  const serverUrl = 'ws://localhost:5810/nt/1234';
+
+  beforeAll(async () => {
+    server = new WSMock(serverUrl);
+    client = PubSubClient.getInstance(serverUrl);
+
+    await server.connected;
+    await completeRttHandshake(server, client.messenger.socket);
+  });
+
+  beforeEach(() => {
+    disableSocketIdleTimeout(client.messenger.socket);
+    topic = new NetworkTablesPrefixTopic(client, 'test');
+  });
+
+  afterEach(() => {
+    topic['client']['prefixTopics'].clear();
+    topic.subscribers.clear();
+  });
+
+  describe('constructor', () => {
+    it('returns the existing topic if it already exists', () => {
+      const newTopic = new NetworkTablesPrefixTopic(topic['client'], 'test');
+      expect(newTopic).toBe(topic);
+    });
+  });
+
+  describe('updateValue', () => {
+    it('updates the value correctly', () => {
+      const params: AnnounceMessageParams = { id: 1, name: 'test', type: 'string', properties: {} };
+      topic.announce(params);
+      topic.updateValue(params, 'new value', Date.now());
+
+      expect(topic.lastChangedTime! - Date.now()).toBeLessThan(10);
+    });
+  });
+
+  describe('announce', () => {
+    it('marks the topic as announced when announce is called', () => {
+      expect(topic.announced).toBe(false);
+      topic.announce({ id: 1, name: 'test', type: 'string', properties: {} });
+      expect(topic.announced).toBe(true);
+      expect(topic.id).toEqual(1);
+    });
+  });
+
+  describe('unannounce', () => {
+    it('marks the topic as unannounced when unannounce is called', () => {
+      topic.announce({ id: 1, name: 'test', type: 'string', properties: {} });
+      expect(topic.announced).toBe(true);
+      topic.unannounce();
+      expect(topic.announced).toBe(false);
+    });
+  });
+
+  describe('subscribe', () => {
+    let callback: ReturnType<typeof vi.fn>;
+    beforeEach(() => {
+      callback = vi.fn();
+    });
+
+    it('should add the callback to the list of subscribers', () => {
+      topic.subscribe(callback);
+      expect(topic.subscribers.size).toEqual(1);
+      expect(topic.subscribers.values().next().value).toEqual({
+        callback,
+        options: {},
+      });
+    });
+
+    it('should send a subscribe message to the server', () => {
+      const send = vi.fn();
+      topic['client']['_messenger']['_socket']['sendTextFrame'] = send;
+      topic.subscribe(callback);
+      expect(send).toHaveBeenCalledWith({
+        method: 'subscribe',
+        params: {
+          topics: ['test'],
+          subuid: expect.any(Number),
+          options: {
+            prefix: true,
+          },
+        } as SubscribeMessageParams,
+      });
+    });
+
+    it('replays cached subtopic values when immediateNotify is true', () => {
+      const prefixTopic = new NetworkTablesPrefixTopic(client, '/foo/');
+      prefixTopic.updateValue({ id: 1, name: '/foo/a', type: 'string', properties: {} }, 'va', Date.now());
+      prefixTopic.updateValue({ id: 2, name: '/foo/b', type: 'string', properties: {} }, 'vb', Date.now());
+      const immediate = vi.fn();
+      prefixTopic.subscribe(immediate, { immediateNotify: true });
+      expect(immediate).toHaveBeenCalledTimes(2);
+      expect(immediate).toHaveBeenCalledWith('va', expect.objectContaining({ name: '/foo/a' }));
+      expect(immediate).toHaveBeenCalledWith('vb', expect.objectContaining({ name: '/foo/b' }));
+      expect(immediate.mock.calls.some((call: unknown[]) => (call[1] as AnnounceMessageParams).name === '/foo/')).toBe(
+        false
+      );
+    });
+
+    it('does not replay cached values when immediateNotify is omitted', () => {
+      const prefixTopic = new NetworkTablesPrefixTopic(client, '/foo/');
+      prefixTopic.updateValue({ id: 1, name: '/foo/a', type: 'string', properties: {} }, 'va', Date.now());
+      prefixTopic.updateValue({ id: 2, name: '/foo/b', type: 'string', properties: {} }, 'vb', Date.now());
+      const delayed = vi.fn();
+      prefixTopic.subscribe(delayed);
+      expect(delayed).not.toHaveBeenCalled();
+    });
+
+    it('does not invent a callback for the prefix name itself', () => {
+      const prefixTopic = new NetworkTablesPrefixTopic(client, '/foo/');
+      prefixTopic.updateValue({ id: 1, name: '/foo/a', type: 'string', properties: {} }, 'va', Date.now());
+      const immediate = vi.fn();
+      prefixTopic.subscribe(immediate, { immediateNotify: true });
+      expect(immediate).toHaveBeenCalledTimes(1);
+      expect(immediate).toHaveBeenCalledWith('va', expect.objectContaining({ name: '/foo/a' }));
+      expect(
+        immediate.mock.calls.every((call: unknown[]) => (call[1] as AnnounceMessageParams).name !== prefixTopic.name)
+      ).toBe(true);
+      expect(immediate.mock.calls.every((call: unknown[]) => (call[1] as AnnounceMessageParams).name !== '/foo/')).toBe(
+        true
+      );
+    });
+  });
+
+  describe('unsubscribe', () => {
+    it('removes the subscriber from the topic', () => {
+      const callback: CallbackFn<NetworkTablesTypes> = (_: NetworkTablesTypes | null) => vi.fn();
+      topic.subscribe(callback);
+      expect(topic.subscribers.size).toBe(1);
+
+      topic.unsubscribe(topic.subscribers.keys().next().value!, true);
+      expect(topic.subscribers.size).toBe(0);
+    });
+    it('does nothing if the callback is not a subscriber', () => {
+      expect(topic.subscribers.size).toBe(0);
+
+      topic.unsubscribe(topic.subscribers.keys().next().value!);
+      expect(topic.subscribers.size).toBe(0);
+    });
+  });
+
+  describe('unsubscribeAll', () => {
+    it('removes all subscribers from the topic', () => {
+      const callback: CallbackFn<NetworkTablesTypes> = (_: NetworkTablesTypes | null) => vi.fn();
+      topic.subscribe(callback);
+      topic.subscribe(callback);
+      expect(topic.subscribers.size).toBe(2);
+      topic.unsubscribeAll();
+      expect(topic.subscribers.size).toBe(0);
+    });
+  });
+
+  describe('resubscribeAll', () => {
+    it('resubscribes all subscribers to the topic', () => {
+      const callback: CallbackFn<NetworkTablesTypes> = (_: NetworkTablesTypes | null) => vi.fn();
+      topic.subscribe(callback);
+      topic.subscribe(callback);
+      expect(topic.subscribers.size).toBe(2);
+      topic.resubscribeAll(topic['client']);
+      expect(topic.subscribers.size).toBe(2);
+    });
+  });
+
+  describe('notifySubscribers', () => {
+    it('calls the callback with the value', () => {
+      const callback = vi.fn();
+      topic.subscribe(callback);
+      const params = { type: 'string', name: 'test', id: 1, properties: {} };
+      topic['notifySubscribers']({ type: 'string', name: 'test', id: 1, properties: {} }, 'foo');
+      expect(callback).toHaveBeenCalledWith('foo', params);
+    });
+  });
+
+  describe('setProperties', () => {
+    it('should set the properties', () => {
+      topic['client']['messenger']['_socket']['sendTextFrame'] = vi.fn();
+      topic.setProperties({ persistent: true, retained: true });
+      expect(topic['client']['messenger']['_socket']['sendTextFrame']).toHaveBeenCalledWith({
+        method: 'setproperties',
+        params: {
+          name: 'test',
+          update: {
+            persistent: true,
+            retained: true,
+          },
+        },
+      });
+    });
+  });
+});

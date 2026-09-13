@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "module": "ESNext",
+    "target": "ES2020",
+    "resolveJsonModule": true,
+    "outDir": "../../dist/out-tsc",
+    "declaration": true,
+    "declarationMap": true,
+    "types": ["node"]
+  },
+  "exclude": ["src/**/*.spec.ts", "src/**/*.test.ts", "src/**/*.bench.ts", "src/**/*.benchmark.ts", "src/__mocks__"],
+  "include": ["src/**/*.ts"]
+}

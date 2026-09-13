@@ -1,0 +1,581 @@
+import { Messenger } from '../socket/messenger';
+import {
+  NetworkTablesTypeInfos,
+  type AnnounceMessageParams,
+  type BinaryMessageData,
+  type NetworkTablesTypes,
+  type PropertiesMessageParams,
+  type UnannounceMessageParams,
+} from '../types/types';
+import { pubsubLogger } from '../util/logger';
+
+import { ProtobufSchemaManager } from './protobuf-schema-manager';
+import { StructSchemaManager } from '../struct/struct-schema-manager';
+
+import type { NetworkTablesBaseTopic } from './base-topic';
+import type { NetworkTablesPrefixTopic } from './prefix-topic';
+import type { NetworkTablesTopic } from './topic';
+
+/** The client for the PubSub protocol. */
+export class PubSubClient {
+  private readonly _messenger: Messenger;
+  private readonly topics: Map<string, NetworkTablesTopic<NetworkTablesTypes>>;
+  private readonly prefixTopics: Map<string, NetworkTablesPrefixTopic>;
+  // topic id -> topic params
+  private readonly knownTopicParams: Map<number, AnnounceMessageParams>;
+  /** Value updates that arrived before the topic announcement (topicId -> latest message). Flushed when announce arrives. */
+  private readonly pendingValueUpdates: Map<number, BinaryMessageData>;
+  private readonly _protobufSchemaManager: ProtobufSchemaManager;
+  private readonly _structSchemaManager: StructSchemaManager;
+  private static _instances = new Map<string, PubSubClient>();
+  // Unified in-flight operations tracking (schema registrations and topic publishes)
+  private readonly inFlightOperations = new Map<string, Promise<unknown>>();
+  private _isCleaningUp = false;
+  private readonly beforeUnloadHandler = () => {
+    this.cleanup();
+  };
+
+  get messenger() {
+    return this._messenger;
+  }
+
+  get protobufSchemaManager() {
+    return this._protobufSchemaManager;
+  }
+
+  get structSchemaManager() {
+    return this._structSchemaManager;
+  }
+
+  private constructor(serverUrl: string) {
+    this._messenger = Messenger.getInstance(
+      serverUrl,
+      this.onTopicUpdate,
+      this.onTopicAnnounce,
+      this.onTopicUnannounce,
+      this.onTopicProperties
+    );
+    this.topics = new Map();
+    this.prefixTopics = new Map();
+    this.knownTopicParams = new Map();
+    this.pendingValueUpdates = new Map();
+    this._protobufSchemaManager = new ProtobufSchemaManager(this);
+    this._structSchemaManager = new StructSchemaManager(this);
+
+    // When the connection drops, local server-side announcement state is no longer reliable.
+    // Clear known ids so outgoing updates can be safely queued until re-announced.
+    this._messenger.socket.addConnectionListener((isConnected) => {
+      if (isConnected) {
+        // Flush any latest-only queued outgoing values after reconnect.
+        // This is scheduled as a microtask so it happens after the socket's onopen handler
+        // has run (which re-sends publish frames). This ensures publish frames precede
+        // any value frames on the wire.
+        queueMicrotask(() => {
+          this.topics.forEach((topic) => {
+            try {
+              topic.resendLatestValue();
+            } catch (error: unknown) {
+              pubsubLogger.warn('Failed to flush queued outgoing value after reconnect', {
+                topicName: topic.name,
+                error,
+              });
+            }
+          });
+        });
+        return;
+      }
+      pubsubLogger.debug('Socket disconnected; clearing announcement state', {
+        topicCount: this.topics.size,
+        prefixTopicCount: this.prefixTopics.size,
+        knownTopicParams: this.knownTopicParams.size,
+      });
+      this.knownTopicParams.clear();
+      this.pendingValueUpdates.clear();
+      // Ensure disconnect cleanup never throws.
+      this.topics.forEach((topic) => {
+        try {
+          topic.unannounce();
+        } catch (error: unknown) {
+          pubsubLogger.warn('Failed to unannounce topic during disconnect cleanup', { topicName: topic.name, error });
+        }
+      });
+      this.prefixTopics.forEach((prefixTopic) => {
+        try {
+          prefixTopic.unannounce();
+        } catch (error: unknown) {
+          pubsubLogger.warn('Failed to unannounce prefix topic during disconnect cleanup', {
+            prefix: prefixTopic.name,
+            error,
+          });
+        }
+      });
+    });
+
+    // In the DOM, auto-cleanup without overwriting an existing beforeunload handler
+    if (typeof window !== 'undefined') {
+      window.addEventListener('beforeunload', this.beforeUnloadHandler);
+    }
+  }
+
+  /**
+   * Gets the instance of the NetworkTables client.
+   * @param serverUrl - The URL of the server to connect to. This is not used after the first call.
+   * @returns The instance of the NetworkTables client.
+   */
+  static getInstance(serverUrl: string): PubSubClient {
+    let instance = this._instances.get(serverUrl);
+    if (!instance) {
+      instance = new PubSubClient(serverUrl);
+      this._instances.set(serverUrl, instance);
+    }
+
+    return instance;
+  }
+
+  /**
+   * Reinstantiates the client by resubscribing to all previously subscribed topics
+   * and republishing for all previously published topics.
+   * @param url - The URL of the server to connect to.
+   */
+  reinstantiate(url: string) {
+    pubsubLogger.info('Client reinstantiated', {
+      newUrl: url,
+      topicCount: this.topics.size,
+      prefixTopicCount: this.prefixTopics.size,
+    });
+    this._messenger.reinstantiate(url);
+
+    // Clear announcement state so ids are reacquired from the new connection.
+    this.knownTopicParams.clear();
+    this.pendingValueUpdates.clear();
+    // Ensure reinstantiation cleanup never throws (tests may register lightweight mocks).
+    this.topics.forEach((topic) => {
+      try {
+        topic.unannounce();
+      } catch (error: unknown) {
+        pubsubLogger.warn('Failed to unannounce topic during reinstantiate', { topicName: topic.name, error });
+      }
+    });
+    this.prefixTopics.forEach((prefixTopic) => {
+      try {
+        prefixTopic.unannounce();
+      } catch (error: unknown) {
+        pubsubLogger.warn('Failed to unannounce prefix topic during reinstantiate', {
+          prefix: prefixTopic.name,
+          error,
+        });
+      }
+    });
+
+    // Re-subscribe and re-publish local state for the new connection.
+    this.topics.forEach((topic) => {
+      topic.resubscribeAll(this);
+      if (topic.publisher) {
+        // Fire-and-forget but always handle rejections to avoid unhandled promises.
+        void Promise.resolve(topic.republish(this)).catch((error: unknown) => {
+          pubsubLogger.warn('Topic republish failed during reinstantiate', { topicName: topic.name, error });
+        });
+      }
+    });
+    this.prefixTopics.forEach((prefixTopic) => {
+      prefixTopic.resubscribeAll(this);
+    });
+  }
+
+  /**
+   * Registers a topic with this PubSubClient.
+   * @param topic - The topic to register
+   */
+  registerTopic<T>(topic: NetworkTablesBaseTopic<T>) {
+    if (topic.isRegular()) {
+      if (this.topics.has(topic.name)) {
+        pubsubLogger.debug('Topic already exists check', { topicName: topic.name, exists: true });
+        throw new Error(`Topic ${topic.name} already exists. Cannot register a topic with the same name.`);
+      }
+      pubsubLogger.debug('Topic already exists check', { topicName: topic.name, exists: false });
+      this.topics.set(topic.name, topic as NetworkTablesTopic<NetworkTablesTypes>);
+      pubsubLogger.debug('Topic registered', { topicName: topic.name, type: 'regular' });
+    } else if (topic.isPrefix()) {
+      if (this.prefixTopics.has(topic.name)) {
+        pubsubLogger.debug('Prefix topic already exists check', { prefix: topic.name, exists: true });
+        throw new Error(`Prefix topic ${topic.name} already exists. Cannot register a topic with the same name.`);
+      }
+      pubsubLogger.debug('Prefix topic already exists check', { prefix: topic.name, exists: false });
+      this.prefixTopics.set(topic.name, topic);
+      pubsubLogger.debug('Prefix topic registered', { prefix: topic.name });
+    }
+  }
+
+  /**
+   * Called by the messenger when a topic is updated.
+   * @param message - The message data.
+   */
+  private onTopicUpdate = (message: BinaryMessageData) => {
+    pubsubLogger.debug('Value update received', {
+      topicId: message.topicId,
+      typeNum: message.typeNum,
+      serverTime: message.serverTime,
+    });
+    const topic = this.getTopicFromId(message.topicId);
+    if (topic) {
+      pubsubLogger.trace('Raw value received', {
+        topicId: message.topicId,
+        value: message.value,
+        typeNum: message.typeNum,
+      });
+      try {
+        const validatedData = NetworkTablesTypeInfos.validateData(topic.typeInfo, message.value);
+        pubsubLogger.debug('Value validated successfully', { topicName: topic.name, topicId: message.topicId });
+        pubsubLogger.trace('Type validation details', {
+          topicName: topic.name,
+          expectedType: topic.typeInfo[1],
+          receivedTypeNum: message.typeNum,
+          validated: true,
+        });
+        pubsubLogger.debug('Value update applied to topic', { topicName: topic.name, topicId: message.topicId });
+        topic.updateValue(validatedData, message.serverTime);
+      } catch (e) {
+        pubsubLogger.trace('Type validation failed', {
+          topicName: topic.name,
+          expectedType: topic.typeInfo[1],
+          receivedTypeNum: message.typeNum,
+          error: String(e),
+        });
+        pubsubLogger.warn('Skipping invalid value update for topic', {
+          topicName: topic.name,
+          topicId: message.topicId,
+          error: String(e),
+        });
+        // Do not throw: allow remaining messages in the same binary frame to be processed
+      }
+    }
+
+    const knownTopic = this.getKnownTopicParams(message.topicId);
+
+    if (knownTopic) {
+      // Use topic's value when we have one so protobuf topics pass decoded value to prefix subscribers
+      const valueForPrefix = topic != null ? (topic.getValue() ?? message.value) : message.value;
+      let matchedPrefixCount = 0;
+      this.prefixTopics.forEach((prefixTopic) => {
+        if (knownTopic.name.startsWith(prefixTopic.name)) {
+          matchedPrefixCount++;
+          pubsubLogger.debug('Prefix topic matched', { topicName: knownTopic.name, prefix: prefixTopic.name });
+          prefixTopic.updateValue(knownTopic, valueForPrefix, message.serverTime);
+        }
+      });
+      if (matchedPrefixCount > 0) {
+        pubsubLogger.debug('Value update applied to prefix topics', {
+          topicName: knownTopic.name,
+          count: matchedPrefixCount,
+        });
+      }
+    }
+
+    if (!topic && !knownTopic) {
+      // Buffer value update until announcement arrives (handles server sending value before announce).
+      this.pendingValueUpdates.set(message.topicId, message);
+      pubsubLogger.debug('Buffered value update for unknown topic', { topicId: message.topicId });
+    }
+  };
+
+  /**
+   * Called by the messenger when a topic is announced.
+   * @param params - The announce message parameters.
+   */
+  private onTopicAnnounce = (params: AnnounceMessageParams) => {
+    pubsubLogger.trace('Map operation: knownTopicParams.set', {
+      topicId: params.id,
+      topicName: params.name,
+      mapSizeBefore: this.knownTopicParams.size,
+    });
+    this.knownTopicParams.set(params.id, params);
+    pubsubLogger.trace('Map operation: knownTopicParams.set complete', { mapSizeAfter: this.knownTopicParams.size });
+    pubsubLogger.debug('Topic announced', { topicName: params.name, topicId: params.id, type: params.type });
+
+    // Announce to the topic
+    const topic = this.topics.get(params.name);
+    topic?.announce(params);
+
+    // Find all prefix topics that match the announced topic
+    let matchedPrefixCount = 0;
+    this.prefixTopics.forEach((prefixTopic) => {
+      if (params.name.startsWith(prefixTopic.name)) {
+        matchedPrefixCount++;
+        pubsubLogger.debug('Prefix topic matched', { topicName: params.name, prefix: prefixTopic.name });
+        prefixTopic.announce(params);
+      }
+    });
+    if (this.prefixTopics.size > 0) {
+      pubsubLogger.debug('Prefix topics checked', {
+        totalPrefixTopics: this.prefixTopics.size,
+        matchedCount: matchedPrefixCount,
+      });
+    }
+
+    // Flush any value update that arrived before this announcement
+    const pendingMessage = this.pendingValueUpdates.get(params.id);
+    if (pendingMessage) {
+      this.pendingValueUpdates.delete(params.id);
+      this._deliverValueUpdate(params, pendingMessage);
+    }
+  };
+
+  /**
+   * Delivers a value update to the regular topic (if any) and all matching prefix topics.
+   */
+  private _deliverValueUpdate(knownTopic: AnnounceMessageParams, message: BinaryMessageData): void {
+    const topic = this.topics.get(knownTopic.name);
+    if (topic) {
+      try {
+        const validatedData = NetworkTablesTypeInfos.validateData(topic.typeInfo, message.value);
+        topic.updateValue(validatedData, message.serverTime);
+        pubsubLogger.debug('Buffered value applied to topic', { topicName: knownTopic.name, topicId: message.topicId });
+      } catch (e) {
+        pubsubLogger.trace('Buffered value validation failed for topic', {
+          topicName: knownTopic.name,
+          error: String(e),
+        });
+      }
+    }
+    const valueForPrefix = (topic != null ? (topic.getValue() ?? message.value) : message.value) as NetworkTablesTypes;
+    let matchedPrefixCount = 0;
+    this.prefixTopics.forEach((prefixTopic) => {
+      if (knownTopic.name.startsWith(prefixTopic.name)) {
+        matchedPrefixCount++;
+        prefixTopic.updateValue(knownTopic, valueForPrefix, message.serverTime);
+      }
+    });
+    if (matchedPrefixCount > 0) {
+      pubsubLogger.debug('Buffered value applied to prefix topics', {
+        topicName: knownTopic.name,
+        count: matchedPrefixCount,
+      });
+    }
+  }
+
+  /**
+   * Called by the messenger when a topic is unannounced.
+   * @param params - The unannounce message parameters.
+   */
+  private onTopicUnannounce = (params: UnannounceMessageParams) => {
+    const topic = this.topics.get(params.name);
+    this.pendingValueUpdates.delete(params.id);
+    if (!topic) {
+      pubsubLogger.debug('Topic was unannounced but does not exist', { topicName: params.name });
+      // Still clean up knownTopicParams even if topic doesn't exist locally
+      pubsubLogger.trace('Map operation: knownTopicParams.delete', {
+        topicId: params.id,
+        mapSizeBefore: this.knownTopicParams.size,
+      });
+      this.knownTopicParams.delete(params.id);
+      pubsubLogger.trace('Map operation: knownTopicParams.delete complete', {
+        mapSizeAfter: this.knownTopicParams.size,
+      });
+      return;
+    }
+    pubsubLogger.debug('Topic unannounced', { topicName: params.name, topicId: topic.id });
+    topic.unannounce();
+    // Clean up knownTopicParams when topic is unannounced
+    pubsubLogger.trace('Map operation: knownTopicParams.delete', {
+      topicId: params.id,
+      mapSizeBefore: this.knownTopicParams.size,
+    });
+    this.knownTopicParams.delete(params.id);
+    pubsubLogger.trace('Map operation: knownTopicParams.delete complete', { mapSizeAfter: this.knownTopicParams.size });
+  };
+
+  /**
+   * Called by the messenger when a topic's properties are updated.
+   * @param params - The properties message parameters.
+   */
+  private onTopicProperties = (params: PropertiesMessageParams) => {
+    const topic = this.topics.get(params.name);
+    if (params.ack) {
+      if (!topic) {
+        pubsubLogger.debug('Topic properties updated but does not exist', { topicName: params.name });
+        return;
+      }
+      pubsubLogger.debug('Topic properties updated', { topicName: params.name, ack: params.ack });
+    }
+  };
+
+  /**
+   * Updates the value of a topic on the server.
+   * @param topic - The topic to update.
+   * @param value - The new value (wire format) to send.
+   */
+  updateServer<TWire extends NetworkTablesTypes, TPublic = TWire>(
+    topic: NetworkTablesTopic<TWire, TPublic>,
+    value: TWire
+  ): void {
+    this._messenger.sendToTopic(topic, value);
+  }
+
+  /**
+   * Notifies all prefix topics that match the given topic name of a local value update.
+   * Called when a regular/protobuf topic's setValue() runs so prefix subscribers (e.g. "all topics" table) see locally published values.
+   */
+  notifyPrefixTopicsForLocalUpdate(params: AnnounceMessageParams, value: NetworkTablesTypes): void {
+    let matchedPrefixCount = 0;
+    this.prefixTopics.forEach((prefixTopic) => {
+      if (params.name.startsWith(prefixTopic.name)) {
+        matchedPrefixCount++;
+        pubsubLogger.debug('Prefix topic notified (local update)', {
+          topicName: params.name,
+          prefix: prefixTopic.name,
+        });
+        prefixTopic.updateValue(params, value, 0);
+      }
+    });
+    if (matchedPrefixCount > 0) {
+      pubsubLogger.debug('Local value applied to prefix topics', { topicName: params.name, count: matchedPrefixCount });
+    }
+  }
+
+  /**
+   * Gets the topic with the given ID.
+   * @param topicId - The ID of the topic to get.
+   * @returns The topic with the given ID, or null if no topic with that ID exists.
+   */
+  private getTopicFromId<T extends NetworkTablesTypes>(topicId: number): NetworkTablesTopic<T> | null {
+    for (const topic of this.topics.values()) {
+      if (topic.id === topicId) {
+        pubsubLogger.debug('Topic found by ID', { topicId, topicName: topic.name });
+        return topic as unknown as NetworkTablesTopic<T>;
+      }
+    }
+
+    pubsubLogger.debug('Topic not found by ID', { topicId });
+    return null;
+  }
+
+  /**
+   * Gets the topic with the given name.
+   * @param topicName - The name of the topic to get.
+   * @returns The topic with the given name, or null if no topic with that name exists.
+   */
+  getTopicFromName<T extends NetworkTablesTypes>(topicName: string): NetworkTablesTopic<T> | null {
+    const topic = this.topics.get(topicName);
+    if (topic) {
+      pubsubLogger.debug('Topic found by name', { topicName });
+      return topic as unknown as NetworkTablesTopic<T>;
+    }
+    pubsubLogger.debug('Topic not found by name', { topicName });
+    return null;
+  }
+
+  /**
+   * Gets the topic with the given name.
+   * @param topicName - The name of the topic to get.
+   * @returns The topic with the given name, or null if no topic with that name exists.
+   */
+  getPrefixTopicFromName(topicName: string) {
+    return this.prefixTopics.get(topicName) ?? null;
+  }
+
+  /**
+   * Gets the known announcement parameters for a topic.
+   * @param id - The ID of the topic.
+   * @returns The known announcement parameters for the topic, or undefined if the topic is not known.
+   */
+  getKnownTopicParams(id: number) {
+    const params = this.knownTopicParams.get(id);
+    if (params) {
+      pubsubLogger.debug('Known topic params retrieved', { topicId: id, topicName: params.name });
+    } else {
+      pubsubLogger.debug('Known topic params not found', { topicId: id });
+    }
+    return params;
+  }
+
+  /**
+   * Gets or creates an in-flight operation to prevent race conditions.
+   * If an operation with the same key is already in progress, returns the existing promise.
+   * Otherwise, creates a new operation and stores it.
+   * @param key - Unique key for the operation (e.g., "schema:/.schema/proto:filename" or "publish:/topic/name")
+   * @param operation - The async operation to execute
+   * @returns A promise that resolves to the operation result
+   * @throws Error if the client is cleaning up and no existing operation is found
+   */
+  getOrCreateInFlightOperation<T>(key: string, operation: () => Promise<T>): Promise<T> {
+    const existing = this.inFlightOperations.get(key);
+    if (existing) {
+      return existing as Promise<T>;
+    }
+
+    // Prevent new operations from starting during cleanup
+    if (this._isCleaningUp) {
+      return Promise.reject(new Error('Cannot start new operation: client is cleaning up'));
+    }
+
+    const promise = (async () => {
+      try {
+        return await operation();
+      } finally {
+        // Always cleanup, regardless of success or failure
+        // This allows retries if the operation failed
+        // Safe to delete even if map was cleared during cleanup (delete is a no-op on non-existent key)
+        this.inFlightOperations.delete(key);
+      }
+    })();
+
+    // Store the promise IMMEDIATELY so concurrent calls wait for the same operation
+    // This must happen synchronously before any await in the promise
+    this.inFlightOperations.set(key, promise);
+
+    return promise;
+  }
+
+  /**
+   * Cleans up the client by unsubscribing from all topics and stopping publishing for all topics.
+   * Prevents new in-flight operations from starting, but allows existing ones to complete naturally.
+   * The socket is closed immediately, which will cause any in-flight operations to fail.
+   */
+  cleanup() {
+    pubsubLogger.debug('Topic cleanup initiated', {
+      topicCount: this.topics.size,
+      prefixTopicCount: this.prefixTopics.size,
+      inFlightOperations: this.inFlightOperations.size,
+    });
+
+    // Prevent new operations from starting
+    this._isCleaningUp = true;
+
+    this.topics.forEach((topic) => {
+      topic.unsubscribeAll();
+      if (topic.pubuid != null) {
+        try {
+          topic.unpublish();
+        } catch {
+          /* not publisher / already unpublished */
+        }
+      }
+    });
+    this.prefixTopics.forEach((prefixTopic) => {
+      prefixTopic.unsubscribeAll();
+    });
+    this._messenger.socket.close();
+
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('beforeunload', this.beforeUnloadHandler);
+    }
+
+    // Clear the in-flight operations map
+    // Existing operations will complete/fail naturally when the socket closes
+    // Their finally blocks will try to delete from the map, but that's safe (no-op if already cleared)
+    this.inFlightOperations.clear();
+  }
+
+  /**
+   * Removes this client, its messenger, and its socket from their singleton maps.
+   * Call after {@link cleanup} so a later getInstance creates a fresh client.
+   */
+  releaseInstance(): void {
+    for (const [key, instance] of PubSubClient._instances) {
+      if (instance === this) {
+        PubSubClient._instances.delete(key);
+      }
+    }
+    this._messenger.releaseInstance();
+  }
+}
