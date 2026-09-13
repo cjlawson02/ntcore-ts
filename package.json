@@ -69,5 +69,5 @@
     "ws": "^8.21.3",
     "zod": "^4.6.2"
   },
-  "packageManager": "npm@11.19.1"
+  "packageManager": "npm@12.0.2"
 }
