@@ -199,9 +199,7 @@ export class ProtobufSchemaManager {
         try {
           return await protobuf.load(protoFilePath);
         } catch (error) {
-          throw new Error(
-            `Failed to load proto file "${protoFilePath}": ${error instanceof Error ? error.message : String(error)}`
-          );
+          throw new Error(`Failed to load proto file "${protoFilePath}"`, { cause: error });
         }
       },
       protoFilePath
@@ -223,7 +221,7 @@ export class ProtobufSchemaManager {
       const messageName = this.getMessageNameFromProto(root);
       return { messageName, root };
     } catch (error) {
-      throw new Error(`Failed to parse proto source: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error('Failed to parse proto source', { cause: error });
     }
   }
   async registerSchemaFromSource(
@@ -322,9 +320,7 @@ export class ProtobufSchemaManager {
       const fileDescriptorProto = descriptor.file[0];
       encoded = this.fileDescriptorProtoType.encode(fileDescriptorProto).finish();
     } catch (error) {
-      throw new Error(
-        `Failed to extract/encode FileDescriptorProto from "${sourceLabel}": ${error instanceof Error ? error.message : String(error)}`
-      );
+      throw new Error(`Failed to extract/encode FileDescriptorProto from "${sourceLabel}"`, { cause: error });
     }
 
     const detectedMessageName = messageName || this.getMessageNameFromProto(root);

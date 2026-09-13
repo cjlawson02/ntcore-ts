@@ -8,14 +8,14 @@ import {
 import { toError, useNtcore } from './context';
 import { trackPublish, unpublishWhenDone, claimPublishOwner, type TrackedPublish } from './unpublish-when-done';
 import { useLatestRef } from './use-latest-ref';
-import type { ZodSchema } from 'zod';
+import type { ZodType } from 'zod';
 
 /**
  * Options for useStructTopic (defaultValue, validator, typeName, schema, subscribeOptions, publish).
  */
 export type UseStructTopicOptions<T extends object | object[] = object> = {
   defaultValue?: T;
-  validator?: ZodSchema<T>;
+  validator?: ZodType<T>;
   typeName?: string;
   schema?: string;
   subscribeOptions?: SubscribeOptions;
@@ -83,7 +83,7 @@ export function useStructTopic<T extends object | object[]>(
   const resolved: UseStructTopicOptions<T> = isStructTypeDescriptor(typeOrOptions)
     ? {
         typeName: typeOrOptions.typeName,
-        validator: typeOrOptions.schema as ZodSchema<T>,
+        validator: typeOrOptions.schema as ZodType<T>,
         ...(maybeOptions as UseStructTopicTypeOptions<T> | undefined),
       }
     : (typeOrOptions ?? {});

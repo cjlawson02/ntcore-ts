@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import type { NetworkTablesTypes } from '@ntcore-ts/client';
-import type { SubscribeOptions } from '@ntcore-ts/client';
+import type { NetworkTablesTypes, SubscribeOptions } from '@ntcore-ts/client';
 import { useNtcore } from './context';
 import { useLatestRef } from './use-latest-ref';
 

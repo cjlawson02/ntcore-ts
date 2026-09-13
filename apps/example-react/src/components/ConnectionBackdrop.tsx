@@ -1,5 +1,5 @@
 import './ConnectionBackdrop.scss';
-import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useState, type SubmitEvent } from 'react';
 import {
   parseRobotAddress,
   useConnectionStatus,
@@ -68,7 +68,7 @@ export function ConnectionBackdrop({ open, onClose }: ConnectionBackdropProps) {
     return () => document.removeEventListener('keydown', handler);
   }, [open, handleClose]);
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = (e: SubmitEvent) => {
     e.preventDefault();
     const effectivePort = mode === 'address' ? port : 5810;
     if (mode === 'team') {

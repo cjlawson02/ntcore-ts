@@ -24,7 +24,7 @@ export class NetworkTablesStructTopic<T extends object | object[]> extends Netwo
   private decodedValue: T | null = null;
   private _typeName: string;
   private _isArray: boolean;
-  private _validator?: z.ZodSchema<T>;
+  private _validator?: z.ZodType<T>;
   private _descriptor: StructDescriptor | null = null;
   /** When schema option build fails (e.g. nested not yet available), store and retry in ensureDescriptor. */
   private _pendingSchema: string | null = null;
@@ -36,7 +36,7 @@ export class NetworkTablesStructTopic<T extends object | object[]> extends Netwo
       typeName?: string;
       schema?: string;
       defaultValue?: T;
-      validator?: z.ZodSchema<T>;
+      validator?: z.ZodType<T>;
     }
   ) {
     const typeName = options?.typeName ?? '';
@@ -69,7 +69,7 @@ export class NetworkTablesStructTopic<T extends object | object[]> extends Netwo
    * A later `validator` replaces any previous validator because the topic is a singleton.
    * @param options - The options to apply.
    */
-  applyOptions(options?: { typeName?: string; schema?: string; defaultValue?: T; validator?: z.ZodSchema<T> }): void {
+  applyOptions(options?: { typeName?: string; schema?: string; defaultValue?: T; validator?: z.ZodType<T> }): void {
     if (!options) return;
     if (options.schema !== undefined) {
       const schema = options.schema;

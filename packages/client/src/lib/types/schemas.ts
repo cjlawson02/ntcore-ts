@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 /** Schema for an integer. */
-export const finiteNumSchema = z.number().finite();
+export const finiteNumSchema = z.number();
 export const integerSchema = finiteNumSchema.int();
 
 /** Schema for type numbers in the NT protocol. */

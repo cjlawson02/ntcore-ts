@@ -9,7 +9,7 @@ import type { z } from 'zod';
 
 /** Options for {@link NetworkTablesJsonTopic} and `getJsonTopic`. */
 export interface JsonTopicOptions<T extends object> {
-  validator?: z.ZodSchema<T>;
+  validator?: z.ZodType<T>;
 }
 
 /**
@@ -17,7 +17,7 @@ export interface JsonTopicOptions<T extends object> {
  */
 export class NetworkTablesJsonTopic<T extends object> extends NetworkTablesTopic<string, T> {
   private decodedValue!: T | null;
-  private _validator?: z.ZodSchema<T>;
+  private _validator?: z.ZodType<T>;
 
   /**
    * Creates a new JSON topic.

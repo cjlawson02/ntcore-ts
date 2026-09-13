@@ -25,7 +25,7 @@ export interface StructTopicOptions<T extends object | object[] = object> {
   typeName?: StructTypeName;
   schema?: string;
   defaultValue?: T;
-  validator?: z.ZodSchema<T>;
+  validator?: z.ZodType<T>;
 }
 
 /** Properties for creating the NetworkTables class. */
@@ -458,7 +458,7 @@ export class NetworkTables {
     const options: StructTopicOptions<T> = isStructTypeDescriptor(typeOrOptions)
       ? {
           typeName: typeOrOptions.typeName,
-          validator: typeOrOptions.schema as z.ZodSchema<T>,
+          validator: typeOrOptions.schema as z.ZodType<T>,
           defaultValue: maybeOptions?.defaultValue,
           schema: maybeOptions?.schema,
         }

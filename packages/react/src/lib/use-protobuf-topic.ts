@@ -3,7 +3,7 @@ import type { SubscribeOptions, TopicProperties } from '@ntcore-ts/client';
 import { toError, useNtcore } from './context';
 import { trackPublish, unpublishWhenDone, claimPublishOwner, type TrackedPublish } from './unpublish-when-done';
 import { useLatestRef } from './use-latest-ref';
-import type { ZodSchema } from 'zod';
+import type { ZodType } from 'zod';
 
 /**
  * Options for useProtobufTopic (defaultValue, validator, protoFilePath, protoSource, messageType, subscribeOptions, publish).
@@ -11,7 +11,7 @@ import type { ZodSchema } from 'zod';
  */
 export type UseProtobufTopicOptions<T extends object> = {
   defaultValue?: T;
-  validator?: ZodSchema<T>;
+  validator?: ZodType<T>;
   protoFilePath?: string;
   protoSource?: string;
   messageType?: import('protobufjs').Type;

@@ -17,7 +17,7 @@ import type { z } from 'zod';
 /** Options for creating a protobuf topic. */
 export interface ProtobufTopicOptions<T extends object> {
   defaultValue?: T;
-  validator?: z.ZodSchema<T>;
+  validator?: z.ZodType<T>;
   /** Path to a .proto file. Node.js only (uses the filesystem). */
   protoFilePath?: string;
   /** Contents of a .proto file. Parsed in-memory; safe in the browser. */
@@ -31,7 +31,7 @@ export class NetworkTablesProtobufTopic<T extends object> extends NetworkTablesT
   private decodedValue: T | null = null;
   private _protobufMessageName?: string;
   private _protobufMessageType: Type | null = null;
-  private _validator?: z.ZodSchema<T>;
+  private _validator?: z.ZodType<T>;
   private _protoFilePath?: string;
   private _protoSource?: string;
   private _providedMessageType?: Type;
@@ -318,7 +318,7 @@ export class NetworkTablesProtobufTopic<T extends object> extends NetworkTablesT
         this._protobufMessageType = messageType;
       }
     } catch (error) {
-      throw new Error(`Failed to load proto schema: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error('Failed to load proto schema', { cause: error });
     }
   }
 
@@ -334,7 +334,7 @@ export class NetworkTablesProtobufTopic<T extends object> extends NetworkTablesT
       this._protobufMessageType = root.lookupType(messageName);
       await this.client.protobufSchemaManager.registerSchemaFromSource(protoSource);
     } catch (error) {
-      throw new Error(`Failed to parse proto source: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error('Failed to parse proto source', { cause: error });
     }
   }
 
@@ -390,9 +390,7 @@ export class NetworkTablesProtobufTopic<T extends object> extends NetworkTablesT
             this._schemaRegistered = true;
           }
         } catch (error) {
-          throw new Error(
-            `Failed to register protobuf schema before publishing: ${error instanceof Error ? error.message : String(error)}`
-          );
+          throw new Error('Failed to register protobuf schema before publishing', { cause: error });
         }
       }
 

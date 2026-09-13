@@ -131,7 +131,7 @@ export class Messenger {
   /**
    * Called when the socket closes.
    */
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
+
   onSocketClose = () => {};
 
   private parseAndFilterMessage<T extends Message>(

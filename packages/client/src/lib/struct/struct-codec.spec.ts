@@ -1,7 +1,6 @@
 import { pack, unpack, type StructPlainObject } from './struct-codec';
 import { getBuiltInDescriptor } from './built-in-schemas';
-import { buildStructDescriptor } from './struct-parser';
-import { parseSchema } from './struct-parser';
+import { buildStructDescriptor, parseSchema } from './struct-parser';
 
 describe('struct-codec', () => {
   describe('round-trip', () => {
