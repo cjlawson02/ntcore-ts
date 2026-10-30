@@ -4,8 +4,9 @@
   "platformAutomerge": true,
   "packageRules": [
     {
-      "matchUpdateTypes": ["minor", "patch"],
+      "matchUpdateTypes": ["minor", "patch", "digest"],
       "automerge": true
     }
-  ]
+  ],
+  "automergeStrategy": "squash"
 }
