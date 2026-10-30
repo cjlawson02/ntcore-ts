@@ -48,7 +48,7 @@ export class NtMcpService {
       },
       safety: [
         'NT writes cannot enable/disable the robot (FMS/DS). Do not let an agent command a live robot.',
-        'Default allowlist: /SmartDashboard/**, /Tuning/**, /MyTable/** (override with NT_WRITE_ALLOWLIST).',
+        'Default allowlist: /SmartDashboard/**, /Tuning/**, /MyTable/**, /Telemetry/**, /Tunables/** (override with NT_WRITE_ALLOWLIST).',
         'Set NT_REQUIRE_LOCALHOST=1 to refuse writes to non-local hosts.',
         'One sample is not root cause — prefer nt_subscribe summaries for live evidence.',
       ],

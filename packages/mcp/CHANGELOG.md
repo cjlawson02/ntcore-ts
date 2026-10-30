@@ -24,7 +24,7 @@ Writes are **off by default**.
 
 - Enable for the session: `nt_set_write_mode({ enabled: true, confirm: true })`.
 - Or start the process with `NT_ALLOW_WRITES=1`.
-- Path allowlist (default): `/SmartDashboard/**`, `/Tuning/**`, `/MyTable/**` via `NT_WRITE_ALLOWLIST`.
+- Path allowlist (default): `/SmartDashboard/**`, `/Tuning/**`, `/MyTable/**`, `/Telemetry/**`, `/Tunables/**` via `NT_WRITE_ALLOWLIST`. The last two are the WPILib 2027 topic trees.
 - Optional: `NT_REQUIRE_LOCALHOST=1` refuses writes to non-local hosts.
 
 ### Runtime

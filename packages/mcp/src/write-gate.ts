@@ -1,7 +1,7 @@
 import { logInfo, logWarn } from './log.js';
 import { matchGlob } from './response.js';
 
-const DEFAULT_ALLOWLIST = ['/SmartDashboard/**', '/Tuning/**', '/MyTable/**'];
+const DEFAULT_ALLOWLIST = ['/SmartDashboard/**', '/Tuning/**', '/MyTable/**', '/Telemetry/**', '/Tunables/**'];
 
 export interface WriteGateStatus {
   enabled: boolean;
