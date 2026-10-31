@@ -35,7 +35,7 @@ function protobufDescriptorJson(): Plugin {
   };
 }
 
-const externalNames = ['@msgpack/msgpack', 'isomorphic-ws', 'protobufjs', 'tslog', 'zod'];
+const externalNames = ['@msgpack/msgpack', 'isomorphic-ws', 'protobufjs', 'tslog', 'wpilib-struct', 'zod'];
 
 const config: RollupOptions = {
   input: 'src/index.ts',
