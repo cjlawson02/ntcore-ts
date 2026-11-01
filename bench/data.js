@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1793558393219,
+  "lastUpdate": 1793558738808,
   "repoUrl": "https://github.com/cjlawson02/ntcore-ts",
   "entries": {
     "ntcore-ts": [
@@ -234,6 +234,84 @@ window.BENCHMARK_DATA = {
             "value": 961.1783993648194,
             "unit": "ops/s",
             "extra": "rme ±0.45%\nmean 1.0471 ms\np99 1.5865 ms"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "7269141+cjlawson02@users.noreply.github.com",
+            "name": "Chris Lawson",
+            "username": "cjlawson02"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "e09955fa3a70f4b98b344bf892281ef6fb5087af",
+          "message": "perf(client): speed up binary frame handling on the socket hot path (#661)\n\nSkip Zod validation for inbound msgpack tuples in favor of a cheap shape check, drop per-frame debug logging, and refresh the idle watchdog via a timestamp instead of clear+setTimeout on every message.\n\nCo-authored-by: Cursor <cursoragent@cursor.com>",
+          "timestamp": "2026-11-01T10:44:59-08:00",
+          "tree_id": "be5fe5fa59aa0aa40aa7a84dd21c13032fd4ce3f",
+          "url": "https://github.com/cjlawson02/ntcore-ts/commit/e09955fa3a70f4b98b344bf892281ef6fb5087af"
+        },
+        "date": 1793558738034,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "client · 100 binary frames through onMessage",
+            "value": 13808.298107808236,
+            "unit": "ops/s",
+            "extra": "rme ±0.11%\nmean 0.0733 ms\np99 0.1003 ms"
+          },
+          {
+            "name": "client · 1 message per frame",
+            "value": 1950851.2363168667,
+            "unit": "ops/s",
+            "extra": "rme ±0.02%\nmean 0.0005 ms\np99 0.0013 ms"
+          },
+          {
+            "name": "client · 10 messages per frame",
+            "value": 954986.8652416882,
+            "unit": "ops/s",
+            "extra": "rme ±0.03%\nmean 0.0012 ms\np99 0.0022 ms"
+          },
+          {
+            "name": "client · 100 messages per frame",
+            "value": 166425.55850797653,
+            "unit": "ops/s",
+            "extra": "rme ±0.04%\nmean 0.0064 ms\np99 0.0101 ms"
+          },
+          {
+            "name": "react · useTopic: 1 value update",
+            "value": 73745.26801692181,
+            "unit": "ops/s",
+            "extra": "rme ±0.07%\nmean 0.0139 ms\np99 0.0226 ms"
+          },
+          {
+            "name": "react · usePrefixTopic: 1 value update",
+            "value": 73124.37838342553,
+            "unit": "ops/s",
+            "extra": "rme ±0.07%\nmean 0.0140 ms\np99 0.0230 ms"
+          },
+          {
+            "name": "react · useTopic: 10 unbatched value updates",
+            "value": 7514.381499384128,
+            "unit": "ops/s",
+            "extra": "rme ±0.24%\nmean 0.1373 ms\np99 0.2636 ms"
+          },
+          {
+            "name": "react · 50 hooks, 1 batched update each",
+            "value": 3048.303661799727,
+            "unit": "ops/s",
+            "extra": "rme ±0.33%\nmean 0.3322 ms\np99 0.4701 ms"
+          },
+          {
+            "name": "react · 50 hooks, 1 unbatched update each",
+            "value": 698.5321342663052,
+            "unit": "ops/s",
+            "extra": "rme ±0.59%\nmean 1.4430 ms\np99 2.1971 ms"
           }
         ]
       }
