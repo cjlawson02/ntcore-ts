@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1793560113868,
+  "lastUpdate": 1793560852654,
   "repoUrl": "https://github.com/cjlawson02/ntcore-ts",
   "entries": {
     "ntcore-ts": [
@@ -468,6 +468,84 @@ window.BENCHMARK_DATA = {
             "value": 434.64319250391725,
             "unit": "ops/s",
             "extra": "rme ±0.94%\nmean 2.3269 ms\np99 3.1607 ms"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "7269141+cjlawson02@users.noreply.github.com",
+            "name": "Chris Lawson",
+            "username": "cjlawson02"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "6bea1df1279aef1955d09042a783774b44bd8986",
+          "message": "perf(react): slim useTopic update path for multi-hook dashboards (#662)\n\nMove publish ready/error off the hot-path useState, collapse per-render\nrefs into one store, and update useLatestRef during render so many-hook\nbatched updates avoid extra effect work. Refresh performance charts and\nallow intentional render-time ref sync under oxlint react/refs.\n\nCo-authored-by: Cursor <cursoragent@cursor.com>",
+          "timestamp": "2026-11-01T11:20:18-08:00",
+          "tree_id": "e47d369239d36ade0733b00cbd04b361a91d33e3",
+          "url": "https://github.com/cjlawson02/ntcore-ts/commit/6bea1df1279aef1955d09042a783774b44bd8986"
+        },
+        "date": 1793560852085,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "client · 100 binary frames through onMessage",
+            "value": 17602.24322815694,
+            "unit": "ops/s",
+            "extra": "rme ±0.09%\nmean 0.0573 ms\np99 0.0764 ms"
+          },
+          {
+            "name": "client · 1 message per frame",
+            "value": 2384810.864159296,
+            "unit": "ops/s",
+            "extra": "rme ±0.01%\nmean 0.0004 ms\np99 0.0009 ms"
+          },
+          {
+            "name": "client · 10 messages per frame",
+            "value": 1279101.4438937258,
+            "unit": "ops/s",
+            "extra": "rme ±0.02%\nmean 0.0009 ms\np99 0.0018 ms"
+          },
+          {
+            "name": "client · 100 messages per frame",
+            "value": 246782.500754337,
+            "unit": "ops/s",
+            "extra": "rme ±0.03%\nmean 0.0041 ms\np99 0.0052 ms"
+          },
+          {
+            "name": "react · useTopic: 1 value update",
+            "value": 111410.88745583335,
+            "unit": "ops/s",
+            "extra": "rme ±0.05%\nmean 0.0092 ms\np99 0.0153 ms"
+          },
+          {
+            "name": "react · usePrefixTopic: 1 value update",
+            "value": 105850.50224553834,
+            "unit": "ops/s",
+            "extra": "rme ±0.07%\nmean 0.0099 ms\np99 0.0186 ms"
+          },
+          {
+            "name": "react · useTopic: 10 unbatched value updates",
+            "value": 10866.705961750597,
+            "unit": "ops/s",
+            "extra": "rme ±0.26%\nmean 0.0967 ms\np99 0.2432 ms"
+          },
+          {
+            "name": "react · 50 hooks, 1 batched update each",
+            "value": 4918.6496998207285,
+            "unit": "ops/s",
+            "extra": "rme ±0.33%\nmean 0.2080 ms\np99 0.3660 ms"
+          },
+          {
+            "name": "react · 50 hooks, 1 unbatched update each",
+            "value": 1020.5902019644045,
+            "unit": "ops/s",
+            "extra": "rme ±0.70%\nmean 1.0014 ms\np99 1.9544 ms"
           }
         ]
       }
