@@ -192,8 +192,7 @@ describe('Messenger', () => {
     it('should return an empty array for non-string websocket payloads', () => {
       const result = (
         messenger as unknown as {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          parseAndFilterMessage: (event: any, method: string) => unknown[];
+          parseAndFilterMessage: (event: { data: unknown }, method: string) => unknown[];
         }
       )['parseAndFilterMessage']({ data: new ArrayBuffer(0) }, 'announce');
 
@@ -215,8 +214,7 @@ describe('Messenger', () => {
       expect(() => {
         (
           messenger as unknown as {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            parseAndFilterMessage: (event: any, method: string) => unknown[];
+            parseAndFilterMessage: (event: { data: unknown }, method: string) => unknown[];
           }
         )['parseAndFilterMessage']({ data: JSON.stringify(singleMessage) }, 'announce');
       }).toThrow();

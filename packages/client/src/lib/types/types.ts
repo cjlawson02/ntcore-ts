@@ -62,6 +62,20 @@ export type NetworkTablesTypes = z.infer<typeof msgPackValueSchema>;
 export type BinaryMessage = z.infer<typeof msgPackSchema>;
 export type TopicProperties = z.infer<typeof topicPropertiesSchema>;
 
+function describeRejectedValue(value: unknown): string {
+  if (
+    typeof value === 'string' ||
+    typeof value === 'number' ||
+    typeof value === 'boolean' ||
+    typeof value === 'bigint' ||
+    value == null
+  ) {
+    return String(value);
+  }
+  const serialized = JSON.stringify(value);
+  return serialized ?? Object.prototype.toString.call(value);
+}
+
 export class NetworkTablesTypeInfos {
   static readonly kBoolean: NetworkTablesTypeInfo = [0, 'boolean'];
   static readonly kDouble: NetworkTablesTypeInfo = [1, 'double'];
@@ -111,7 +125,7 @@ export class NetworkTablesTypeInfos {
         if (typeof parsedJson === 'object' && parsedJson !== null) {
           return parsedString;
         } else {
-          throw new Error(`Bad JSON value: ${value}`);
+          throw new Error(`Bad JSON value: ${describeRejectedValue(value)}`);
         }
       }
       // 5
@@ -119,31 +133,31 @@ export class NetworkTablesTypeInfos {
         if (value instanceof Uint8Array) {
           return value;
         } else {
-          throw new Error(`Invalid Uint8Array value: ${value}`);
+          throw new Error(`Invalid Uint8Array value: ${describeRejectedValue(value)}`);
         }
       case NetworkTablesTypeInfos.kRPC:
         if (value instanceof Uint8Array) {
           return value;
         } else {
-          throw new Error(`Invalid RPC value: ${value}`);
+          throw new Error(`Invalid RPC value: ${describeRejectedValue(value)}`);
         }
       case NetworkTablesTypeInfos.kMsgpack:
         if (value instanceof Uint8Array) {
           return value;
         } else {
-          throw new Error(`Invalid Msgpack value: ${value}`);
+          throw new Error(`Invalid Msgpack value: ${describeRejectedValue(value)}`);
         }
       case NetworkTablesTypeInfos.kProtobuf:
         if (value instanceof Uint8Array) {
           return value;
         } else {
-          throw new Error(`Invalid Protobuf value: ${value}`);
+          throw new Error(`Invalid Protobuf value: ${describeRejectedValue(value)}`);
         }
       case NetworkTablesTypeInfos.kStructSchema:
         if (value instanceof Uint8Array) {
           return value;
         } else {
-          throw new Error(`Invalid struct schema value: ${value}`);
+          throw new Error(`Invalid struct schema value: ${describeRejectedValue(value)}`);
         }
       // 16
       case NetworkTablesTypeInfos.kBooleanArray:
@@ -170,7 +184,7 @@ export class NetworkTablesTypeInfos {
           if (value instanceof Uint8Array) return value;
           throw new Error(`Invalid struct value: expected Uint8Array`);
         }
-        throw new Error(`Invalid type info: ${expectedTypeInfo}`);
+        throw new Error(`Invalid type info: ${describeRejectedValue(expectedTypeInfo)}`);
       }
     }
   }

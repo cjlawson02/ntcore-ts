@@ -9,6 +9,15 @@ import { Util } from '../util/util';
 
 import { NetworkTablesSocket } from './socket';
 
+/** Copy the live socket and override fields without spreading the WebSocket instance. */
+function stubSocket(target: NetworkTablesSocket, overrides: object): void {
+  target['_websocket'] = Object.assign(
+    Object.create(WebSocket.prototype),
+    target['_websocket'],
+    overrides
+  ) as WebSocket;
+}
+
 import type {
   AnnounceMessage,
   AnnounceMessageParams,
@@ -90,10 +99,7 @@ describe('NetworkTablesSocket', () => {
     });
 
     it('should return false if the WebSocket is closed', () => {
-      socket['_websocket'] = {
-        ...socket.websocket,
-        readyState: WebSocket.CLOSED,
-      } as WebSocket;
+      stubSocket(socket, { readyState: WebSocket.CLOSED });
 
       expect(socket.isConnected()).toBe(false);
     });
@@ -108,12 +114,7 @@ describe('NetworkTablesSocket', () => {
   describe('sendTextFrame', () => {
     it('should queue messages when not connected', () => {
       const send = vi.fn();
-      socket['_websocket'] = {
-        ...socket.websocket,
-        readyState: WebSocket.CONNECTING,
-        send,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } as any;
+      stubSocket(socket, { readyState: WebSocket.CONNECTING, send });
 
       const msg: UnsubscribeMessage = { method: 'unsubscribe', params: { subuid: 1 } };
       socket.sendTextFrame(msg);
@@ -126,12 +127,7 @@ describe('NetworkTablesSocket', () => {
 
     it('should queue control frames until the first RTT completes', () => {
       const send = vi.fn();
-      socket['_websocket'] = {
-        ...socket.websocket,
-        readyState: WebSocket.OPEN,
-        send,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } as any;
+      stubSocket(socket, { readyState: WebSocket.OPEN, send });
       socket['clockSynced'] = false;
 
       const msg: UnsubscribeMessage = { method: 'unsubscribe', params: { subuid: 1 } };
@@ -144,10 +140,7 @@ describe('NetworkTablesSocket', () => {
 
   describe('waitForConnection', () => {
     it('should resolve via listener once the socket becomes connected', async () => {
-      socket['_websocket'] = {
-        ...socket.websocket,
-        readyState: WebSocket.CONNECTING,
-      } as WebSocket;
+      stubSocket(socket, { readyState: WebSocket.CONNECTING });
 
       const p = socket.waitForConnection();
 
@@ -155,10 +148,7 @@ describe('NetworkTablesSocket', () => {
       expect(socket['connectionListeners'].size).toBeGreaterThan(0);
 
       // Flip to OPEN and notify listeners.
-      socket['_websocket'] = {
-        ...socket.websocket,
-        readyState: WebSocket.OPEN,
-      } as WebSocket;
+      stubSocket(socket, { readyState: WebSocket.OPEN });
       socket['updateConnectionListeners']();
 
       await expect(p).resolves.toBeUndefined();
@@ -176,18 +166,12 @@ describe('NetworkTablesSocket', () => {
       await Promise.resolve();
       expect(listener).toHaveBeenCalledWith(true);
 
-      socket['_websocket'] = {
-        ...socket.websocket,
-        readyState: WebSocket.CLOSED,
-      } as WebSocket;
+      stubSocket(socket, { readyState: WebSocket.CLOSED });
       socket['updateConnectionListeners']();
       expect(listener).toHaveBeenLastCalledWith(false);
 
       dispose();
-      socket['_websocket'] = {
-        ...socket.websocket,
-        readyState: WebSocket.OPEN,
-      } as WebSocket;
+      stubSocket(socket, { readyState: WebSocket.OPEN });
       socket['updateConnectionListeners']();
 
       // No new calls after dispose.
@@ -235,21 +219,14 @@ describe('NetworkTablesSocket', () => {
     it('should not send any messages if the WebSocket is not open', async () => {
       // Mock the WebSocket's `send` method
       const send = vi.fn();
-      socket['_websocket'] = {
-        ...socket['_websocket'],
-        send,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } as any;
+      stubSocket(socket, { send });
 
       // Queue some messages
       const messages = ['Hello, world!', 'Foo', 'Bar'];
       socket['messageQueue'].push(...messages);
 
       // Set the WebSocket's `readyState` property to be `WebSocket.CONNECTING`
-      socket['_websocket'] = {
-        ...socket.websocket,
-        readyState: WebSocket.CONNECTING,
-      } as WebSocket;
+      stubSocket(socket, { readyState: WebSocket.CONNECTING });
 
       // Send the queued messages
       socket['sendQueuedMessages']();
@@ -262,12 +239,7 @@ describe('NetworkTablesSocket', () => {
   describe('sendValueToTopic', () => {
     it('should return -1 and not send when not connected', () => {
       const send = vi.fn();
-      socket['_websocket'] = {
-        ...socket.websocket,
-        readyState: WebSocket.CONNECTING,
-        send,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } as any;
+      stubSocket(socket, { readyState: WebSocket.CONNECTING, send });
 
       const result = socket.sendValueToTopic(123, 456, NetworkTablesTypeInfos.kInteger);
       expect(result).toBe(-1);
@@ -277,12 +249,7 @@ describe('NetworkTablesSocket', () => {
 
     it('should send and return a timestamp when connected', () => {
       const send = vi.fn();
-      socket['_websocket'] = {
-        ...socket.websocket,
-        readyState: WebSocket.OPEN,
-        send,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } as any;
+      stubSocket(socket, { readyState: WebSocket.OPEN, send });
       socket['clockSynced'] = true;
       socket['bestRtt'] = 0;
       socket['offset'] = 0;
@@ -333,12 +300,7 @@ describe('NetworkTablesSocket', () => {
     it('should send a heartbeat message through the WebSocket', () => {
       // Mock the WebSocket's `send` method
       const send = vi.fn();
-      socket['_websocket'] = {
-        ...socket.websocket,
-        readyState: WebSocket.OPEN,
-        send,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } as any;
+      stubSocket(socket, { readyState: WebSocket.OPEN, send });
       vi.spyOn(Util, 'getMicros').mockReturnValue(12345.6);
       socket['heartbeat']();
 
@@ -355,7 +317,6 @@ describe('NetworkTablesSocket', () => {
       const setIntervalSpy = vi.spyOn(globalThis, 'setInterval').mockReturnValue({} as ReturnType<typeof setInterval>);
       // Force protocol to NT 4.0 so `init()`'s open handler enables heartbeat.
       try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (socket.websocket as any).protocol = 'networktables.first.wpi.edu';
       } catch {
         Object.defineProperty(socket.websocket, 'protocol', {
@@ -375,7 +336,6 @@ describe('NetworkTablesSocket', () => {
       const setIntervalSpy = vi.spyOn(globalThis, 'setInterval').mockReturnValue({} as ReturnType<typeof setInterval>);
       const sendSpy = vi.spyOn(socket.websocket, 'send');
       try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (socket.websocket as any).protocol = 'v4.1.networktables.first.wpi.edu';
       } catch {
         Object.defineProperty(socket.websocket, 'protocol', {
@@ -430,12 +390,7 @@ describe('NetworkTablesSocket', () => {
     it('should skip strong value publishes until the clock is synced', () => {
       socket['clockSynced'] = false;
       const send = vi.fn();
-      socket['_websocket'] = {
-        ...socket.websocket,
-        readyState: WebSocket.OPEN,
-        send,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } as any;
+      stubSocket(socket, { readyState: WebSocket.OPEN, send });
 
       const result = socket.sendValueToTopic(123, 456, NetworkTablesTypeInfos.kInteger);
       expect(result).toBe(-1);
@@ -487,7 +442,6 @@ describe('NetworkTablesSocket', () => {
       const setTimeoutSpy = vi
         .spyOn(globalThis, 'setTimeout')
         // Don't actually schedule anything; we only want to observe that it would.
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .mockImplementation(((_fn: any, _ms?: any) => 1 as any) as any);
 
       socket.websocket.onclose?.({
@@ -507,7 +461,6 @@ describe('NetworkTablesSocket', () => {
       socket.stopAutoConnect();
       const setTimeoutSpy = vi
         .spyOn(globalThis, 'setTimeout')
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .mockImplementation(((_fn: any, _ms?: any) => 1 as any) as any);
 
       socket.websocket.onclose?.({
@@ -526,7 +479,6 @@ describe('NetworkTablesSocket', () => {
       const onClose = socket.websocket.onclose;
       const setTimeoutSpy = vi
         .spyOn(globalThis, 'setTimeout')
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .mockImplementation(((_fn: any, _ms?: any) => 1 as any) as any);
 
       socket.close();
@@ -548,7 +500,6 @@ describe('NetworkTablesSocket', () => {
       socket.reinstantiate('ws://localhost:5810/nt/reinstantiate');
       const setTimeoutSpy = vi
         .spyOn(globalThis, 'setTimeout')
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .mockImplementation(((_fn: any, _ms?: any) => 1 as any) as any);
 
       previousOnClose?.({
@@ -576,10 +527,7 @@ describe('NetworkTablesSocket', () => {
       expect(listeners[1]).toHaveBeenCalledWith(true);
 
       // Simulate disconnect.
-      socket['_websocket'] = {
-        ...socket.websocket,
-        readyState: WebSocket.CLOSED,
-      } as WebSocket;
+      stubSocket(socket, { readyState: WebSocket.CLOSED });
       socket['updateConnectionListeners']();
 
       expect(listeners[0]).toHaveBeenCalledWith(false);

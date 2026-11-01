@@ -6,6 +6,13 @@
     {
       "matchUpdateTypes": ["minor", "patch", "digest"],
       "automerge": true
+    },
+    {
+      "description": "oxlint and oxfmt add and remove rules between versions. An unknown rule name is a fatal config error, so these stay pinned and are not automerged.",
+      "matchPackageNames": ["oxlint", "oxfmt"],
+      "groupName": "oxc lint and format",
+      "rangeStrategy": "pin",
+      "automerge": false
     }
   ],
   "automergeStrategy": "squash"

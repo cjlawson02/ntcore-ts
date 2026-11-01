@@ -40,7 +40,7 @@ function formatJsonLeaf(val: unknown): string {
   if (typeof val === 'boolean') return val ? 'true' : 'false';
   if (typeof val === 'number') return String(val);
   if (typeof val === 'string') return JSON.stringify(val);
-  return String(val);
+  return JSON.stringify(val) ?? '';
 }
 
 interface JsonExpanderProps {
