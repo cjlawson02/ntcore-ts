@@ -8,18 +8,18 @@ Typical FRC traffic is tens to low thousands of topic updates per second. The nu
 
 Measured with `npm run bench` on an Apple M1 Pro, Node 24. React benches run in jsdom (`flushSync` commit), not a full browser layout/paint.
 
-| Workload                               |                          Rate |    Mean |
-| -------------------------------------- | ----------------------------: | ------: |
-| Client, 1 message / frame              |                       2.63M/s |  0.4 µs |
-| Client, 10 messages / frame            |  1.01M frames/s (10.1M msg/s) |  1.1 µs |
-| Client, 100 messages / frame           |   143k frames/s (14.3M msg/s) |  7.1 µs |
-| Client, 100 frames through `onMessage` | 16.1k batches/s (1.61M msg/s) |   63 µs |
-| React `useTopic` (one update)          |                         87k/s |   12 µs |
-| React `usePrefixTopic` (one update)    |                         88k/s |   12 µs |
-| React 50-hook dashboard (batched)      |                        3.8k/s |  278 µs |
-| React 50-hook dashboard (unbatched)    |                         746/s | 1.37 ms |
+| Workload                               |                          Rate |   Mean |
+| -------------------------------------- | ----------------------------: | -----: |
+| Client, 1 message / frame              |                       2.63M/s | 0.4 µs |
+| Client, 10 messages / frame            |  1.01M frames/s (10.1M msg/s) | 1.1 µs |
+| Client, 100 messages / frame           |   143k frames/s (14.3M msg/s) | 7.1 µs |
+| Client, 100 frames through `onMessage` | 16.1k batches/s (1.61M msg/s) |  63 µs |
+| React `useTopic` (one update)          |                         88k/s |  11 µs |
+| React `usePrefixTopic` (one update)    |                         85k/s |  12 µs |
+| React 50-hook dashboard (batched)      |                        4.5k/s | 240 µs |
+| React 50-hook dashboard (unbatched)    |                         800/s | 1.3 ms |
 
-Decode of a double is about 0.4 µs. Applying it through `useTopic` is about 12 µs. Batching 50 hook updates into one React commit stays under 300 µs mean.
+Decode of a double is about 0.4 µs. Applying it through `useTopic` is about 11 µs. Batching 50 hook updates into one React commit stays under 250 µs mean.
 
 ## What is measured
 

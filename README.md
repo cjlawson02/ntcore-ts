@@ -25,7 +25,7 @@ https://github.com/user-attachments/assets/eddf89b3-25c1-441b-aea5-357e49edd20e
 
 ## Performance
 
-The client can decode about **2.6 million** NT frames per second. React `useTopic` applies about **87 thousand** updates per second. A 50-widget dashboard, all updating in one React batch, still does about **3,800** full refreshes per second.
+The client can decode about **2.6 million** NT frames per second. React `useTopic` applies about **88 thousand** updates per second. A 50-widget dashboard, all updating in one React batch, still does about **4,500** full refreshes per second.
 
 Typical FRC traffic is tens to low thousands of updates per second. The network and NT server saturate first.
 
@@ -42,15 +42,15 @@ xychart-beta
     title "React hook updates per second (jsdom, Apple M1 Pro)"
     x-axis ["useTopic", "usePrefixTopic", "50 hooks batched"]
     y-axis "updates/s" 0 --> 90000
-    bar [87400, 88100, 3800]
+    bar [88000, 85000, 4500]
 ```
 
 | Workload                          |                        Rate |   Mean |
 | --------------------------------- | --------------------------: | -----: |
 | Client, 1 message / frame         |                     2.63M/s | 0.4 µs |
 | Client, 100 messages / frame      | 143k frames/s (14.3M msg/s) | 7.1 µs |
-| React `useTopic` (one update)     |                       87k/s |  12 µs |
-| React 50-hook dashboard (batched) |                      3.8k/s | 278 µs |
+| React `useTopic` (one update)     |                       88k/s |  11 µs |
+| React 50-hook dashboard (batched) |                      4.5k/s | 240 µs |
 
 Numbers are from `npm run bench` on an Apple M1 Pro, Node 24. CI re-runs the same suite on every PR and fails if throughput drops to half of `main`. Details: [performance guide](https://ntcore.chrislawson.dev/guide/performance).
 
