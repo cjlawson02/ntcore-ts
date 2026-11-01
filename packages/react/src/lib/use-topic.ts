@@ -1,6 +1,8 @@
-import { useCallback, useEffect, useState } from 'react';
+/* oxlint-disable react/refs -- store mirror updated during render; value hot path stays one useState */
+import { useEffect, useReducer, useRef, useState } from 'react';
 import {
   NetworkTablesTypeInfos,
+  type NetworkTables,
   type NetworkTablesTypeInfo,
   type NetworkTablesTypes,
   type SubscribeOptions,
@@ -8,7 +10,6 @@ import {
 } from '@ntcore-ts/client';
 import { toError, useNtcore } from './context';
 import { trackPublish, unpublishWhenDone, claimPublishOwner, type TrackedPublish } from './unpublish-when-done';
-import { useLatestRef } from './use-latest-ref';
 
 /**
  * Options for useTopic. Use `publish: true` to become the publisher with default
@@ -47,6 +48,20 @@ export type UseTopicResult<T = NetworkTablesTypes> = {
   error: Error | null;
 };
 
+type TopicMeta = { isReadyToWrite: boolean; error: Error | null };
+
+type TopicStore<T> = {
+  nt: NetworkTables;
+  name: string;
+  typeNum: number;
+  typeStr: string;
+  typeInfo: NetworkTablesTypeInfo;
+  options: UseTopicOptions<T> | undefined;
+  meta: TopicMeta;
+  bumpMeta: () => void;
+  setValue: (value: T) => void;
+};
+
 /**
  * Subscribes to a NetworkTables topic and returns the latest value. Unsubscribes on unmount.
  *
@@ -57,6 +72,9 @@ export type UseTopicResult<T = NetworkTablesTypes> = {
  *
  * Subscription is re-created only when `nt`, `name`, or `typeInfo` change. Optional
  * options are read at subscribe time.
+ *
+ * Value updates only touch one `useState`. Publish ready/error live on a per-hook store and
+ * bump a rarely-used reducer, so read-only dashboards stay close to a single-state hot path.
  *
  * @param name - Topic name (e.g. "/MyTable/Gyro").
  * @param typeInfo - Type info from NetworkTablesTypeInfos (e.g. NetworkTablesTypeInfos.kDouble).
@@ -84,34 +102,62 @@ export function useTopic<T>(
   const typeStr = typeInfo[1];
 
   const [state, setState] = useState<T | null>(options?.defaultValue ?? null);
-  const [isReadyToWrite, setIsReadyToWrite] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
-  const [identity, setIdentity] = useState({ nt, name, typeNum, typeStr });
-  const optionsRef = useLatestRef(options);
+  const [, bumpMeta] = useReducer((n: number) => n + 1, 0);
 
-  if (nt !== identity.nt || name !== identity.name || typeNum !== identity.typeNum || typeStr !== identity.typeStr) {
-    setIdentity({ nt, name, typeNum, typeStr });
+  const storeRef = useRef<TopicStore<T> | null>(null);
+  if (storeRef.current === null) {
+    const store: TopicStore<T> = {
+      nt,
+      name,
+      typeNum,
+      typeStr,
+      typeInfo,
+      options,
+      meta: { isReadyToWrite: false, error: null },
+      bumpMeta,
+      setValue: (value: T) => {
+        const s = storeRef.current!;
+        if (s.options?.publish === undefined || !s.meta.isReadyToWrite) return;
+        try {
+          const topic =
+            s.typeInfo[1] === 'json'
+              ? s.nt.getJsonTopic(s.name, s.options?.defaultValue as object | undefined)
+              : s.nt.createTopic(s.name, s.typeInfo, s.options?.defaultValue as NetworkTablesTypes | undefined);
+          topic.setValue(value as never);
+        } catch (e) {
+          s.meta = { ...s.meta, error: toError(e) };
+          s.bumpMeta();
+        }
+      },
+    };
+    storeRef.current = store;
+  }
+
+  const store = storeRef.current;
+  store.bumpMeta = bumpMeta;
+  store.options = options;
+  store.typeInfo = typeInfo;
+
+  if (nt !== store.nt || name !== store.name || typeNum !== store.typeNum || typeStr !== store.typeStr) {
+    store.nt = nt;
+    store.name = name;
+    store.typeNum = typeNum;
+    store.typeStr = typeStr;
+    store.meta = { isReadyToWrite: false, error: null };
     setState(options?.defaultValue ?? null);
-    setIsReadyToWrite(false);
-    setError(null);
   }
 
   useEffect(() => {
     let cancelled = false;
     const topic =
       typeInfo[1] === 'json'
-        ? nt.getJsonTopic(name, optionsRef.current?.defaultValue as object | undefined)
-        : nt.createTopic(name, typeInfo, optionsRef.current?.defaultValue as NetworkTablesTypes | undefined);
+        ? nt.getJsonTopic(name, store.options?.defaultValue as object | undefined)
+        : nt.createTopic(name, typeInfo, store.options?.defaultValue as NetworkTablesTypes | undefined);
     const subuid = topic.subscribe((v) => {
-      if (cancelled) return;
-      try {
-        setState(v as T);
-      } catch (e) {
-        setError(toError(e));
-      }
-    }, optionsRef.current?.subscribeOptions ?? undefined);
-    const publish = optionsRef.current?.publish;
-    const unpublishOnUnmount = optionsRef.current?.unpublishOnUnmount ?? publish !== undefined;
+      if (!cancelled) setState(v as T);
+    }, store.options?.subscribeOptions ?? undefined);
+    const publish = store.options?.publish;
+    const unpublishOnUnmount = store.options?.unpublishOnUnmount ?? publish !== undefined;
     const shouldPublish = publish !== undefined;
     let trackedPublish: TrackedPublish | undefined;
     let ownerToken: number | undefined;
@@ -122,10 +168,14 @@ export function useTopic<T>(
         topic
           .publish(properties)
           .then(() => {
-            if (!cancelled) setIsReadyToWrite(true);
+            if (cancelled) return;
+            store.meta = { isReadyToWrite: true, error: null };
+            store.bumpMeta();
           })
           .catch((e) => {
-            if (!cancelled) setError(toError(e));
+            if (cancelled) return;
+            store.meta = { isReadyToWrite: false, error: toError(e) };
+            store.bumpMeta();
           })
       );
     }
@@ -133,29 +183,23 @@ export function useTopic<T>(
       cancelled = true;
       topic.unsubscribe(subuid);
       if (shouldPublish && unpublishOnUnmount && ownerToken !== undefined) {
-        unpublishWhenDone(topic, trackedPublish, setError, ownerToken);
+        unpublishWhenDone(
+          topic,
+          trackedPublish,
+          (err) => {
+            store.meta = { ...store.meta, error: err };
+            store.bumpMeta();
+          },
+          ownerToken
+        );
       }
     };
-  }, [nt, name, typeNum, typeStr, optionsRef, typeInfo]);
+  }, [nt, name, typeNum, typeStr, typeInfo, store]);
 
-  const setValueCb = useCallback(
-    (value: T) => {
-      const publish = optionsRef.current?.publish;
-      if (publish !== undefined && !isReadyToWrite) return;
-      try {
-        const topic =
-          typeInfo[1] === 'json'
-            ? nt.getJsonTopic(name, optionsRef.current?.defaultValue as object | undefined)
-            : nt.createTopic(name, typeInfo, optionsRef.current?.defaultValue as NetworkTablesTypes | undefined);
-        topic.setValue(value as never);
-      } catch (e) {
-        setError(toError(e));
-      }
-    },
-    [nt, name, typeInfo, isReadyToWrite, optionsRef]
-  );
-
-  const setValue = publishOpt !== undefined ? setValueCb : undefined;
-
-  return { value: state, setValue, isReadyToWrite, error };
+  return {
+    value: state,
+    setValue: publishOpt !== undefined ? store.setValue : undefined,
+    isReadyToWrite: store.meta.isReadyToWrite,
+    error: store.meta.error,
+  };
 }
