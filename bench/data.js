@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1793557192897,
+  "lastUpdate": 1793558393219,
   "repoUrl": "https://github.com/cjlawson02/ntcore-ts",
   "entries": {
     "ntcore-ts": [
@@ -156,6 +156,84 @@ window.BENCHMARK_DATA = {
             "value": 412.2126838984619,
             "unit": "ops/s",
             "extra": "rme ±0.91%\nmean 2.4499 ms\np99 3.4259 ms"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "7269141+cjlawson02@users.noreply.github.com",
+            "name": "Chris Lawson",
+            "username": "cjlawson02"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "488e178cc330fa65175790a44f53e6538c6e0535",
+          "message": "chore: replace ESLint and Prettier with oxlint and oxfmt (#660)\n\nTypecheck with TypeScript 7 while Rollup and TypeDoc keep the TypeScript 6 compiler API.\n\nCo-authored-by: Cursor <cursoragent@cursor.com>",
+          "timestamp": "2026-11-01T10:39:18-08:00",
+          "tree_id": "2c97c456ab8e0b6da5f40c527871931725ffb960",
+          "url": "https://github.com/cjlawson02/ntcore-ts/commit/488e178cc330fa65175790a44f53e6538c6e0535"
+        },
+        "date": 1793558392670,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "client · 100 binary frames through onMessage",
+            "value": 6080.6771254277655,
+            "unit": "ops/s",
+            "extra": "rme ±0.28%\nmean 0.1681 ms\np99 0.3953 ms"
+          },
+          {
+            "name": "client · 1 message per frame",
+            "value": 976849.3230705846,
+            "unit": "ops/s",
+            "extra": "rme ±0.02%\nmean 0.0011 ms\np99 0.0016 ms"
+          },
+          {
+            "name": "client · 10 messages per frame",
+            "value": 216900.70360233422,
+            "unit": "ops/s",
+            "extra": "rme ±0.04%\nmean 0.0048 ms\np99 0.0079 ms"
+          },
+          {
+            "name": "client · 100 messages per frame",
+            "value": 25492.33532037001,
+            "unit": "ops/s",
+            "extra": "rme ±0.15%\nmean 0.0409 ms\np99 0.0724 ms"
+          },
+          {
+            "name": "react · usePrefixTopic: 1 value update",
+            "value": 99836.65951470965,
+            "unit": "ops/s",
+            "extra": "rme ±0.07%\nmean 0.0104 ms\np99 0.0196 ms"
+          },
+          {
+            "name": "react · useTopic: 1 value update",
+            "value": 98814.47008134454,
+            "unit": "ops/s",
+            "extra": "rme ±0.08%\nmean 0.0106 ms\np99 0.0178 ms"
+          },
+          {
+            "name": "react · useTopic: 10 unbatched value updates",
+            "value": 10317.68271728493,
+            "unit": "ops/s",
+            "extra": "rme ±0.17%\nmean 0.0993 ms\np99 0.1392 ms"
+          },
+          {
+            "name": "react · 50 hooks, 1 batched update each",
+            "value": 4131.834913261307,
+            "unit": "ops/s",
+            "extra": "rme ±0.56%\nmean 0.2596 ms\np99 0.7626 ms"
+          },
+          {
+            "name": "react · 50 hooks, 1 unbatched update each",
+            "value": 961.1783993648194,
+            "unit": "ops/s",
+            "extra": "rme ±0.45%\nmean 1.0471 ms\np99 1.5865 ms"
           }
         ]
       }
