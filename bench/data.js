@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1793558738808,
+  "lastUpdate": 1793558852737,
   "repoUrl": "https://github.com/cjlawson02/ntcore-ts",
   "entries": {
     "ntcore-ts": [
@@ -312,6 +312,84 @@ window.BENCHMARK_DATA = {
             "value": 698.5321342663052,
             "unit": "ops/s",
             "extra": "rme ±0.59%\nmean 1.4430 ms\np99 2.1971 ms"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "git@chrislawson.dev",
+            "name": "Chris Lawson",
+            "username": "cjlawson02"
+          },
+          "committer": {
+            "email": "git@chrislawson.dev",
+            "name": "Chris Lawson",
+            "username": "cjlawson02"
+          },
+          "distinct": true,
+          "id": "915277ac49a7c764ea8ca13c43c75c63f16e6808",
+          "message": "docs: refresh client performance charts after socket hot-path speedup\n\nUpdate root, client, and performance-guide numbers from post-#661 benches (~2.6M frames/s).\n\nCo-authored-by: Cursor <cursoragent@cursor.com>",
+          "timestamp": "2026-11-01T10:46:51-08:00",
+          "tree_id": "22dc5f62bf90d0e01caff36d27fc929776e85efd",
+          "url": "https://github.com/cjlawson02/ntcore-ts/commit/915277ac49a7c764ea8ca13c43c75c63f16e6808"
+        },
+        "date": 1793558852124,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "client · 100 binary frames through onMessage",
+            "value": 13315.329617835077,
+            "unit": "ops/s",
+            "extra": "rme ±0.11%\nmean 0.0759 ms\np99 0.0998 ms"
+          },
+          {
+            "name": "client · 1 message per frame",
+            "value": 1941222.381408041,
+            "unit": "ops/s",
+            "extra": "rme ±0.01%\nmean 0.0005 ms\np99 0.0012 ms"
+          },
+          {
+            "name": "client · 10 messages per frame",
+            "value": 979568.2506218752,
+            "unit": "ops/s",
+            "extra": "rme ±0.01%\nmean 0.0011 ms\np99 0.0016 ms"
+          },
+          {
+            "name": "client · 100 messages per frame",
+            "value": 167412.5556873146,
+            "unit": "ops/s",
+            "extra": "rme ±0.04%\nmean 0.0061 ms\np99 0.0104 ms"
+          },
+          {
+            "name": "react · useTopic: 1 value update",
+            "value": 71423.74585343944,
+            "unit": "ops/s",
+            "extra": "rme ±0.09%\nmean 0.0144 ms\np99 0.0259 ms"
+          },
+          {
+            "name": "react · usePrefixTopic: 1 value update",
+            "value": 71319.39578987981,
+            "unit": "ops/s",
+            "extra": "rme ±0.09%\nmean 0.0145 ms\np99 0.0255 ms"
+          },
+          {
+            "name": "react · useTopic: 10 unbatched value updates",
+            "value": 7221.012033165362,
+            "unit": "ops/s",
+            "extra": "rme ±0.29%\nmean 0.1438 ms\np99 0.2728 ms"
+          },
+          {
+            "name": "react · 50 hooks, 1 batched update each",
+            "value": 3046.5738397689565,
+            "unit": "ops/s",
+            "extra": "rme ±0.34%\nmean 0.3327 ms\np99 0.5298 ms"
+          },
+          {
+            "name": "react · 50 hooks, 1 unbatched update each",
+            "value": 684.939639495606,
+            "unit": "ops/s",
+            "extra": "rme ±0.50%\nmean 1.4677 ms\np99 2.0478 ms"
           }
         ]
       }
