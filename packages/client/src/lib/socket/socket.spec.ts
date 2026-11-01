@@ -418,9 +418,12 @@ describe('NetworkTablesSocket', () => {
       const closeSpy = vi.spyOn(socket.websocket, 'close');
       socket['resetIdleTimer']();
       vi.advanceTimersByTime(NetworkTablesSocket['IDLE_TIMEOUT_MS'] - 1);
-      socket['resetIdleTimer']();
+      // Production inbound path updates lastActivity without clear+setTimeout.
+      socket['markActivity']();
       vi.advanceTimersByTime(NetworkTablesSocket['IDLE_TIMEOUT_MS'] - 1);
       expect(closeSpy).not.toHaveBeenCalled();
+      vi.advanceTimersByTime(2);
+      expect(closeSpy).toHaveBeenCalled();
     });
   });
 

@@ -1,13 +1,14 @@
 import { encode, decodeMulti } from '@msgpack/msgpack';
 import WebSocket from 'isomorphic-ws';
 
-import { messageSchema, msgPackSchema } from '../types/schemas';
+import { messageSchema } from '../types/schemas';
 import { NetworkTablesTypeInfos } from '../types/types';
 import { socketLogger } from '../util/logger';
 import { Util } from '../util/util';
 
 import type {
   AnnounceMessageParams,
+  BinaryMessage,
   Message,
   PropertiesMessageParams,
   UnannounceMessageParams,
@@ -16,6 +17,32 @@ import type {
   BinaryMessageData,
 } from '../types/types';
 import type { CloseEvent as WS_CloseEvent, MessageEvent as WS_MessageEvent, ErrorEvent as WS_ErrorEvent } from 'ws';
+
+/** NT binary type numbers — keep in sync with `typeNumSchema`. */
+const VALID_TYPE_NUMS: ReadonlySet<number> = new Set([0, 1, 2, 3, 4, 5, 16, 17, 18, 19, 20]);
+
+/**
+ * Fast shape check for inbound msgpack tuples. Avoids Zod on the hot path;
+ * topic-level type validation still happens in PubSubClient.
+ */
+function isBinaryMessage(decoded: unknown): decoded is BinaryMessage {
+  if (!Array.isArray(decoded) || decoded.length !== 4) {
+    return false;
+  }
+  const topicId = decoded[0];
+  const serverTime = decoded[1];
+  const typeNum = decoded[2];
+  return (
+    typeof topicId === 'number' &&
+    Number.isInteger(topicId) &&
+    (topicId === -1 || topicId >= 0) &&
+    typeof serverTime === 'number' &&
+    Number.isInteger(serverTime) &&
+    serverTime >= 0 &&
+    typeof typeNum === 'number' &&
+    VALID_TYPE_NUMS.has(typeNum)
+  );
+}
 
 /** Socket for NetworkTables 4.1 */
 export class NetworkTablesSocket {
@@ -35,6 +62,8 @@ export class NetworkTablesSocket {
   private clockSynced = false;
   private heartbeatInterval: ReturnType<typeof setInterval> | undefined;
   private idleTimer: ReturnType<typeof setTimeout> | undefined;
+  /** Wall-clock ms of last inbound frame; used so idle timeout can avoid clear+setTimeout per message. */
+  private lastActivityMs = 0;
   private reconnectTimer: ReturnType<typeof setTimeout> | undefined;
   private connectionAttemptCount = 0;
   private lastConnectionLogTime = 0;
@@ -408,15 +437,11 @@ export class NetworkTablesSocket {
    * @param event - The message event.
    */
   private onMessage(event: MessageEvent | WS_MessageEvent) {
-    this.resetIdleTimer();
+    this.markActivity();
 
     if (event.data instanceof ArrayBuffer || event.data instanceof Uint8Array) {
-      socketLogger.debug('Binary frame received', { size: event.data.byteLength });
       this.handleBinaryFrame(event.data);
     } else {
-      socketLogger.debug('Text frame received', {
-        size: typeof event.data === 'string' ? event.data.length : 'unknown',
-      });
       this.handleTextFrame(event.data);
     }
   }
@@ -451,42 +476,28 @@ export class NetworkTablesSocket {
    * @param frame - The frame.
    */
   private handleBinaryFrame(frame: ArrayBuffer | Uint8Array) {
-    let messageCount = 0;
-    let heartbeatCount = 0;
-    let topicUpdateCount = 0;
     let skippedCount = 0;
     for (const decoded of decodeMulti(frame)) {
-      try {
-        const message = msgPackSchema.parse(decoded);
-        socketLogger.trace('Message schema validated', { topicId: message[0], typeNum: message[2] });
-        const messageData: BinaryMessageData = {
-          topicId: message[0],
-          serverTime: message[1],
-          typeNum: message[2],
-          value: message[3],
-        };
-        messageCount++;
-        if (messageData.topicId === -1) {
-          heartbeatCount++;
-          this.handleRTT(messageData.serverTime, messageData.value);
-        } else {
-          topicUpdateCount++;
-          this.onTopicUpdate(messageData);
-        }
-      } catch (e) {
+      if (!isBinaryMessage(decoded)) {
         skippedCount++;
         socketLogger.warn('Skipping malformed or invalid message in binary frame', {
-          error: String(e),
+          error: 'Invalid binary message shape',
           skippedInFrame: skippedCount,
         });
+        continue;
+      }
+      const messageData: BinaryMessageData = {
+        topicId: decoded[0],
+        serverTime: decoded[1],
+        typeNum: decoded[2],
+        value: decoded[3],
+      };
+      if (messageData.topicId === -1) {
+        this.handleRTT(messageData.serverTime, messageData.value);
+      } else {
+        this.onTopicUpdate(messageData);
       }
     }
-    socketLogger.debug('Binary frame processed', {
-      messageCount,
-      heartbeatCount,
-      topicUpdateCount,
-      skippedCount,
-    });
   }
 
   /**
@@ -572,13 +583,9 @@ export class NetworkTablesSocket {
     const time = pubuid === -1 ? 0 : Math.ceil(this.getServerTime());
     const message = Util.createBinaryMessage(pubuid, time, value, typeInfo);
 
-    const cleanMsg = msgPackSchema.parse(message);
-    const framePubuid = cleanMsg[0];
-    const typeNum = cleanMsg[2];
-
     // Send the message to the server (binary frames are never queued).
-    socketLogger.debug('Binary frame sent', { pubuid: framePubuid, typeNum });
-    this._websocket.send(encode(cleanMsg));
+    socketLogger.debug('Binary frame sent', { pubuid: message[0], typeNum: message[2] });
+    this._websocket.send(encode(message));
 
     return time;
   }
@@ -593,8 +600,7 @@ export class NetworkTablesSocket {
     const clientTime = Math.round(Util.getMicros());
     socketLogger.debug('Heartbeat sent', { time: clientTime });
     const message = Util.createBinaryMessage(-1, 0, clientTime, NetworkTablesTypeInfos.kInteger);
-    const cleanMsg = msgPackSchema.parse(message);
-    this._websocket.send(encode(cleanMsg));
+    this._websocket.send(encode(message));
   }
 
   /**
@@ -670,19 +676,44 @@ export class NetworkTablesSocket {
     this.updateConnectionListeners();
   }
 
-  private resetIdleTimer() {
-    this.clearIdleTimer();
+  /**
+   * Record inbound activity and arm the idle timer if needed.
+   * Updates a timestamp instead of clear+setTimeout on every frame (hot path).
+   */
+  private markActivity() {
+    this.lastActivityMs = Date.now();
     if (this.tearingDown || !this.isSocketOpen()) {
       return;
     }
+    if (this.idleTimer == null) {
+      this.armIdleTimer(NetworkTablesSocket.IDLE_TIMEOUT_MS);
+    }
+  }
+
+  private armIdleTimer(delayMs: number) {
     this.idleTimer = setTimeout(() => {
       this.idleTimer = undefined;
       if (this.tearingDown || !this.isSocketOpen()) {
         return;
       }
+      const remaining = NetworkTablesSocket.IDLE_TIMEOUT_MS - (Date.now() - this.lastActivityMs);
+      if (remaining > 0) {
+        this.armIdleTimer(remaining);
+        return;
+      }
       socketLogger.warn('No data for idle timeout, closing', { timeoutMs: NetworkTablesSocket.IDLE_TIMEOUT_MS });
       this._websocket.close();
-    }, NetworkTablesSocket.IDLE_TIMEOUT_MS);
+    }, delayMs);
+  }
+
+  /** Arm idle watchdog after connect/heartbeat so silence before the first frame still times out. */
+  private resetIdleTimer() {
+    this.lastActivityMs = Date.now();
+    this.clearIdleTimer();
+    if (this.tearingDown || !this.isSocketOpen()) {
+      return;
+    }
+    this.armIdleTimer(NetworkTablesSocket.IDLE_TIMEOUT_MS);
   }
 
   private clearIdleTimer() {
