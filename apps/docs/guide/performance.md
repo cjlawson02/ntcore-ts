@@ -61,11 +61,12 @@ Writes `tmp/github-bench.json` in the [customBiggerIsBetter](https://github.com/
 
 Every push to `main` / `beta` and every pull request runs [`.github/workflows/bench.yml`](https://github.com/cjlawson02/ntcore-ts/blob/main/.github/workflows/bench.yml).
 
-- Throughput is compared to the last stored `main` result (higher ops/s is better).
-- A drop to about 2/3 of `main` comments an alert on the PR (`alert-threshold: 150%`).
-- A drop to half of `main` fails the job (`fail-threshold: 200%`).
+- Throughput is compared to the last stored `beta` or `main` result (higher ops/s is better).
+- Each same-repo pull request gets a comment with the measured ops/s. Later runs update that comment.
+- A drop to about 2/3 of that baseline comments an alert on the PR (`alert-threshold: 150%`).
+- A drop to half of that baseline fails the job (`fail-threshold: 200%`).
 - History is stored on the `gh-bench` branch (separate from the docs site).
 
 GitHub-hosted runners are noisier than a laptop, so the fail bar is deliberately wide. Treat CI as a “did we tank it?” check, not a micro-benchmark of 5% changes. Absolute ops/s on `ubuntu-latest` will not match the M1 Pro table above.
 
-The first successful push to `main` after this workflow lands creates the history branch. Later PRs compare against that.
+Successful pushes to `beta` or `main` write the history used as the baseline. Later PRs compare against that.

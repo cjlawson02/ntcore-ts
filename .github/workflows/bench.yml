@@ -9,6 +9,7 @@ on:
 
 permissions:
   contents: write
+  issues: write
   pull-requests: write
 
 jobs:
@@ -34,7 +35,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           gh-pages-branch: gh-bench
           benchmark-data-dir-path: bench
-          auto-push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+          auto-push: ${{ github.event_name == 'push' && (github.ref == 'refs/heads/beta' || github.ref == 'refs/heads/main') }}
           comment-always: ${{ github.event.pull_request.head.repo.full_name == github.repository || github.event_name == 'push' }}
           summary-always: true
           comment-on-alert: ${{ github.event.pull_request.head.repo.full_name == github.repository || github.event_name == 'push' }}
@@ -42,3 +43,55 @@ jobs:
           alert-threshold: '150%'
           fail-threshold: '200%'
           max-items-in-chart: 40
+
+      - name: Comment benchmark results on pull request
+        if: always() && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && hashFiles('tmp/github-bench.json') != ''
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const fs = require('fs');
+            const benches = JSON.parse(fs.readFileSync('tmp/github-bench.json', 'utf8'));
+            const marker = '<!-- ntcore-bench-results -->';
+            const rows = benches.map((bench) => {
+              const value = Number(bench.value).toLocaleString('en-US', { maximumFractionDigits: 0 });
+              const detail = String(bench.extra ?? '').replaceAll('\n', ', ');
+              return `| \`${bench.name}\` | ${value} | ${detail} |`;
+            });
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const body = [
+              marker,
+              '## Benchmarks',
+              '',
+              'Throughput from this pull request. Higher ops/s is better.',
+              '',
+              '| Benchmark | ops/s | Detail |',
+              '| --- | ---: | --- |',
+              ...rows,
+              '',
+              `Run: ${runUrl}`,
+            ].join('\n');
+
+            const { owner, repo } = context.repo;
+            const issue_number = context.issue.number;
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner,
+              repo,
+              issue_number,
+              per_page: 100,
+            });
+            const existing = comments.find((comment) => comment.body?.includes(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner,
+                repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number,
+                body,
+              });
+            }
