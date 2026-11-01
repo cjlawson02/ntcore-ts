@@ -8,7 +8,7 @@
     "typecheck": "tsc -p tsconfig.app.json --noEmit",
     "start": "tsx src/main.ts",
     "serve": "tsx src/main.ts",
-    "lint": "eslint .",
+    "lint": "oxlint .",
     "e2e": "vitest run --config vitest.e2e.config.mts",
     "e2e:local": "bash ../../tools/scripts/e2e-with-robot.sh"
   },

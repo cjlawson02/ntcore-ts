@@ -15,7 +15,8 @@ This is an npm workspaces + Turborepo monorepo.
 - Unit tests: `npx turbo run test --filter=@ntcore-ts/client` (or `@ntcore-ts/react`). For a single file: `npx vitest run --config packages/client/vitest.config.mts <name>`
 - Benchmarks: `npm run bench` (client + react). CI JSON: `npm run bench:ci`.
 - Multiple package tests: `npm test` (client + react)
-- Format check: `npm run format:check`
+- Lint: `npm run lint` (Oxlint). Fix: `npm run lint:fix`.
+- Format check: `npm run format:check` (Oxfmt). Write: `npm run format`.
 - Docs site: `npm run docs` (build) or `npm run docs:dev` (VitePress + TypeDoc). Guides live in `apps/docs/`; API is generated into `apps/docs/api/`.
 
 ## Spec-driven E2E tests

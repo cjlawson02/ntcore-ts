@@ -49,6 +49,7 @@ describe('logger utilities', () => {
 
   it('proxy loggers should bind methods and reflect updated settings', () => {
     // Method binding: extracting the method should still work.
+    // oxlint-disable-next-line typescript/unbound-method -- the test checks that the proxy binds `this`
     const info = socketLogger.info;
     expect(() => info('hello')).not.toThrow();
 

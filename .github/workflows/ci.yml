@@ -34,7 +34,7 @@ jobs:
       - run: npm run format:check
       - run: npx turbo run typecheck
       - run: npx turbo run build
-      - run: npx turbo run lint
+      - run: npm run lint
       - run: npx turbo run test -- --coverage
 
       - name: E2E against example-robot (NT server)
