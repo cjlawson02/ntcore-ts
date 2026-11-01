@@ -36,9 +36,9 @@ jobs:
           gh-pages-branch: gh-bench
           benchmark-data-dir-path: bench
           auto-push: ${{ github.event_name == 'push' && (github.ref == 'refs/heads/beta' || github.ref == 'refs/heads/main') }}
-          comment-always: ${{ github.event.pull_request.head.repo.full_name == github.repository || github.event_name == 'push' }}
+          comment-always: false
           summary-always: true
-          comment-on-alert: ${{ github.event.pull_request.head.repo.full_name == github.repository || github.event_name == 'push' }}
+          comment-on-alert: false
           fail-on-alert: true
           alert-threshold: '150%'
           fail-threshold: '200%'
