@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1793558852737,
+  "lastUpdate": 1793560113868,
   "repoUrl": "https://github.com/cjlawson02/ntcore-ts",
   "entries": {
     "ntcore-ts": [
@@ -390,6 +390,84 @@ window.BENCHMARK_DATA = {
             "value": 684.939639495606,
             "unit": "ops/s",
             "extra": "rme ±0.50%\nmean 1.4677 ms\np99 2.0478 ms"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "git@chrislawson.dev",
+            "name": "Chris Lawson",
+            "username": "cjlawson02"
+          },
+          "committer": {
+            "email": "git@chrislawson.dev",
+            "name": "Chris Lawson",
+            "username": "cjlawson02"
+          },
+          "distinct": true,
+          "id": "1ef937f99e300b8c29f7fbd573de7aef97263900",
+          "message": "ci: stop posting a second benchmark review on pull requests\n\nCo-authored-by: Cursor <cursoragent@cursor.com>",
+          "timestamp": "2026-11-01T11:07:52-08:00",
+          "tree_id": "ff5185eaaaa458ca4af35fff9a30af2746efe4a3",
+          "url": "https://github.com/cjlawson02/ntcore-ts/commit/1ef937f99e300b8c29f7fbd573de7aef97263900"
+        },
+        "date": 1793560113563,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "client · 100 binary frames through onMessage",
+            "value": 9773.172038498424,
+            "unit": "ops/s",
+            "extra": "rme ±0.16%\nmean 0.1035 ms\np99 0.1794 ms"
+          },
+          {
+            "name": "client · 1 message per frame",
+            "value": 1523009.683308131,
+            "unit": "ops/s",
+            "extra": "rme ±0.01%\nmean 0.0007 ms\np99 0.0016 ms"
+          },
+          {
+            "name": "client · 10 messages per frame",
+            "value": 765976.8449036687,
+            "unit": "ops/s",
+            "extra": "rme ±0.01%\nmean 0.0013 ms\np99 0.0017 ms"
+          },
+          {
+            "name": "client · 100 messages per frame",
+            "value": 135078.59505256554,
+            "unit": "ops/s",
+            "extra": "rme ±0.05%\nmean 0.0076 ms\np99 0.0145 ms"
+          },
+          {
+            "name": "react · useTopic: 1 value update",
+            "value": 40984.84640973994,
+            "unit": "ops/s",
+            "extra": "rme ±0.15%\nmean 0.0254 ms\np99 0.0511 ms"
+          },
+          {
+            "name": "react · usePrefixTopic: 1 value update",
+            "value": 40705.59828150126,
+            "unit": "ops/s",
+            "extra": "rme ±0.16%\nmean 0.0256 ms\np99 0.0525 ms"
+          },
+          {
+            "name": "react · useTopic: 10 unbatched value updates",
+            "value": 4435.219321933218,
+            "unit": "ops/s",
+            "extra": "rme ±0.39%\nmean 0.2307 ms\np99 0.3155 ms"
+          },
+          {
+            "name": "react · 50 hooks, 1 batched update each",
+            "value": 2275.692276554829,
+            "unit": "ops/s",
+            "extra": "rme ±0.43%\nmean 0.4460 ms\np99 0.6352 ms"
+          },
+          {
+            "name": "react · 50 hooks, 1 unbatched update each",
+            "value": 434.64319250391725,
+            "unit": "ops/s",
+            "extra": "rme ±0.94%\nmean 2.3269 ms\np99 3.1607 ms"
           }
         ]
       }
