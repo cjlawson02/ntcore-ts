@@ -41,7 +41,7 @@
     "@types/ws": "^8.18.1",
     "@typescript/native": "npm:typescript@7.0.2",
     "@vitejs/plugin-react": "^6.1.1",
-    "@vitest/coverage-v8": "5.0.5",
+    "@vitest/coverage-v8": "5.1.0",
     "husky": "^9.1.7",
     "isomorphic-ws": "^5.0.0",
     "jsdom": "^30.0.1",
@@ -65,7 +65,7 @@
     "typescript": "npm:@typescript/typescript6@6.0.2",
     "vite": "^8.3.0",
     "vitepress": "^1.6.4",
-    "vitest": "5.0.5",
+    "vitest": "5.1.0",
     "vitest-websocket-mock": "^0.8.0",
     "ws": "^8.21.3",
     "zod": "^4.6.2"
