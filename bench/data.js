@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1793672856791,
+  "lastUpdate": 1793821634004,
   "repoUrl": "https://github.com/cjlawson02/ntcore-ts",
   "entries": {
     "ntcore-ts": [
@@ -702,6 +702,84 @@ window.BENCHMARK_DATA = {
             "value": 816.099802027901,
             "unit": "ops/s",
             "extra": "rme ±0.59%\nmean 1.2370 ms\np99 1.9851 ms"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "29139614+renovate[bot]@users.noreply.github.com",
+            "name": "renovate[bot]",
+            "username": "renovate[bot]"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "fc8429c06b50d4b5aad448ba4a729e033749fd70",
+          "message": "chore(deps): update dependency rollup to v4.67.5 (#668)\n\nCo-authored-by: renovate[bot] <29139614+renovate[bot]@users.noreply.github.com>",
+          "timestamp": "2026-11-04T19:46:31Z",
+          "tree_id": "426f43bcd2573ac213bfadd9d35c87b6a85a8fb6",
+          "url": "https://github.com/cjlawson02/ntcore-ts/commit/fc8429c06b50d4b5aad448ba4a729e033749fd70"
+        },
+        "date": 1793821633208,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "client · 100 binary frames through onMessage",
+            "value": 9773.994247924122,
+            "unit": "ops/s",
+            "extra": "rme ±0.11%\nmean 0.1029 ms\np99 0.1281 ms"
+          },
+          {
+            "name": "client · 1 message per frame",
+            "value": 1461325.9999182618,
+            "unit": "ops/s",
+            "extra": "rme ±0.02%\nmean 0.0007 ms\np99 0.0016 ms"
+          },
+          {
+            "name": "client · 10 messages per frame",
+            "value": 759036.5198670364,
+            "unit": "ops/s",
+            "extra": "rme ±0.01%\nmean 0.0014 ms\np99 0.0018 ms"
+          },
+          {
+            "name": "client · 100 messages per frame",
+            "value": 135595.80811987683,
+            "unit": "ops/s",
+            "extra": "rme ±0.04%\nmean 0.0076 ms\np99 0.0133 ms"
+          },
+          {
+            "name": "react · useTopic: 1 value update",
+            "value": 44859.84500344489,
+            "unit": "ops/s",
+            "extra": "rme ±0.15%\nmean 0.0233 ms\np99 0.0482 ms"
+          },
+          {
+            "name": "react · usePrefixTopic: 1 value update",
+            "value": 43681.92914977618,
+            "unit": "ops/s",
+            "extra": "rme ±0.15%\nmean 0.0239 ms\np99 0.0510 ms"
+          },
+          {
+            "name": "react · useTopic: 10 unbatched value updates",
+            "value": 4769.210685244605,
+            "unit": "ops/s",
+            "extra": "rme ±0.37%\nmean 0.2145 ms\np99 0.3045 ms"
+          },
+          {
+            "name": "react · 50 hooks, 1 batched update each",
+            "value": 2687.566734534147,
+            "unit": "ops/s",
+            "extra": "rme ±0.40%\nmean 0.3780 ms\np99 0.5697 ms"
+          },
+          {
+            "name": "react · 50 hooks, 1 unbatched update each",
+            "value": 452.4508115271723,
+            "unit": "ops/s",
+            "extra": "rme ±0.98%\nmean 2.2373 ms\np99 3.1254 ms"
           }
         ]
       }
