@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1793850385820,
+  "lastUpdate": 1793875153547,
   "repoUrl": "https://github.com/cjlawson02/ntcore-ts",
   "entries": {
     "ntcore-ts": [
@@ -936,6 +936,84 @@ window.BENCHMARK_DATA = {
             "value": 996.0880522332615,
             "unit": "ops/s",
             "extra": "rme ±0.84%\nmean 1.0361 ms\np99 2.4173 ms"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "29139614+renovate[bot]@users.noreply.github.com",
+            "name": "renovate[bot]",
+            "username": "renovate[bot]"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "e09be5898893ee3761b8af4015b405dda29abbc9",
+          "message": "chore(deps): update dependency vite to v8.3.6 (#670)\n\nCo-authored-by: renovate[bot] <29139614+renovate[bot]@users.noreply.github.com>",
+          "timestamp": "2026-11-05T10:38:38Z",
+          "tree_id": "d520948ce544648fcc517ef19f73dff76b0184e5",
+          "url": "https://github.com/cjlawson02/ntcore-ts/commit/e09be5898893ee3761b8af4015b405dda29abbc9"
+        },
+        "date": 1793875153001,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "client · 100 binary frames through onMessage",
+            "value": 16633.792173118643,
+            "unit": "ops/s",
+            "extra": "rme ±0.17%\nmean 0.0620 ms\np99 0.1077 ms"
+          },
+          {
+            "name": "client · 1 message per frame",
+            "value": 2315903.507696508,
+            "unit": "ops/s",
+            "extra": "rme ±0.01%\nmean 0.0004 ms\np99 0.0006 ms"
+          },
+          {
+            "name": "client · 10 messages per frame",
+            "value": 1273462.6235699411,
+            "unit": "ops/s",
+            "extra": "rme ±0.02%\nmean 0.0008 ms\np99 0.0014 ms"
+          },
+          {
+            "name": "client · 100 messages per frame",
+            "value": 233985.36132782212,
+            "unit": "ops/s",
+            "extra": "rme ±0.06%\nmean 0.0046 ms\np99 0.0081 ms"
+          },
+          {
+            "name": "react · useTopic: 1 value update",
+            "value": 110358.3072386881,
+            "unit": "ops/s",
+            "extra": "rme ±0.05%\nmean 0.0093 ms\np99 0.0159 ms"
+          },
+          {
+            "name": "react · usePrefixTopic: 1 value update",
+            "value": 103580.69456878828,
+            "unit": "ops/s",
+            "extra": "rme ±0.08%\nmean 0.0106 ms\np99 0.0225 ms"
+          },
+          {
+            "name": "react · useTopic: 10 unbatched value updates",
+            "value": 11128.872691006107,
+            "unit": "ops/s",
+            "extra": "rme ±0.15%\nmean 0.0919 ms\np99 0.1156 ms"
+          },
+          {
+            "name": "react · 50 hooks, 1 batched update each",
+            "value": 5179.779666799062,
+            "unit": "ops/s",
+            "extra": "rme ±0.29%\nmean 0.1968 ms\np99 0.3308 ms"
+          },
+          {
+            "name": "react · 50 hooks, 1 unbatched update each",
+            "value": 991.7007408110339,
+            "unit": "ops/s",
+            "extra": "rme ±0.96%\nmean 1.0547 ms\np99 2.5380 ms"
           }
         ]
       }
