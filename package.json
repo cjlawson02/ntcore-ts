@@ -48,7 +48,7 @@
     "lint-staged": "^17.5.1",
     "oxfmt": "0.75.0",
     "oxlint": "1.90.0",
-    "oxlint-tsgolint": "7.0.2005",
+    "oxlint-tsgolint": "7.0.2006",
     "protobufjs": "^8.8.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
