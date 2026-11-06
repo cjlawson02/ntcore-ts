@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1793875153547,
+  "lastUpdate": 1793939295793,
   "repoUrl": "https://github.com/cjlawson02/ntcore-ts",
   "entries": {
     "ntcore-ts": [
@@ -1014,6 +1014,84 @@ window.BENCHMARK_DATA = {
             "value": 991.7007408110339,
             "unit": "ops/s",
             "extra": "rme ±0.96%\nmean 1.0547 ms\np99 2.5380 ms"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "29139614+renovate[bot]@users.noreply.github.com",
+            "name": "renovate[bot]",
+            "username": "renovate[bot]"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "cfdc23ed4d48b1841a64eb4e30693da226008078",
+          "message": "chore(deps): update dependency oxlint-tsgolint to v7.0.2006 (#671)\n\nCo-authored-by: renovate[bot] <29139614+renovate[bot]@users.noreply.github.com>",
+          "timestamp": "2026-11-06T04:27:36Z",
+          "tree_id": "d58f81fc88db70ce3d54a67da5023e6ede247333",
+          "url": "https://github.com/cjlawson02/ntcore-ts/commit/cfdc23ed4d48b1841a64eb4e30693da226008078"
+        },
+        "date": 1793939295432,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "client · 100 binary frames through onMessage",
+            "value": 9922.464183295162,
+            "unit": "ops/s",
+            "extra": "rme ±0.12%\nmean 0.1017 ms\np99 0.1301 ms"
+          },
+          {
+            "name": "client · 1 message per frame",
+            "value": 1433235.9116797769,
+            "unit": "ops/s",
+            "extra": "rme ±0.02%\nmean 0.0007 ms\np99 0.0017 ms"
+          },
+          {
+            "name": "client · 10 messages per frame",
+            "value": 737605.8710778763,
+            "unit": "ops/s",
+            "extra": "rme ±0.01%\nmean 0.0014 ms\np99 0.0020 ms"
+          },
+          {
+            "name": "client · 100 messages per frame",
+            "value": 129734.27223052338,
+            "unit": "ops/s",
+            "extra": "rme ±0.04%\nmean 0.0079 ms\np99 0.0154 ms"
+          },
+          {
+            "name": "react · useTopic: 1 value update",
+            "value": 45888.04964258033,
+            "unit": "ops/s",
+            "extra": "rme ±0.14%\nmean 0.0227 ms\np99 0.0440 ms"
+          },
+          {
+            "name": "react · usePrefixTopic: 1 value update",
+            "value": 44447.28058232439,
+            "unit": "ops/s",
+            "extra": "rme ±0.15%\nmean 0.0234 ms\np99 0.0450 ms"
+          },
+          {
+            "name": "react · useTopic: 10 unbatched value updates",
+            "value": 4886.217195962397,
+            "unit": "ops/s",
+            "extra": "rme ±0.44%\nmean 0.2120 ms\np99 0.4099 ms"
+          },
+          {
+            "name": "react · 50 hooks, 1 batched update each",
+            "value": 2735.5341273833164,
+            "unit": "ops/s",
+            "extra": "rme ±0.43%\nmean 0.3726 ms\np99 0.6543 ms"
+          },
+          {
+            "name": "react · 50 hooks, 1 unbatched update each",
+            "value": 462.220254661851,
+            "unit": "ops/s",
+            "extra": "rme ±0.75%\nmean 2.1789 ms\np99 2.7873 ms"
           }
         ]
       }
