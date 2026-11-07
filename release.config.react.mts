@@ -1,6 +1,6 @@
 /**
  * React package release config. Use with semantic-release-monorepo from packages/react:
- *   cd packages/react && npx semantic-release -e semantic-release-monorepo -c ../../release.config.react.mts
+ *   cd packages/react && npx semantic-release -e semantic-release-monorepo
  * Paths below are relative to packages/react (cwd when run from that directory).
  */
 import type { GlobalConfig } from 'semantic-release';
@@ -26,7 +26,7 @@ const config: GlobalConfig = {
     [
       '@semantic-release/exec',
       {
-        prepareCmd: 'npm run build',
+        prepareCmd: 'npx turbo run build --filter=@ntcore-ts/react',
       },
     ],
     [

@@ -1,6 +1,6 @@
 /**
  * Client package release config. Use with semantic-release-monorepo from packages/client:
- *   cd packages/client && npx semantic-release -e semantic-release-monorepo -c ../../release.config.client.mts
+ *   cd packages/client && npx semantic-release -e semantic-release-monorepo
  * Paths below are relative to packages/client (cwd when run from that directory).
  */
 import type { GlobalConfig } from 'semantic-release';
@@ -26,7 +26,7 @@ const config: GlobalConfig = {
     [
       '@semantic-release/exec',
       {
-        prepareCmd: 'npm run build',
+        prepareCmd: 'npx turbo run build --filter=@ntcore-ts/client',
       },
     ],
     [

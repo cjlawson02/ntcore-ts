@@ -13,12 +13,13 @@
     "ntcore-ts-mcp": "./dist/cli.js"
   },
   "exports": {
+    "./package.json": "./package.json",
     ".": {
-      "types": "./src/index.ts",
-      "import": "./src/index.ts"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.esm.js"
     }
   },
-  "types": "./src/index.ts",
+  "types": "./dist/index.d.ts",
   "files": [
     "dist",
     "README.md"
@@ -37,20 +38,7 @@
     "zod": "^4.6.4"
   },
   "publishConfig": {
-    "access": "public",
-    "main": "./dist/index.esm.js",
-    "module": "./dist/index.esm.js",
-    "types": "./dist/index.d.ts",
-    "bin": {
-      "ntcore-ts-mcp": "./dist/cli.js"
-    },
-    "exports": {
-      "./package.json": "./package.json",
-      ".": {
-        "import": "./dist/index.esm.js",
-        "types": "./dist/index.d.ts"
-      }
-    }
+    "access": "public"
   },
   "keywords": [
     "ntcore",
@@ -61,5 +49,7 @@
     "robot",
     "robotics",
     "wpilib"
-  ]
+  ],
+  "main": "./dist/index.esm.js",
+  "module": "./dist/index.esm.js"
 }
