@@ -32,7 +32,8 @@
     "test": "vitest run",
     "lint": "oxlint .",
     "start": "tsx src/cli.ts",
-    "serve": "tsx src/cli.ts"
+    "serve": "tsx src/cli.ts",
+    "check:pack": "publint --strict && attw --pack . --profile esm-only"
   },
   "dependencies": {
     "@modelcontextprotocol/server": "^2.3.1",
