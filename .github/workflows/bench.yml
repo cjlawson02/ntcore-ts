@@ -27,6 +27,8 @@ jobs:
           node-version: 26
           cache: npm
       - run: npm ci
+      # The react benches import @ntcore-ts/client from its built dist.
+      - run: npx turbo run build --filter=@ntcore-ts/client
       - name: Run benchmarks
         uses: CodSpeedHQ/action@v5
         with:
