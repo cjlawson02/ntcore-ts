@@ -29,7 +29,7 @@ This is an npm workspaces + Turborepo monorepo. Prefer `npx turbo run <task>` or
 - Open an issue for bugs with enough detail to reproduce.
 - Keep PRs focused; match existing code style and patterns.
 - Add or update tests when behavior changes.
-- Processing-speed benches (`npm run bench`) run in CI on every PR. The Bench check fails when a suite is more than 50% slower than the base commit on the same runner; see [the performance guide](https://ntcore.chrislawson.dev/guide/performance).
+- Processing-speed benches (`npm run bench`) run on every PR under [CodSpeed](https://codspeed.io/cjlawson02/ntcore-ts), which comments with the change against `main` and flags regressions; see [the performance guide](https://ntcore.chrislawson.dev/guide/performance).
 - For e2e features, keep specs and tests in sync (`apps/example-client/specs/` ↔ `apps/example-client/src/e2e/`). See [AGENTS.md](AGENTS.md) and [apps/example-client/specs/README.md](apps/example-client/specs/README.md).
 
 ## Releases

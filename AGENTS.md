@@ -13,7 +13,7 @@ This is an npm workspaces + Turborepo monorepo.
 
 - E2E (against example-robot): `npm run e2e:local` (builds deps, starts the robot, runs the e2e suite)
 - Unit tests: `npx turbo run test --filter=@ntcore-ts/client` (or `@ntcore-ts/react`). For a single file: `npx vitest run --config packages/client/vitest.config.mts <name>`
-- Benchmarks: `npm run bench` (client + react). CI JSON: `npm run bench:ci`.
+- Benchmarks: `npm run bench` (client + react). CI runs them under CodSpeed (`.github/workflows/bench.yml`).
 - Multiple package tests: `npm test` (client + react)
 - Lint: `npm run lint` (Oxlint). Fix: `npm run lint:fix`.
 - Format check: `npm run format:check` (Oxfmt). Write: `npm run format`.
