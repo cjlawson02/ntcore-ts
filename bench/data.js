@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1794082705261,
+  "lastUpdate": 1794083927297,
   "repoUrl": "https://github.com/cjlawson02/ntcore-ts",
   "entries": {
     "ntcore-ts": [
@@ -1482,6 +1482,84 @@ window.BENCHMARK_DATA = {
             "value": 1038.771723380769,
             "unit": "ops/s",
             "extra": "rme ±0.66%\nmean 0.9918 ms\np99 2.4686 ms"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "138796702+Project516@users.noreply.github.com",
+            "name": "project516",
+            "username": "Project516"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "29b0e05df440dec13deb11a92a4e3330f44acbca",
+          "message": "fix(release): skip git hooks in the release commit (#681)",
+          "timestamp": "2026-11-07T12:38:12-08:00",
+          "tree_id": "552e4b267e9887b18ad54832446ef9fc3a1933a8",
+          "url": "https://github.com/cjlawson02/ntcore-ts/commit/29b0e05df440dec13deb11a92a4e3330f44acbca"
+        },
+        "date": 1794083926905,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "client · 100 binary frames through onMessage",
+            "value": 12574.926797172957,
+            "unit": "ops/s",
+            "extra": "rme ±0.15%\nmean 0.0807 ms\np99 0.1367 ms"
+          },
+          {
+            "name": "client · 1 message per frame",
+            "value": 1928500.262822399,
+            "unit": "ops/s",
+            "extra": "rme ±0.01%\nmean 0.0005 ms\np99 0.0012 ms"
+          },
+          {
+            "name": "client · 10 messages per frame",
+            "value": 955716.8936157073,
+            "unit": "ops/s",
+            "extra": "rme ±0.02%\nmean 0.0011 ms\np99 0.0019 ms"
+          },
+          {
+            "name": "client · 100 messages per frame",
+            "value": 163858.63111694017,
+            "unit": "ops/s",
+            "extra": "rme ±0.06%\nmean 0.0064 ms\np99 0.0113 ms"
+          },
+          {
+            "name": "react · useTopic: 1 value update",
+            "value": 80511.36329131878,
+            "unit": "ops/s",
+            "extra": "rme ±0.07%\nmean 0.0127 ms\np99 0.0219 ms"
+          },
+          {
+            "name": "react · usePrefixTopic: 1 value update",
+            "value": 76481.00622991634,
+            "unit": "ops/s",
+            "extra": "rme ±0.08%\nmean 0.0135 ms\np99 0.0256 ms"
+          },
+          {
+            "name": "react · useTopic: 10 unbatched value updates",
+            "value": 8217.172468638712,
+            "unit": "ops/s",
+            "extra": "rme ±0.21%\nmean 0.1241 ms\np99 0.1900 ms"
+          },
+          {
+            "name": "react · 50 hooks, 1 batched update each",
+            "value": 3729.647801805958,
+            "unit": "ops/s",
+            "extra": "rme ±0.31%\nmean 0.2719 ms\np99 0.4136 ms"
+          },
+          {
+            "name": "react · 50 hooks, 1 unbatched update each",
+            "value": 758.4707383623561,
+            "unit": "ops/s",
+            "extra": "rme ±0.46%\nmean 1.3249 ms\np99 1.8133 ms"
           }
         ]
       }
