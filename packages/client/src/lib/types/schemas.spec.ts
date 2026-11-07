@@ -28,6 +28,13 @@ describe('schema', () => {
       expect(typeStringSchema.safeParse('string').success).toBe(true);
     });
 
+    it.each(['struct:Pose2d', 'struct:Pose2d[]', 'structschema', 'proto:Pose2d', 'application/x-custom'])(
+      'accepts extensible topic type %s',
+      (type: string) => {
+        expect(typeStringSchema.parse(type)).toBe(type);
+      }
+    );
+
     it('rejects non-string values (NT 4.1 JSON text frames always use string types)', () => {
       expect(typeStringSchema.safeParse(0).success).toBe(false);
       expect(typeStringSchema.safeParse(5).success).toBe(false);
@@ -258,7 +265,7 @@ describe('schema', () => {
           params: {
             name: 'testTopic',
             pubuid: 1,
-            type: 'invalidType',
+            type: 5,
             properties: { persistent: true },
           },
         }).success

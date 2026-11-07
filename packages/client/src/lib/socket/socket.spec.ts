@@ -617,6 +617,31 @@ describe('NetworkTablesSocket', () => {
       expect(onAnnounce).toHaveBeenCalledWith(params);
     });
 
+    it('processes built-in, struct, and arbitrary custom announcements in the same frame', () => {
+      const types = ['double', 'structschema', 'struct:Pose2d', 'application/x-custom'];
+      const messages: AnnounceMessage[] = types.map((type, id) => ({
+        method: 'announce',
+        params: { name: `topic/${id}`, id, type, properties: {} },
+      }));
+
+      server.send(JSON.stringify(messages));
+
+      expect(onAnnounce).toHaveBeenCalledTimes(messages.length);
+      for (const [index, message] of messages.entries()) {
+        expect(onAnnounce).toHaveBeenNthCalledWith(index + 1, message.params);
+      }
+
+      const bytes = new Uint8Array([1, 2, 3]);
+      socket['onMessage']({ data: encode([3, 1000, 5, bytes]) } as unknown as MessageEvent);
+
+      expect(onTopicUpdate).toHaveBeenCalledWith({
+        topicId: 3,
+        serverTime: 1000,
+        typeNum: 5,
+        value: bytes,
+      });
+    });
+
     it('should call the onUnannounce handler for an unannounce message', () => {
       const params: UnannounceMessageParams = {
         name: 'foo',

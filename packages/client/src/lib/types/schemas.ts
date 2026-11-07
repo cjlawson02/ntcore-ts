@@ -19,28 +19,8 @@ export const typeNumSchema = z.union([
   z.literal(20),
 ]);
 
-/** Schema for type strings in the NT protocol (JSON text frames always use strings per NT 4.1 spec). */
-export const typeStringSchema = z.union([
-  z.literal('boolean'),
-  z.literal('double'),
-  z.literal('int'),
-  z.literal('float'),
-  z.literal('string'),
-  z.literal('json'),
-  z.literal('raw'),
-  z.literal('rpc'),
-  z.literal('msgpack'),
-  z.literal('structschema'),
-  z.literal('protobuf'),
-  z.literal('boolean[]'),
-  z.literal('double[]'),
-  z.literal('int[]'),
-  z.literal('float[]'),
-  z.literal('string[]'),
-  z.string().startsWith('proto:'),
-  z.string().startsWith('struct:'),
-  z.string().startsWith('photonstruct:'),
-]);
+/** NT topic type strings are extensible; the binary frame carries the numeric wire type. */
+export const typeStringSchema = z.string();
 
 /** Schema for topic properties in the NT protocol. */
 export const topicPropertiesSchema = z
