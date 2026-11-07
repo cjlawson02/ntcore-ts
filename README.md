@@ -52,7 +52,7 @@ xychart-beta
 | React `useTopic` (one update)     |                       88k/s |  11 µs |
 | React 50-hook dashboard (batched) |                      4.5k/s | 240 µs |
 
-Numbers are from `npm run bench` on an Apple M1 Pro, Node 24. CI re-runs the same suite on every PR and fails if throughput drops to half of `main`. Details: [performance guide](https://ntcore.chrislawson.dev/guide/performance).
+Numbers are from `npm run bench` on an Apple M1 Pro, Node 24. CI re-runs the same suite on every PR under CodSpeed and flags regressions against `main`. Details: [performance guide](https://ntcore.chrislawson.dev/guide/performance).
 
 ## Documentation
 

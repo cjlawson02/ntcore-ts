@@ -2,6 +2,7 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import codspeedPlugin from '@codspeed/vitest-plugin';
 import { defineConfig } from 'vitest/config';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -9,6 +10,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export default defineConfig(() => ({
   root: __dirname,
   cacheDir: '../../node_modules/.vite/packages/client',
+  plugins: [codspeedPlugin()],
   resolve: {
     tsconfigPaths: true,
     // One mock-socket instance: WSMock's Server and the isomorphic-ws alias must share it.

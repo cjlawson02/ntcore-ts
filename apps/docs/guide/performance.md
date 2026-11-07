@@ -49,24 +49,12 @@ npm run bench -w @ntcore-ts/client
 npm run bench -w @ntcore-ts/react
 ```
 
-CI JSON (used by GitHub Actions):
-
-```bash
-npm run bench:ci
-```
-
-Writes `tmp/github-bench.json` in the [customBiggerIsBetter](https://github.com/benchmark-action/github-action-benchmark) format.
-
 ## CI regression checks
 
-Every push to `main` and every pull request runs [`.github/workflows/bench.yml`](https://github.com/cjlawson02/ntcore-ts/blob/main/.github/workflows/bench.yml).
+Every push to `main` and every pull request runs [`.github/workflows/bench.yml`](https://github.com/cjlawson02/ntcore-ts/blob/main/.github/workflows/bench.yml) under [CodSpeed](https://codspeed.io/cjlawson02/ntcore-ts).
 
-- Throughput is compared to the last stored `main` result (higher ops/s is better).
-- Each same-repo pull request gets a comment with the measured ops/s. Later runs update that comment.
-- A drop to about 2/3 of that baseline comments an alert on the PR (`alert-threshold: 150%`).
-- A drop to half of that baseline fails the job (`fail-threshold: 200%`).
-- History is stored on the `gh-bench` branch (separate from the docs site).
+- Benchmarks run in CodSpeed's CPU simulation mode, which counts simulated CPU cycles instead of wall-clock time, so results are stable on shared GitHub runners.
+- CodSpeed comments on each pull request with the change against `main` and reports a status check that flags regressions above the configured threshold.
+- Pushes to `main` record the baseline and history shown on the CodSpeed dashboard.
 
-GitHub-hosted runners are noisier than a laptop, so the fail bar is deliberately wide. Treat CI as a “did we tank it?” check, not a micro-benchmark of 5% changes. Absolute ops/s on `ubuntu-latest` will not match the M1 Pro table above.
-
-Successful pushes to `main` write the history used as the baseline. Later PRs compare against that.
+Simulation runs V8 without its optimizing compilers and with a fixed GC schedule, so it tracks how much work each path does rather than optimized-JIT or GC behaviour. Absolute numbers will not match the M1 Pro table above. The plugin does nothing outside CodSpeed's CI, so `npm run bench` locally is unchanged.
