@@ -1,11 +1,10 @@
 /**
- * Client package release config. Use with semantic-release-monorepo from packages/client:
- *   cd packages/client && npx semantic-release -e semantic-release-monorepo -c ../../release.config.client.mts
- * Paths below are relative to packages/client (cwd when run from that directory).
+ * MCP package release config. Use with semantic-release-monorepo from packages/mcp:
+ *   cd packages/mcp && npx semantic-release -e semantic-release-monorepo
+ * Paths below are relative to packages/mcp (cwd when run from that directory).
  */
-import type { GlobalConfig } from 'semantic-release';
-
-const config: GlobalConfig = {
+/** @type {import('semantic-release').GlobalConfig} */
+const config = {
   branches: ['main', { name: 'beta', prerelease: true }],
   plugins: [
     '@semantic-release/commit-analyzer',
@@ -41,7 +40,7 @@ const config: GlobalConfig = {
       '@semantic-release/git',
       {
         assets: ['package.json', 'CHANGELOG.md'],
-        message: 'chore(release): @ntcore-ts/client ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}',
+        message: 'chore(release): @ntcore-ts/mcp ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}',
       },
     ],
   ],

@@ -38,7 +38,7 @@ gyroTopic.subscribe((value, params) => {
 
 // Create the AutoMode topic w/ a default return value of 'No Auto'
 // Note: this retained publisher contends with example-react if both run against the same server.
-(async () => {
+void (async () => {
   const autoModeTopic = ntcore.getStringTopic('/MyTable/AutoMode', 'No Auto');
 
   // Make us the publisher
@@ -87,7 +87,7 @@ let y: number;
 
 // Subscribe to all topics under the prefix /MyTable/Accelerometer/
 accelerometerTopic.subscribe((value, params) => {
-  console.log(`[Accel Prefix Topic] Got Accelerometer Value: ${value} from topic ${params.name}`); // i.e. Got Accelerometer Value: 9.81 from topic /MyTable/Accelerometer/Y
+  console.log(`[Accel Prefix Topic] Got Accelerometer Value: ${JSON.stringify(value)} from topic ${params.name}`); // i.e. Got Accelerometer Value: 9.81 from topic /MyTable/Accelerometer/Y
 
   // You can also use the topic name to determine which value to set
   if (params.name.endsWith('X')) {
@@ -118,7 +118,7 @@ if (process.env.NT_DUMP_ALL === '1') {
   const allTopics = ntcore.getPrefixTopic('/');
 
   allTopics.subscribe((value, params) => {
-    console.log(`[All Topics] Got Value: ${value} from topic ${params.name}`);
+    console.log(`[All Topics] Got Value: ${JSON.stringify(value)} from topic ${params.name}`);
   });
 }
 
@@ -126,7 +126,7 @@ if (process.env.NT_DUMP_ALL === '1') {
 // Example of using a protobuf topic to publish a value //
 // --------------------------------------------------------- //
 
-(async () => {
+void (async () => {
   // Create a protobuf topic with the proto file path
   // The schema will be automatically registered to NetworkTables when publishing
   const customProtoTopic = ntcore.getProtobufTopic<TestData>('/MyTable/CustomProto', {

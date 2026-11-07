@@ -8,24 +8,24 @@ Typical FRC traffic is tens to low thousands of topic updates per second. The nu
 
 Measured with `npm run bench` on an Apple M1 Pro, Node 24. React benches run in jsdom (`flushSync` commit), not a full browser layout/paint.
 
-| Workload                               |                        Rate |    Mean |
-| -------------------------------------- | --------------------------: | ------: |
-| Client, 1 message / frame              |                     1.01M/s |  1.2 µs |
-| Client, 10 messages / frame            | 164k frames/s (1.64M msg/s) |  7.8 µs |
-| Client, 100 messages / frame           |  17k frames/s (1.74M msg/s) |   73 µs |
-| Client, 100 frames through `onMessage` | 6.3k batches/s (632k msg/s) |  159 µs |
-| React `useTopic` (one update)          |                       87k/s |   12 µs |
-| React `usePrefixTopic` (one update)    |                       88k/s |   12 µs |
-| React 50-hook dashboard (batched)      |                      3.8k/s |  278 µs |
-| React 50-hook dashboard (unbatched)    |                       746/s | 1.37 ms |
+| Workload                               |                          Rate |   Mean |
+| -------------------------------------- | ----------------------------: | -----: |
+| Client, 1 message / frame              |                       2.63M/s | 0.4 µs |
+| Client, 10 messages / frame            |  1.01M frames/s (10.1M msg/s) | 1.1 µs |
+| Client, 100 messages / frame           |   143k frames/s (14.3M msg/s) | 7.1 µs |
+| Client, 100 frames through `onMessage` | 16.1k batches/s (1.61M msg/s) |  63 µs |
+| React `useTopic` (one update)          |                         88k/s |  11 µs |
+| React `usePrefixTopic` (one update)    |                         85k/s |  12 µs |
+| React 50-hook dashboard (batched)      |                        4.5k/s | 240 µs |
+| React 50-hook dashboard (unbatched)    |                         800/s | 1.3 ms |
 
-Decode of a double is about 1 µs. Applying it through `useTopic` is about 12 µs. Batching 50 hook updates into one React commit stays under 300 µs mean.
+Decode of a double is about 0.4 µs. Applying it through `useTopic` is about 11 µs. Batching 50 hook updates into one React commit stays under 250 µs mean.
 
 ## What is measured
 
 **Client** (`packages/client/src/lib/socket/*.bench.ts`)
 
-- Hot path: `handleBinaryFrame` — msgpack decode, Zod schema parse, `onTopicUpdate` callback.
+- Hot path: `handleBinaryFrame` — msgpack decode, lightweight binary shape check, `onTopicUpdate` callback.
 - `onMessage`: 100 binary frames through the WebSocket message handler.
 
 **React** (`packages/react/src/lib/hooks.bench.tsx`)
@@ -61,11 +61,12 @@ Writes `tmp/github-bench.json` in the [customBiggerIsBetter](https://github.com/
 
 Every push to `main` / `beta` and every pull request runs [`.github/workflows/bench.yml`](https://github.com/cjlawson02/ntcore-ts/blob/main/.github/workflows/bench.yml).
 
-- Throughput is compared to the last stored `main` result (higher ops/s is better).
-- A drop to about 2/3 of `main` comments an alert on the PR (`alert-threshold: 150%`).
-- A drop to half of `main` fails the job (`fail-threshold: 200%`).
+- Throughput is compared to the last stored `beta` or `main` result (higher ops/s is better).
+- Each same-repo pull request gets a comment with the measured ops/s. Later runs update that comment.
+- A drop to about 2/3 of that baseline comments an alert on the PR (`alert-threshold: 150%`).
+- A drop to half of that baseline fails the job (`fail-threshold: 200%`).
 - History is stored on the `gh-bench` branch (separate from the docs site).
 
 GitHub-hosted runners are noisier than a laptop, so the fail bar is deliberately wide. Treat CI as a “did we tank it?” check, not a micro-benchmark of 5% changes. Absolute ops/s on `ubuntu-latest` will not match the M1 Pro table above.
 
-The first successful push to `main` after this workflow lands creates the history branch. Later PRs compare against that.
+Successful pushes to `beta` or `main` write the history used as the baseline. Later PRs compare against that.

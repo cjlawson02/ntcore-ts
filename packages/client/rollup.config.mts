@@ -35,7 +35,7 @@ function protobufDescriptorJson(): Plugin {
   };
 }
 
-const externalNames = ['@msgpack/msgpack', 'isomorphic-ws', 'protobufjs', 'tslog', 'zod'];
+const externalNames = ['@msgpack/msgpack', 'isomorphic-ws', 'protobufjs', 'tslog', 'wpilib-struct', 'zod'];
 
 const config: RollupOptions = {
   input: 'src/index.ts',
@@ -45,7 +45,9 @@ const config: RollupOptions = {
     format: 'esm',
     sourcemap: true,
   },
-  external: (id) => externalNames.some((name) => id === name || id.startsWith(`${name}/`)),
+  external: (id) =>
+    id !== 'protobufjs/google/protobuf/descriptor.json' &&
+    externalNames.some((name) => id === name || id.startsWith(`${name}/`)),
   plugins: [
     protobufDescriptorJson(),
     resolve({ preferBuiltins: true, extensions: ['.mjs', '.js', '.json', '.ts'] }),

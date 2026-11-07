@@ -64,10 +64,13 @@ export function usePrefixTopic(
 ): PrefixTopicUpdate | null {
   const nt = useNtcore();
   const [state, setState] = useState<PrefixTopicUpdate | null>(null);
-  const [identity, setIdentity] = useState({ nt, prefix });
+  const identityRef = useRef({ nt, prefix });
 
-  if (nt !== identity.nt || prefix !== identity.prefix) {
-    setIdentity({ nt, prefix });
+  // Reset when nt/prefix change without an extra identity useState (hot-path win).
+  // oxlint-disable-next-line react/refs -- compare+write identity during render, then adjust state
+  if (nt !== identityRef.current.nt || prefix !== identityRef.current.prefix) {
+    // oxlint-disable-next-line react/refs -- see above
+    identityRef.current = { nt, prefix };
     setState(null);
   }
 
@@ -94,14 +97,16 @@ export function usePrefixTopicMap(
 ): Record<string, PrefixTopicMapEntry> {
   const nt = useNtcore();
   const [byName, setByName] = useState<Record<string, PrefixTopicMapEntry>>({});
-  const [identity, setIdentity] = useState({ nt, prefix });
+  const identityRef = useRef({ nt, prefix });
   const pendingRef = useRef<Record<string, PrefixTopicMapEntry>>({});
   const rafRef = useRef<number | null>(null);
   const [mapGeneration, setMapGeneration] = useState(0);
   const mapGenerationRef = useLatestRef(mapGeneration);
 
-  if (nt !== identity.nt || prefix !== identity.prefix) {
-    setIdentity({ nt, prefix });
+  // oxlint-disable-next-line react/refs -- compare+write identity during render, then adjust state
+  if (nt !== identityRef.current.nt || prefix !== identityRef.current.prefix) {
+    // oxlint-disable-next-line react/refs -- see above
+    identityRef.current = { nt, prefix };
     setByName({});
     setMapGeneration((g) => g + 1);
   }

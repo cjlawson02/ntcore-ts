@@ -1,9 +1,11 @@
 import type { Configuration } from 'lint-staged';
 
+const quote = (files: readonly string[]) => files.map((file) => JSON.stringify(file)).join(' ');
+
 const config: Configuration = {
-  '*': (files) => [`prettier --write --ignore-unknown ${files.map((f) => JSON.stringify(f)).join(' ')}`],
-  '*.{ts,tsx,js,jsx,mjs,cjs,mts,cts}': () => [
-    'npx turbo run lint --filter=...[HEAD]',
+  '*': (files) => [`oxfmt ${quote(files)}`],
+  '*.{ts,tsx,js,jsx,mjs,cjs,mts,cts}': (files) => [
+    `oxlint --report-unused-disable-directives ${quote(files)}`,
     'npx turbo run test --filter=...[HEAD]',
     'npx turbo run build --filter=...[HEAD]',
   ],

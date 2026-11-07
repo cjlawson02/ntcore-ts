@@ -528,7 +528,7 @@ describe('Topic', () => {
   describe('setProperties', () => {
     it('should set the properties', () => {
       topic['client']['messenger']['_socket']['sendTextFrame'] = vi.fn();
-      topic.setProperties({ persistent: true, retained: true });
+      void topic.setProperties({ persistent: true, retained: true });
       expect(topic['client']['messenger']['_socket']['sendTextFrame']).toHaveBeenCalledWith({
         method: 'setproperties',
         params: {

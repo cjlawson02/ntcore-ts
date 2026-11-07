@@ -29,6 +29,22 @@ describe('WriteGate', () => {
     expect(gate.setWriteMode(true, true).enabled).toBe(true);
   });
 
+  it('defaults to dashboard, example, and 2027 telemetry prefixes', () => {
+    delete process.env.NT_WRITE_ALLOWLIST;
+    const gate = new WriteGate({ envAllowWrites: false });
+    gate.setWriteMode(true, true);
+    expect(gate.getStatus().allowlist).toEqual([
+      '/SmartDashboard/**',
+      '/Tuning/**',
+      '/MyTable/**',
+      '/Telemetry/**',
+      '/Tunables/**',
+    ]);
+    expect(() => gate.assertCanWrite('/Telemetry/Arm/angle', 'localhost')).not.toThrow();
+    expect(() => gate.assertCanWrite('/Tunables/Arm/setpoint', 'localhost')).not.toThrow();
+    expect(() => gate.assertCanWrite('/FMSInfo/x', 'localhost')).toThrow(/allowlist/i);
+  });
+
   it('enforces allowlist', () => {
     const gate = new WriteGate({
       envAllowWrites: false,

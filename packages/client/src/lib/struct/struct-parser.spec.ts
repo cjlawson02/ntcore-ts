@@ -29,28 +29,36 @@ describe('struct-parser', () => {
       expect(fields[0]).toEqual({ typeName: 'uint8', name: 'flags', arraySize: 1, bitWidth: 4 });
     });
 
-    it('parses schema with enum enum { A=0,B=1 } int32 x', () => {
-      const fields = parseSchema('enum { A=0,B=1 } int32 x');
+    it('parses enum values with negative integers and a trailing comma', () => {
+      const fields = parseSchema('enum { UNKNOWN=-1,A=0,B=1, } int32 x');
       expect(fields).toHaveLength(1);
       expect(fields[0].typeName).toBe('int32');
       expect(fields[0].name).toBe('x');
-      expect(fields[0].enumValues).toEqual({ A: 0, B: 1 });
+      expect(fields[0].enumValues).toEqual({ UNKNOWN: -1, A: 0, B: 1 });
     });
 
     it('rejects invalid schema malformed tokens', () => {
       expect(() => parseSchema('double x [')).toThrow();
       expect(() => parseSchema('double')).toThrow();
       expect(() => parseSchema('double x ; ; double')).toThrow();
+      expect(() => parseSchema('double x double y')).toThrow();
     });
 
-    it('handles whitespace and optional semicolons', () => {
+    it.each(['int32 arr[0]', 'uint8 flags:0'])('rejects zero-sized declarations: %s', (schema: string) => {
+      expect(() => parseSchema(schema)).toThrow();
+    });
+
+    it('rejects bitfield width exceeding type size', () => {
+      expect(() => parseSchema('uint8 flags:16')).toThrow();
+    });
+
+    it('handles whitespace and an optional trailing semicolon', () => {
       const fields = parseSchema('  double   x  ;  double   y  ');
       expect(fields).toHaveLength(2);
       expect(fields[0].name).toBe('x');
       expect(fields[1].name).toBe('y');
 
-      const noSemicolon = parseSchema('double x double y');
-      expect(noSemicolon).toHaveLength(2);
+      expect(parseSchema('double x;double y;')).toEqual(fields);
     });
   });
 
@@ -79,12 +87,6 @@ describe('struct-parser', () => {
         return cache.get(name) ?? null;
       }
       expect(() => buildStructDescriptor('A', fieldsA, getNested)).toThrow(/circular|unknown/);
-    });
-
-    it('rejects bitfield width exceeding type size', () => {
-      const fields = parseSchema('uint8 flags:16');
-      const getNested = () => null;
-      expect(() => buildStructDescriptor('Bad', fields, getNested)).toThrow(/bitfield width/);
     });
   });
 });

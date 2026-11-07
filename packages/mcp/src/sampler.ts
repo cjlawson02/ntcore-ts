@@ -69,7 +69,7 @@ export async function collectSamples(nt: NetworkTables, options: SubscribeOption
   const changeOnly = options.changeOnly ?? false;
   const epsilon = options.changeEpsilon ?? 1e-9;
   const sampleIntervalMs = options.sampleIntervalMs ?? 0;
-  const typeMap = { ...(options.types ?? {}) };
+  const typeMap = { ...options.types };
 
   const buckets = new Map<string, { type: string; points: SamplePoint[]; lastRaw: unknown }>();
   let truncated = false;

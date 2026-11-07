@@ -36,14 +36,14 @@ function Dashboard() {
 }
 ```
 
-A single `useTopic` update is about **87k/s** (~12 µs). A 50-hook dashboard updating in one React batch is about **3.8k** full refreshes/s (~278 µs). That is far above typical FRC NT rates.
+A single `useTopic` update is about **88k/s** (~11 µs). A 50-hook dashboard updating in one React batch is about **4.5k** full refreshes/s (~240 µs). That is far above typical FRC NT rates.
 
 ```mermaid
 xychart-beta
     title "React updates per second (jsdom, Apple M1 Pro)"
     x-axis ["useTopic", "usePrefixTopic", "50 hooks batched"]
     y-axis "updates/s" 0 --> 90000
-    bar [87400, 88100, 3800]
+    bar [88000, 85000, 4500]
 ```
 
 ## Running unit tests
@@ -59,11 +59,11 @@ Hook update benches measure `useTopic` / `usePrefixTopic` from callback to a jsd
 
 On an Apple M1 Pro (jsdom):
 
-| Workload                      |   Rate |    Mean |
-| ----------------------------- | -----: | ------: |
-| `useTopic` (one update)       |  87k/s |   12 µs |
-| `usePrefixTopic` (one update) |  88k/s |   12 µs |
-| 50 hooks, one batched update  | 3.8k/s |  278 µs |
-| 50 hooks, unbatched           |  746/s | 1.37 ms |
+| Workload                      |   Rate |   Mean |
+| ----------------------------- | -----: | -----: |
+| `useTopic` (one update)       |  88k/s |  11 µs |
+| `usePrefixTopic` (one update) |  85k/s |  12 µs |
+| 50 hooks, one batched update  | 4.5k/s | 240 µs |
+| 50 hooks, unbatched           |  800/s | 1.3 ms |
 
 CI re-runs these benches on every PR and fails if throughput drops to half of `main`. See the [performance guide](https://ntcore.chrislawson.dev/guide/performance).

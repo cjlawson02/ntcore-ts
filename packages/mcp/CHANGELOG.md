@@ -1,3 +1,16 @@
+# [@ntcore-ts/mcp-v1.1.0-beta.3](https://github.com/cjlawson02/ntcore-ts/compare/@ntcore-ts/mcp-v1.1.0-beta.2...@ntcore-ts/mcp-v1.1.0-beta.3) (2026-11-07)
+
+
+### Bug Fixes
+
+* publish packages with valid dist entry points ([3a667cd](https://github.com/cjlawson02/ntcore-ts/commit/3a667cd134a1484ce7763918ab21bf56ab140ef3))
+
+# [@ntcore-ts/mcp-v1.1.0-beta.2](https://github.com/cjlawson02/ntcore-ts/compare/@ntcore-ts/mcp-v1.1.0-beta.1...@ntcore-ts/mcp-v1.1.0-beta.2) (2026-11-07)
+
+### Bug Fixes
+
+- **release:** load each package's release config ([#679](https://github.com/cjlawson02/ntcore-ts/issues/679)) ([2281951](https://github.com/cjlawson02/ntcore-ts/commit/228195144a8cdf52aac4ceaaa636a1889711924b))
+
 # Changelog
 
 ## @ntcore-ts/mcp-v1.0.0
@@ -24,7 +37,7 @@ Writes are **off by default**.
 
 - Enable for the session: `nt_set_write_mode({ enabled: true, confirm: true })`.
 - Or start the process with `NT_ALLOW_WRITES=1`.
-- Path allowlist (default): `/SmartDashboard/**`, `/Tuning/**`, `/MyTable/**` via `NT_WRITE_ALLOWLIST`.
+- Path allowlist (default): `/SmartDashboard/**`, `/Tuning/**`, `/MyTable/**`, `/Telemetry/**`, `/Tunables/**` via `NT_WRITE_ALLOWLIST`. The last two are the WPILib 2027 topic trees.
 - Optional: `NT_REQUIRE_LOCALHOST=1` refuses writes to non-local hosts.
 
 ### Runtime

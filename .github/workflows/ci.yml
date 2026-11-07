@@ -20,12 +20,12 @@ jobs:
       # Cache node_modules
       - uses: actions/setup-node@v7
         with:
-          node-version: 24
+          node-version: 26
           cache: 'npm'
       - uses: actions/setup-java@v6
         with:
           distribution: 'temurin'
-          java-version: '25'
+          java-version: '25.0.5+8.0.LTS'
       - run: npm ci
 
       - name: Install protoc and xvfb
@@ -34,7 +34,7 @@ jobs:
       - run: npm run format:check
       - run: npx turbo run typecheck
       - run: npx turbo run build
-      - run: npx turbo run lint
+      - run: npm run lint
       - run: npx turbo run test -- --coverage
 
       - name: E2E against example-robot (NT server)
@@ -52,6 +52,8 @@ jobs:
     needs: main
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
+    env:
+      HUSKY: 0
     permissions:
       contents: write
       issues: write
@@ -63,7 +65,7 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-node@v7
         with:
-          node-version: 24
+          node-version: 26
           registry-url: 'https://registry.npmjs.org'
           package-manager-cache: false
       - run: npm ci

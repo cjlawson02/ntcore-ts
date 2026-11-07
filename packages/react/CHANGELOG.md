@@ -1,3 +1,16 @@
+# [@ntcore-ts/react-v1.0.1-beta.3](https://github.com/cjlawson02/ntcore-ts/compare/@ntcore-ts/react-v1.0.1-beta.2...@ntcore-ts/react-v1.0.1-beta.3) (2026-11-07)
+
+
+### Bug Fixes
+
+* publish packages with valid dist entry points ([3a667cd](https://github.com/cjlawson02/ntcore-ts/commit/3a667cd134a1484ce7763918ab21bf56ab140ef3))
+
+# [@ntcore-ts/react-v1.0.1-beta.2](https://github.com/cjlawson02/ntcore-ts/compare/@ntcore-ts/react-v1.0.1-beta.1...@ntcore-ts/react-v1.0.1-beta.2) (2026-11-07)
+
+### Bug Fixes
+
+- **release:** load each package's release config ([#679](https://github.com/cjlawson02/ntcore-ts/issues/679)) ([2281951](https://github.com/cjlawson02/ntcore-ts/commit/228195144a8cdf52aac4ceaaa636a1889711924b))
+
 # Changelog
 
 ## @ntcore-ts/react-v1.0.0

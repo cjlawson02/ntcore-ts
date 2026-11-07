@@ -62,7 +62,7 @@ export function toJsonSafe(value: unknown): JsonValue {
     }
     return out;
   }
-  return String(value);
+  return Object.prototype.toString.call(value);
 }
 
 /** Match topic paths against simple glob patterns (`*` = one segment, `**` = any depth). */

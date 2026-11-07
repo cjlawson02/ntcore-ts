@@ -37,7 +37,9 @@ export function getRobotAddress(team: number, platform: RobotPlatform = 'roborio
 }
 
 export type ParsedRobotAddress =
-  { platform: 'roborio'; team: number } | { platform: 'systemcore'; team: number } | { platform: null; team: null };
+  | { platform: 'roborio'; team: number }
+  | { platform: 'systemcore'; team: number }
+  | { platform: null; team: null };
 
 /** Detects a RoboRIO mDNS name or SystemCore team IP. Other hosts return `{ platform: null, team: null }`. */
 export function parseRobotAddress(host: string): ParsedRobotAddress {

@@ -9,7 +9,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "typecheck": "tsc -p tsconfig.app.json --noEmit",
-    "lint": "eslint ."
+    "lint": "oxlint ."
   },
   "dependencies": {
     "@ntcore-ts/client": "*",
