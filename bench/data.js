@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1794028466609,
+  "lastUpdate": 1794082705261,
   "repoUrl": "https://github.com/cjlawson02/ntcore-ts",
   "entries": {
     "ntcore-ts": [
@@ -1404,6 +1404,84 @@ window.BENCHMARK_DATA = {
             "value": 750.1991221315823,
             "unit": "ops/s",
             "extra": "rme ±0.59%\nmean 1.3438 ms\np99 1.8696 ms"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "138796702+Project516@users.noreply.github.com",
+            "name": "project516",
+            "username": "Project516"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "228195144a8cdf52aac4ceaaa636a1889711924b",
+          "message": "fix(release): load each package's release config (#679)\n\nsemantic-release has no -c option and ignores unknown flags, so the\nrelease scripts ran with its default plugins. The build step in the\nconfig never ran and the published packages contain no dist folder.\nMove each config next to its package as release.config.mjs, where\nsemantic-release finds it.",
+          "timestamp": "2026-11-07T12:17:49-08:00",
+          "tree_id": "820abf60218d1cdc3462d233a2892892d3bb4de6",
+          "url": "https://github.com/cjlawson02/ntcore-ts/commit/228195144a8cdf52aac4ceaaa636a1889711924b"
+        },
+        "date": 1794082704688,
+        "tool": "customBiggerIsBetter",
+        "benches": [
+          {
+            "name": "client · 100 binary frames through onMessage",
+            "value": 16776.33003179873,
+            "unit": "ops/s",
+            "extra": "rme ±0.09%\nmean 0.0602 ms\np99 0.0766 ms"
+          },
+          {
+            "name": "client · 1 message per frame",
+            "value": 2323472.98328,
+            "unit": "ops/s",
+            "extra": "rme ±0.01%\nmean 0.0004 ms\np99 0.0009 ms"
+          },
+          {
+            "name": "client · 10 messages per frame",
+            "value": 1273739.7517417036,
+            "unit": "ops/s",
+            "extra": "rme ±0.02%\nmean 0.0008 ms\np99 0.0014 ms"
+          },
+          {
+            "name": "client · 100 messages per frame",
+            "value": 240174.98043276166,
+            "unit": "ops/s",
+            "extra": "rme ±0.04%\nmean 0.0045 ms\np99 0.0068 ms"
+          },
+          {
+            "name": "react · useTopic: 1 value update",
+            "value": 108076.81306836738,
+            "unit": "ops/s",
+            "extra": "rme ±0.05%\nmean 0.0095 ms\np99 0.0158 ms"
+          },
+          {
+            "name": "react · usePrefixTopic: 1 value update",
+            "value": 104132.9799597501,
+            "unit": "ops/s",
+            "extra": "rme ±0.07%\nmean 0.0102 ms\np99 0.0189 ms"
+          },
+          {
+            "name": "react · useTopic: 10 unbatched value updates",
+            "value": 11213.24112333164,
+            "unit": "ops/s",
+            "extra": "rme ±0.14%\nmean 0.0910 ms\np99 0.1137 ms"
+          },
+          {
+            "name": "react · 50 hooks, 1 batched update each",
+            "value": 5134.163817018775,
+            "unit": "ops/s",
+            "extra": "rme ±0.30%\nmean 0.1985 ms\np99 0.3267 ms"
+          },
+          {
+            "name": "react · 50 hooks, 1 unbatched update each",
+            "value": 1038.771723380769,
+            "unit": "ops/s",
+            "extra": "rme ±0.66%\nmean 0.9918 ms\np99 2.4686 ms"
           }
         ]
       }
