@@ -1,4 +1,4 @@
-import { NetworkTablesTypeInfos } from './types';
+import { NetworkTablesTypeInfos } from './types.js';
 
 import type {
   AnnounceMessage,
@@ -10,7 +10,7 @@ import type {
   UnannounceMessage,
   UnpublishMessage,
   UnsubscribeMessage,
-} from './types';
+} from './types.js';
 
 describe('NetworkTablesTypeInfos', () => {
   it('should have the correct values', () => {

@@ -1,10 +1,10 @@
 import { encode, decodeMulti } from '@msgpack/msgpack';
 import WebSocket from 'isomorphic-ws';
 
-import { messageSchema } from '../types/schemas';
-import { NetworkTablesTypeInfos } from '../types/types';
-import { socketLogger } from '../util/logger';
-import { Util } from '../util/util';
+import { messageSchema } from '../types/schemas.js';
+import { NetworkTablesTypeInfos } from '../types/types.js';
+import { socketLogger } from '../util/logger.js';
+import { Util } from '../util/util.js';
 
 import type {
   AnnounceMessageParams,
@@ -15,7 +15,7 @@ import type {
   NetworkTablesTypes,
   NetworkTablesTypeInfo,
   BinaryMessageData,
-} from '../types/types';
+} from '../types/types.js';
 import type { CloseEvent as WS_CloseEvent, MessageEvent as WS_MessageEvent, ErrorEvent as WS_ErrorEvent } from 'ws';
 
 /** NT binary type numbers — keep in sync with `typeNumSchema`. */

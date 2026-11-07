@@ -1,10 +1,10 @@
-import { NetworkTablesTypeInfos } from '../types/types';
+import { NetworkTablesTypeInfos } from '../types/types.js';
 
-import { pubsubLogger } from '../util/logger';
+import { pubsubLogger } from '../util/logger.js';
 
-import { NetworkTablesTopic } from './topic';
+import { NetworkTablesTopic } from './topic.js';
 
-import type { PubSubClient } from './pubsub';
+import type { PubSubClient } from './pubsub.js';
 import type { z } from 'zod';
 
 /** Options for {@link NetworkTablesJsonTopic} and `getJsonTopic`. */

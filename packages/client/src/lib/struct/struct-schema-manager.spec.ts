@@ -1,8 +1,8 @@
 import WSMock from 'vitest-websocket-mock';
 
-import { completeRttHandshake, disableSocketIdleTimeout } from '../../../tests/rtt-handshake';
-import { PubSubClient } from '../pubsub/pubsub';
-import { StructSchemaManager } from './struct-schema-manager';
+import { completeRttHandshake, disableSocketIdleTimeout } from '../../../tests/rtt-handshake.js';
+import { PubSubClient } from '../pubsub/pubsub.js';
+import { StructSchemaManager } from './struct-schema-manager.js';
 
 describe('StructSchemaManager', () => {
   let client: PubSubClient;

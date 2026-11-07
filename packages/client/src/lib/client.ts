@@ -1,11 +1,11 @@
-import { NetworkTablesPrefixTopic } from './pubsub/prefix-topic';
-import { NetworkTablesProtobufTopic, type ProtobufTopicOptions } from './pubsub/protobuf-topic';
-import { NetworkTablesJsonTopic, type JsonTopicOptions } from './pubsub/json-topic';
-import { NetworkTablesStructTopic } from './pubsub/struct-topic';
-import { PubSubClient } from './pubsub/pubsub';
-import { NetworkTablesTopic } from './pubsub/topic';
-import { isStructTypeDescriptor, type StructTypeDescriptor, type StructTypeName } from './struct/geometry';
-import { NetworkTablesTypeInfos } from './types/types';
+import { NetworkTablesPrefixTopic } from './pubsub/prefix-topic.js';
+import { NetworkTablesProtobufTopic, type ProtobufTopicOptions } from './pubsub/protobuf-topic.js';
+import { NetworkTablesJsonTopic, type JsonTopicOptions } from './pubsub/json-topic.js';
+import { NetworkTablesStructTopic } from './pubsub/struct-topic.js';
+import { PubSubClient } from './pubsub/pubsub.js';
+import { NetworkTablesTopic } from './pubsub/topic.js';
+import { isStructTypeDescriptor, type StructTypeDescriptor, type StructTypeName } from './struct/geometry.js';
+import { NetworkTablesTypeInfos } from './types/types.js';
 import {
   defaultLogger,
   setLogLevel,
@@ -13,10 +13,10 @@ import {
   getModuleLogLevel,
   type LoggerModule,
   type LogLevel,
-} from './util/logger';
-import { Util, getRobotAddress, type RobotPlatform } from './util/util';
+} from './util/logger.js';
+import { Util, getRobotAddress, type RobotPlatform } from './util/util.js';
 
-import type { NetworkTablesTypeInfo, NetworkTablesTypes } from './types/types';
+import type { NetworkTablesTypeInfo, NetworkTablesTypes } from './types/types.js';
 
 import type { z } from 'zod';
 

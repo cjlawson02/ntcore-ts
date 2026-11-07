@@ -1,4 +1,4 @@
-import type { BinaryMessage, NetworkTablesTypeInfo, NetworkTablesTypes } from '../types/types';
+import type { BinaryMessage, NetworkTablesTypeInfo, NetworkTablesTypes } from '../types/types.js';
 
 /** Robot controller used to resolve a team number to a hostname. */
 export type RobotPlatform = 'roborio' | 'systemcore';

@@ -1,6 +1,6 @@
-import { NetworkTablesTypeInfos } from '../types/types';
+import { NetworkTablesTypeInfos } from '../types/types.js';
 
-import { Util, getRobotAddress, getTeamIpAddress, parseRobotAddress, SYSTEMCORE_MDNS_HOST } from './util';
+import { Util, getRobotAddress, getTeamIpAddress, parseRobotAddress, SYSTEMCORE_MDNS_HOST } from './util.js';
 
 describe('Util', () => {
   describe('getMicros', () => {

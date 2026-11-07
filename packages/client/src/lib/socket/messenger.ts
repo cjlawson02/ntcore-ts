@@ -1,9 +1,9 @@
-import { messageSchema } from '../types/schemas';
-import { messengerLogger } from '../util/logger';
+import { messageSchema } from '../types/schemas.js';
+import { messengerLogger } from '../util/logger.js';
 
-import { NetworkTablesSocket } from './socket';
+import { NetworkTablesSocket } from './socket.js';
 
-import type { NetworkTablesTopic } from '../pubsub/topic';
+import type { NetworkTablesTopic } from '../pubsub/topic.js';
 import type {
   Message,
   PublishMessage,
@@ -20,7 +20,7 @@ import type {
   PropertiesMessageParams,
   AnnounceMessage,
   PropertiesMessage,
-} from '../types/types';
+} from '../types/types.js';
 import type { MessageEvent as WS_MessageEvent } from 'ws';
 
 /** NetworkTables client. */

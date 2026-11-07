@@ -10,16 +10,16 @@ import descriptorJson from 'protobufjs/google/protobuf/descriptor.json' with { t
 const protobuf = (protobufNs as unknown as { default?: typeof protobufNs }).default ?? protobufNs;
 
 // Import types from our type declaration file
-import type { IFileDescriptorProto, IFileDescriptorSet } from './protobufjs-descriptor';
+import type { IFileDescriptorProto, IFileDescriptorSet } from './protobufjs-descriptor.js';
 
-import { NetworkTablesTypeInfos } from '../types/types';
-import { pubsubLogger } from '../util/logger';
+import { NetworkTablesTypeInfos } from '../types/types.js';
+import { pubsubLogger } from '../util/logger.js';
 
-import { NetworkTablesPrefixTopic } from './prefix-topic';
-import { NetworkTablesTopic } from './topic';
+import { NetworkTablesPrefixTopic } from './prefix-topic.js';
+import { NetworkTablesTopic } from './topic.js';
 
-import type { PubSubClient } from './pubsub';
-import type { AnnounceMessageParams } from '../types/types';
+import type { PubSubClient } from './pubsub.js';
+import type { AnnounceMessageParams } from '../types/types.js';
 
 /** Extract basename from a path string without Node's path module (works in browser and Node). */
 function basename(filePath: string): string {

@@ -19,7 +19,7 @@ import {
   announceMessageSchema,
   unannounceMessageSchema,
   propertiesMessageSchema,
-} from './schemas';
+} from './schemas.js';
 
 describe('schema', () => {
   describe('typeStringSchema', () => {

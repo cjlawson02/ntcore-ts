@@ -126,7 +126,7 @@ declare module 'protobufjs' {
      * @param descriptor - The FileDescriptorSet containing file descriptors
      * @returns A Root instance (actually returns Namespace, but we know it's a Root)
      */
-    function fromDescriptor(descriptor: import('./protobufjs-descriptor').IFileDescriptorSet): protobuf.Namespace;
+    function fromDescriptor(descriptor: import('./protobufjs-descriptor.js').IFileDescriptorSet): protobuf.Namespace;
   }
 
   interface Root {

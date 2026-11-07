@@ -2,8 +2,8 @@ import type { ReactNode } from 'react';
 import { renderHook, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NetworkTablesTypeInfos } from '@ntcore-ts/client';
-import { NtcoreProvider } from './context';
-import { useTopic } from './use-topic';
+import { NtcoreProvider } from './context.js';
+import { useTopic } from './use-topic.js';
 
 const mockUnsubscribe = vi.fn();
 const mockUnpublish = vi.fn();

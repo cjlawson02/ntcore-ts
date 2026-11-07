@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNtcore } from './context';
+import { useNtcore } from './context.js';
 
 const STATUS_POLL_MS = 1000;
 

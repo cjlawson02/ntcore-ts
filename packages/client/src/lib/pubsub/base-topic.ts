@@ -1,8 +1,8 @@
-import { pubsubLogger } from '../util/logger';
+import { pubsubLogger } from '../util/logger.js';
 
-import type { NetworkTablesPrefixTopic } from './prefix-topic';
-import type { PubSubClient } from './pubsub';
-import type { NetworkTablesTopic } from './topic';
+import type { NetworkTablesPrefixTopic } from './prefix-topic.js';
+import type { PubSubClient } from './pubsub.js';
+import type { NetworkTablesTopic } from './topic.js';
 import type {
   AnnounceMessageParams,
   NetworkTablesTypes,
@@ -10,7 +10,7 @@ import type {
   SetPropertiesMessageParams,
   SubscribeOptions,
   TopicProperties,
-} from '../types/types';
+} from '../types/types.js';
 
 export type CallbackFn<T> = (value: T | null, params: AnnounceMessageParams) => void;
 

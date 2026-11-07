@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { SubscribeOptions, TopicProperties } from '@ntcore-ts/client';
-import { toError, useNtcore } from './context';
-import { trackPublish, unpublishWhenDone, claimPublishOwner, type TrackedPublish } from './unpublish-when-done';
-import { useLatestRef } from './use-latest-ref';
+import { toError, useNtcore } from './context.js';
+import { trackPublish, unpublishWhenDone, claimPublishOwner, type TrackedPublish } from './unpublish-when-done.js';
+import { useLatestRef } from './use-latest-ref.js';
 import type { ZodType } from 'zod';
 
 /**

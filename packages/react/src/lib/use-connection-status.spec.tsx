@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react';
 import { renderHook } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { NtcoreProvider } from './context';
-import { useConnectionStatus } from './use-connection-status';
+import { NtcoreProvider } from './context.js';
+import { useConnectionStatus } from './use-connection-status.js';
 
 const mockRemoveConnectionListener = vi.fn();
 const mockNt = {

@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { finiteNumSchema, integerSchema } from './schemas';
+import { finiteNumSchema, integerSchema } from './schemas.js';
 
 import type {
   typeStringSchema,
@@ -17,7 +17,7 @@ import type {
   unpublishMessageSchema,
   unsubscribeMessageSchema,
   typeNumSchema,
-} from './schemas';
+} from './schemas.js';
 
 export type TypeString = z.infer<typeof typeStringSchema>;
 export type TypeNum = z.infer<typeof typeNumSchema>;

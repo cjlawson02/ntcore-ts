@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { BUILT_IN_STRUCT_TYPE_NAMES } from './built-in-schemas';
+import { BUILT_IN_STRUCT_TYPE_NAMES } from './built-in-schemas.js';
 
 /** WPILib built-in struct type names (geometry). */
 export type BuiltInStructTypeName = (typeof BUILT_IN_STRUCT_TYPE_NAMES)[number];

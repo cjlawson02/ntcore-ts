@@ -1,4 +1,4 @@
-import { Messenger } from '../socket/messenger';
+import { Messenger } from '../socket/messenger.js';
 import {
   NetworkTablesTypeInfos,
   type AnnounceMessageParams,
@@ -6,15 +6,15 @@ import {
   type NetworkTablesTypes,
   type PropertiesMessageParams,
   type UnannounceMessageParams,
-} from '../types/types';
-import { pubsubLogger } from '../util/logger';
+} from '../types/types.js';
+import { pubsubLogger } from '../util/logger.js';
 
-import { ProtobufSchemaManager } from './protobuf-schema-manager';
-import { StructSchemaManager } from '../struct/struct-schema-manager';
+import { ProtobufSchemaManager } from './protobuf-schema-manager.js';
+import { StructSchemaManager } from '../struct/struct-schema-manager.js';
 
-import type { NetworkTablesBaseTopic } from './base-topic';
-import type { NetworkTablesPrefixTopic } from './prefix-topic';
-import type { NetworkTablesTopic } from './topic';
+import type { NetworkTablesBaseTopic } from './base-topic.js';
+import type { NetworkTablesPrefixTopic } from './prefix-topic.js';
+import type { NetworkTablesTopic } from './topic.js';
 
 /** The client for the PubSub protocol. */
 export class PubSubClient {

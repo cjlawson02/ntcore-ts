@@ -1,19 +1,19 @@
 import WSMock from 'vitest-websocket-mock';
 
-import { completeRttHandshake, disableSocketIdleTimeout } from '../../../tests/rtt-handshake';
-import { NetworkTablesTypeInfos } from '../types/types';
+import { completeRttHandshake, disableSocketIdleTimeout } from '../../../tests/rtt-handshake.js';
+import { NetworkTablesTypeInfos } from '../types/types.js';
 
-import { Messenger } from './messenger';
-import { NetworkTablesSocket } from './socket';
+import { Messenger } from './messenger.js';
+import { NetworkTablesSocket } from './socket.js';
 
-import type { NetworkTablesTopic } from '../pubsub/topic';
+import type { NetworkTablesTopic } from '../pubsub/topic.js';
 import type {
   AnnounceMessage,
   PublishMessageParams,
   SetPropertiesMessageParams,
   SubscribeMessageParams,
   PropertiesMessage,
-} from '../types/types';
+} from '../types/types.js';
 
 describe('Messenger', () => {
   let messenger: Messenger;

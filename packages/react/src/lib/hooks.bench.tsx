@@ -5,9 +5,9 @@ import { render } from '@testing-library/react';
 import '@testing-library/react/dont-cleanup-after-each';
 import { flushSync } from 'react-dom';
 import { NetworkTablesTypeInfos, type NetworkTables } from '@ntcore-ts/client';
-import { NtcoreContext } from './context';
-import { useTopic } from './use-topic';
-import { usePrefixTopic } from './use-prefix-topic';
+import { NtcoreContext } from './context.js';
+import { useTopic } from './use-topic.js';
+import { usePrefixTopic } from './use-prefix-topic.js';
 
 type TopicCallback = (value: unknown, params?: { name: string; type: string }) => void;
 

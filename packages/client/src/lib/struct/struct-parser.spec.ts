@@ -1,5 +1,5 @@
-import { parseSchema, buildStructDescriptor } from './struct-parser';
-import type { StructDescriptor } from './struct-descriptor';
+import { parseSchema, buildStructDescriptor } from './struct-parser.js';
+import type { StructDescriptor } from './struct-descriptor.js';
 
 describe('struct-parser', () => {
   describe('parseSchema', () => {

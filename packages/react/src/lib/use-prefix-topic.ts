@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { NetworkTablesTypes, SubscribeOptions } from '@ntcore-ts/client';
-import { useNtcore } from './context';
-import { useLatestRef } from './use-latest-ref';
+import { useNtcore } from './context.js';
+import { useLatestRef } from './use-latest-ref.js';
 
 /**
  * Last update from a prefix topic: value, NT type string, and subtopic name.

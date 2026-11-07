@@ -5,11 +5,11 @@ import * as protobuf from 'protobufjs';
 import WSMock from 'vitest-websocket-mock';
 import { z } from 'zod';
 
-import type { AnnounceMessage } from '../types/types';
-import { PubSubClient } from './pubsub';
-import { NetworkTablesProtobufTopic } from './protobuf-topic';
-import { autoAnnounceOnPublish } from '../../../tests/auto-announce';
-import { completeRttHandshake, disableSocketIdleTimeout } from '../../../tests/rtt-handshake';
+import type { AnnounceMessage } from '../types/types.js';
+import { PubSubClient } from './pubsub.js';
+import { NetworkTablesProtobufTopic } from './protobuf-topic.js';
+import { autoAnnounceOnPublish } from '../../../tests/auto-announce.js';
+import { completeRttHandshake, disableSocketIdleTimeout } from '../../../tests/rtt-handshake.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const SIMPLE_PROTO_PATH = path.join(__dirname, '__fixtures__', 'simple.proto');

@@ -4,12 +4,12 @@ import { fileURLToPath } from 'url';
 import * as protobuf from 'protobufjs';
 import WSMock from 'vitest-websocket-mock';
 
-import { NetworkTablesTypeInfos } from '../types/types';
+import { NetworkTablesTypeInfos } from '../types/types.js';
 
-import { PubSubClient } from './pubsub';
-import { ProtobufSchemaManager } from './protobuf-schema-manager';
-import { autoAnnounceOnPublish } from '../../../tests/auto-announce';
-import { completeRttHandshake, disableSocketIdleTimeout } from '../../../tests/rtt-handshake';
+import { PubSubClient } from './pubsub.js';
+import { ProtobufSchemaManager } from './protobuf-schema-manager.js';
+import { autoAnnounceOnPublish } from '../../../tests/auto-announce.js';
+import { completeRttHandshake, disableSocketIdleTimeout } from '../../../tests/rtt-handshake.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const SIMPLE_PROTO_PATH = path.join(__dirname, '__fixtures__', 'simple.proto');

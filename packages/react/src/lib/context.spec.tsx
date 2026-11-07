@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react';
 import { renderHook } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { NtcoreProvider, useNtcore } from './context';
-import type { NtcoreProviderProps } from './context';
+import { NtcoreProvider, useNtcore } from './context.js';
+import type { NtcoreProviderProps } from './context.js';
 
 const mockRemoveConnectionListener = vi.fn();
 const mockUnsubscribe = vi.fn();
