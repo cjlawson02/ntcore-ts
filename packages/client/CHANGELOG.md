@@ -1,5 +1,11 @@
 # @ntcore-ts/client
 
+## 1.1.1
+
+### Patch Changes
+
+- [#685](https://github.com/cjlawson02/ntcore-ts/pull/685) [`ccd1b6d`](https://github.com/cjlawson02/ntcore-ts/commit/ccd1b6d16f34ab8baa9f0d0823238a873ece2b82) Thanks [@cjlawson02](https://github.com/cjlawson02)! - Fix published type declarations failing to resolve under `moduleResolution: node16`/`nodenext`.
+
 ## 1.1.0 (2026-11-07)
 
 [Compare changes](https://github.com/cjlawson02/ntcore-ts/compare/@ntcore-ts/client-v1.0.0...@ntcore-ts/client-v1.1.0)
