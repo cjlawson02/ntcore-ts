@@ -1,3 +1,10 @@
+# [@ntcore-ts/client-v1.1.0-beta.4](https://github.com/cjlawson02/ntcore-ts/compare/@ntcore-ts/client-v1.1.0-beta.3...@ntcore-ts/client-v1.1.0-beta.4) (2026-11-07)
+
+
+### Bug Fixes
+
+* publish packages with valid dist entry points ([3a667cd](https://github.com/cjlawson02/ntcore-ts/commit/3a667cd134a1484ce7763918ab21bf56ab140ef3))
+
 # [@ntcore-ts/client-v1.1.0-beta.3](https://github.com/cjlawson02/ntcore-ts/compare/@ntcore-ts/client-v1.1.0-beta.2...@ntcore-ts/client-v1.1.0-beta.3) (2026-11-07)
 
 ### Bug Fixes
