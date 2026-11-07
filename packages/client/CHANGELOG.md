@@ -1,3 +1,10 @@
+# [@ntcore-ts/client-v1.1.0-beta.3](https://github.com/cjlawson02/ntcore-ts/compare/@ntcore-ts/client-v1.1.0-beta.2...@ntcore-ts/client-v1.1.0-beta.3) (2026-11-07)
+
+
+### Bug Fixes
+
+* **release:** load each package's release config ([#679](https://github.com/cjlawson02/ntcore-ts/issues/679)) ([2281951](https://github.com/cjlawson02/ntcore-ts/commit/228195144a8cdf52aac4ceaaa636a1889711924b))
+
 # Changelog
 
 Note: there may be breaking changes between each beta version, but if a breaking change is introduced out of beta, it will be a major version change
