@@ -1,11 +1,11 @@
 import WSMock from 'vitest-websocket-mock';
 import { z } from 'zod';
 
-import { completeRttHandshake, disableSocketIdleTimeout } from '../../../tests/rtt-handshake';
-import { NetworkTablesJsonTopic } from './json-topic';
-import { PubSubClient } from './pubsub';
+import { completeRttHandshake, disableSocketIdleTimeout } from '../../../tests/rtt-handshake.js';
+import { NetworkTablesJsonTopic } from './json-topic.js';
+import { PubSubClient } from './pubsub.js';
 
-import type { AnnounceMessage } from '../types/types';
+import type { AnnounceMessage } from '../types/types.js';
 
 describe('NetworkTablesJsonTopic', () => {
   let topic: NetworkTablesJsonTopic<{ foo: string; n: number }>;

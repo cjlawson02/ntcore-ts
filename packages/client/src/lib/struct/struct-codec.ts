@@ -1,5 +1,5 @@
-import type { StructDescriptor, StructFieldDescriptor } from './struct-descriptor';
-import { getPrimitiveSize } from './struct-descriptor';
+import type { StructDescriptor, StructFieldDescriptor } from './struct-descriptor.js';
+import { getPrimitiveSize } from './struct-descriptor.js';
 
 /** Plain object representation of a struct (for pack input / unpack output). */
 export type StructPlainObject = Record<string, unknown>;

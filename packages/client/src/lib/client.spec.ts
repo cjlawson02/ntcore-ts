@@ -1,10 +1,10 @@
-import { NetworkTables } from './client';
-import { PubSubClient } from './pubsub/pubsub';
-import { Messenger } from './socket/messenger';
-import { NetworkTablesSocket } from './socket/socket';
-import { Pose2d } from './struct/geometry';
-import { NetworkTablesTypeInfos } from './types/types';
-import { LogLevel } from './util/logger';
+import { NetworkTables } from './client.js';
+import { PubSubClient } from './pubsub/pubsub.js';
+import { Messenger } from './socket/messenger.js';
+import { NetworkTablesSocket } from './socket/socket.js';
+import { Pose2d } from './struct/geometry.js';
+import { NetworkTablesTypeInfos } from './types/types.js';
+import { LogLevel } from './util/logger.js';
 import { z } from 'zod';
 
 describe('NetworkTables', () => {

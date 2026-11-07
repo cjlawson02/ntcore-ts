@@ -1,8 +1,8 @@
 import WSMock from 'vitest-websocket-mock';
 
-import { completeRttHandshake, disableSocketIdleTimeout } from '../../../tests/rtt-handshake';
-import { PubSubClient } from './pubsub';
-import { NetworkTablesStructTopic } from './struct-topic';
+import { completeRttHandshake, disableSocketIdleTimeout } from '../../../tests/rtt-handshake.js';
+import { PubSubClient } from './pubsub.js';
+import { NetworkTablesStructTopic } from './struct-topic.js';
 
 const serverUrl = 'ws://localhost:5814/nt/9999';
 

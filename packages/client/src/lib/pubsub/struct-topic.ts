@@ -3,18 +3,18 @@ import {
   type AnnounceMessageParams,
   type PublishMessageParams,
   type TopicProperties,
-} from '../types/types';
+} from '../types/types.js';
 
-import { pubsubLogger } from '../util/logger';
+import { pubsubLogger } from '../util/logger.js';
 
-import { NetworkTablesTopic } from './topic';
+import { NetworkTablesTopic } from './topic.js';
 
-import type { PubSubClient } from './pubsub';
+import type { PubSubClient } from './pubsub.js';
 import type { z } from 'zod';
-import type { StructDescriptor } from '../struct/struct-descriptor';
-import { pack, unpack, type StructPlainObject } from '../struct/struct-codec';
-import { getBuiltInDescriptor } from '../struct/built-in-schemas';
-import { parseSchema, buildStructDescriptor } from '../struct/struct-parser';
+import type { StructDescriptor } from '../struct/struct-descriptor.js';
+import { pack, unpack, type StructPlainObject } from '../struct/struct-codec.js';
+import { getBuiltInDescriptor } from '../struct/built-in-schemas.js';
+import { parseSchema, buildStructDescriptor } from '../struct/struct-parser.js';
 
 function structTypeInfo(typeName: string, isArray: boolean): [5, string] {
   return [5, isArray ? `struct:${typeName}[]` : `struct:${typeName}`];

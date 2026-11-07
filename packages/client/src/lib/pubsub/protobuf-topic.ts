@@ -4,13 +4,13 @@ import {
   type AnnounceMessageParams,
   type PublishMessageParams,
   type TopicProperties,
-} from '../types/types';
+} from '../types/types.js';
 
-import { pubsubLogger } from '../util/logger';
+import { pubsubLogger } from '../util/logger.js';
 
-import { NetworkTablesTopic } from './topic';
+import { NetworkTablesTopic } from './topic.js';
 
-import type { PubSubClient } from './pubsub';
+import type { PubSubClient } from './pubsub.js';
 import type { Type } from 'protobufjs';
 import type { z } from 'zod';
 

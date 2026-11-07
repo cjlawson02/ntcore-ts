@@ -1,13 +1,13 @@
-import { NetworkTablesTypeInfos } from '../types/types';
-import type { AnnounceMessageParams } from '../types/types';
-import { parseSchema, buildStructDescriptor } from './struct-parser';
-import type { ParsedField } from './struct-parser';
-import type { StructDescriptor } from './struct-descriptor';
-import { getBuiltInDescriptor, getBuiltInSchemaString } from './built-in-schemas';
-import { NetworkTablesPrefixTopic } from '../pubsub/prefix-topic';
-import { NetworkTablesTopic } from '../pubsub/topic';
-import type { PubSubClient } from '../pubsub/pubsub';
-import { pubsubLogger } from '../util/logger';
+import { NetworkTablesTypeInfos } from '../types/types.js';
+import type { AnnounceMessageParams } from '../types/types.js';
+import { parseSchema, buildStructDescriptor } from './struct-parser.js';
+import type { ParsedField } from './struct-parser.js';
+import type { StructDescriptor } from './struct-descriptor.js';
+import { getBuiltInDescriptor, getBuiltInSchemaString } from './built-in-schemas.js';
+import { NetworkTablesPrefixTopic } from '../pubsub/prefix-topic.js';
+import { NetworkTablesTopic } from '../pubsub/topic.js';
+import type { PubSubClient } from '../pubsub/pubsub.js';
+import { pubsubLogger } from '../util/logger.js';
 
 const STRUCT_SCHEMA_PREFIX = '/.schema/struct:';
 

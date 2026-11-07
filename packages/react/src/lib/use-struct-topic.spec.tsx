@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react';
 import { renderHook, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { NtcoreProvider } from './context';
-import { useStructTopic } from './use-struct-topic';
+import { NtcoreProvider } from './context.js';
+import { useStructTopic } from './use-struct-topic.js';
 
 const mockUnsubscribe = vi.fn();
 const mockUnpublish = vi.fn();

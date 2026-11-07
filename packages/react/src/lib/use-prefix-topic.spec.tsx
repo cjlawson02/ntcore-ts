@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react';
 import { renderHook, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { NtcoreProvider } from './context';
-import { usePrefixTopic, usePrefixTopicMap } from './use-prefix-topic';
+import { NtcoreProvider } from './context.js';
+import { usePrefixTopic, usePrefixTopicMap } from './use-prefix-topic.js';
 
 const mockUnsubscribe = vi.fn();
 let _subscribeCallback: ((v: unknown, params: { name: string; type: string }) => void) | null = null;

@@ -6,7 +6,7 @@ import {
   setModuleLogLevel,
   socketLogger,
   messengerLogger,
-} from './logger';
+} from './logger.js';
 
 describe('logger utilities', () => {
   beforeEach(() => {

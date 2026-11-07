@@ -32,6 +32,16 @@ This is an npm workspaces + Turborepo monorepo. Prefer `npx turbo run <task>` or
 - Processing-speed benches (`npm run bench`) run in CI on every PR. The Bench check fails when a suite is more than 50% slower than the base commit on the same runner; see [the performance guide](https://ntcore.chrislawson.dev/guide/performance).
 - For e2e features, keep specs and tests in sync (`apps/example-client/specs/` ↔ `apps/example-client/src/e2e/`). See [AGENTS.md](AGENTS.md) and [apps/example-client/specs/README.md](apps/example-client/specs/README.md).
 
+## Releases
+
+Releases are automated with [Changesets](https://changesets.dev).
+
+- **Add a changeset to any PR that should release a package:** run `npm run changeset`, pick the packages and bump type, and commit the generated `.changeset/*.md` file. Docs, tests, and tooling changes don't need one.
+- **Every merge to `main` with pending changesets** publishes `<next version>-beta.<datetime>` to the `beta` dist-tag (`npm i @ntcore-ts/client@beta`) and opens or updates a `chore: version packages` PR with the version bumps and changelogs.
+- **Merging that PR cuts the stable release:** the new versions are published to `latest`, with git tags and GitHub releases.
+
+Publishing uses npm trusted publishing (OIDC) from `.github/workflows/ci.yml`. `npm run check:packages` (publint, attw, and an install smoke test) runs on every PR.
+
 ## Docs
 
 Public guides live in [`apps/docs/`](apps/docs/). The API reference is generated from TypeDoc (`typedoc.json`) into `apps/docs/api/` when you run `npm run docs`. Change guide pages or JSDoc on public APIs; keep package READMEs short.

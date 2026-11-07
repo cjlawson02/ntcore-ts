@@ -2,12 +2,12 @@ import { decode, encode } from '@msgpack/msgpack';
 import WebSocket from 'isomorphic-ws';
 import WSMock from 'vitest-websocket-mock';
 
-import { completeRttHandshake } from '../../../tests/rtt-handshake';
-import { NetworkTablesTypeInfos } from '../types/types';
-import { LogLevel, setLogLevel } from '../util/logger';
-import { Util } from '../util/util';
+import { completeRttHandshake } from '../../../tests/rtt-handshake.js';
+import { NetworkTablesTypeInfos } from '../types/types.js';
+import { LogLevel, setLogLevel } from '../util/logger.js';
+import { Util } from '../util/util.js';
 
-import { NetworkTablesSocket } from './socket';
+import { NetworkTablesSocket } from './socket.js';
 
 /** Copy the live socket and override fields without spreading the WebSocket instance. */
 function stubSocket(target: NetworkTablesSocket, overrides: object): void {
@@ -27,7 +27,7 @@ import type {
   UnannounceMessage,
   UnannounceMessageParams,
   UnsubscribeMessage,
-} from '../types/types';
+} from '../types/types.js';
 
 describe('NetworkTablesSocket', () => {
   let socket: NetworkTablesSocket;

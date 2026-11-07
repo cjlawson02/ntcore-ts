@@ -11,6 +11,9 @@
     "lint": {
       "dependsOn": ["^build"]
     },
+    "check:pack": {
+      "dependsOn": ["build"]
+    },
     "test": {
       "dependsOn": ["^build"],
       "outputs": ["../../coverage/**", "coverage/**"]

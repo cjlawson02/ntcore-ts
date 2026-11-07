@@ -1,5 +1,5 @@
-import { buildStructDescriptor, parseSchema } from './struct-parser';
-import type { StructDescriptor } from './struct-descriptor';
+import { buildStructDescriptor, parseSchema } from './struct-parser.js';
+import type { StructDescriptor } from './struct-descriptor.js';
 
 const SCHEMAS = {
   Translation2d: 'double x;double y',

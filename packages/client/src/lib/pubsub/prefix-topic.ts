@@ -1,15 +1,15 @@
-import { pubsubLogger } from '../util/logger';
+import { pubsubLogger } from '../util/logger.js';
 
-import { NetworkTablesBaseTopic } from './base-topic';
+import { NetworkTablesBaseTopic } from './base-topic.js';
 
-import type { CallbackFn } from './base-topic';
-import type { PubSubClient } from './pubsub';
+import type { CallbackFn } from './base-topic.js';
+import type { PubSubClient } from './pubsub.js';
 import type {
   AnnounceMessageParams,
   NetworkTablesTypes,
   SubscribeMessageParams,
   SubscribeOptions,
-} from '../types/types';
+} from '../types/types.js';
 
 export class NetworkTablesPrefixTopic extends NetworkTablesBaseTopic<NetworkTablesTypes> {
   readonly type = 'prefix';

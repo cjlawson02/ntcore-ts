@@ -1,4 +1,4 @@
-import { toError } from './context';
+import { toError } from './context.js';
 
 /** Tracks whether an in-flight `publish()` has settled so unmount can unpublish immediately. */
 export type TrackedPublish = {

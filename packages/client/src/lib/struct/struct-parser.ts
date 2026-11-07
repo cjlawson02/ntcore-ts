@@ -6,7 +6,7 @@ import {
   type PrimitiveTypeName,
   type StructDescriptor,
   type StructFieldDescriptor,
-} from './struct-descriptor';
+} from './struct-descriptor.js';
 
 export type ParsedField = {
   typeName: string;

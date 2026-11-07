@@ -1,6 +1,6 @@
-import { NetworkTablesTypeInfos } from '../types/types';
+import { NetworkTablesTypeInfos } from '../types/types.js';
 
-import { PubSubClient } from './pubsub';
+import { PubSubClient } from './pubsub.js';
 
 describe('PubSubClient', () => {
   let client: PubSubClient;

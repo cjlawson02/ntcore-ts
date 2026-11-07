@@ -2,13 +2,13 @@ import { beforeAll, test } from 'vitest';
 import { encode } from '@msgpack/msgpack';
 import WSMock from 'vitest-websocket-mock';
 
-import { NetworkTablesTypeInfos } from '../types/types';
-import { LogLevel, setModuleLogLevel } from '../util/logger';
-import { Util } from '../util/util';
+import { NetworkTablesTypeInfos } from '../types/types.js';
+import { LogLevel, setModuleLogLevel } from '../util/logger.js';
+import { Util } from '../util/util.js';
 
-import { NetworkTablesSocket } from './socket';
+import { NetworkTablesSocket } from './socket.js';
 
-import type { BinaryMessage } from '../types/types';
+import type { BinaryMessage } from '../types/types.js';
 
 const serverUrl = 'ws://localhost:5812/nt/throughput-bench';
 

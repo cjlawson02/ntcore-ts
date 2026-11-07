@@ -21,7 +21,7 @@ import {
   Twist2dSchema,
   Twist3d,
   Twist3dSchema,
-} from './geometry';
+} from './geometry.js';
 
 describe('geometry', () => {
   describe('Pose2dSchema', () => {

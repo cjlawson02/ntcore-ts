@@ -7,8 +7,8 @@ import {
   type SubscribeOptions,
   type TopicProperties,
 } from '@ntcore-ts/client';
-import { toError, useNtcore } from './context';
-import { trackPublish, unpublishWhenDone, claimPublishOwner, type TrackedPublish } from './unpublish-when-done';
+import { toError, useNtcore } from './context.js';
+import { trackPublish, unpublishWhenDone, claimPublishOwner, type TrackedPublish } from './unpublish-when-done.js';
 
 /**
  * Options for useTopic. Use `publish: true` to become the publisher with default

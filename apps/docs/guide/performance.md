@@ -59,9 +59,9 @@ Writes `tmp/github-bench.json` in the [customBiggerIsBetter](https://github.com/
 
 ## CI regression checks
 
-Every push to `main` / `beta` and every pull request runs [`.github/workflows/bench.yml`](https://github.com/cjlawson02/ntcore-ts/blob/main/.github/workflows/bench.yml).
+Every push to `main` and every pull request runs [`.github/workflows/bench.yml`](https://github.com/cjlawson02/ntcore-ts/blob/main/.github/workflows/bench.yml).
 
-- Throughput is compared to the last stored `beta` or `main` result (higher ops/s is better).
+- Throughput is compared to the last stored `main` result (higher ops/s is better).
 - Each same-repo pull request gets a comment with the measured ops/s. Later runs update that comment.
 - A drop to about 2/3 of that baseline comments an alert on the PR (`alert-threshold: 150%`).
 - A drop to half of that baseline fails the job (`fail-threshold: 200%`).
@@ -69,4 +69,4 @@ Every push to `main` / `beta` and every pull request runs [`.github/workflows/be
 
 GitHub-hosted runners are noisier than a laptop, so the fail bar is deliberately wide. Treat CI as a “did we tank it?” check, not a micro-benchmark of 5% changes. Absolute ops/s on `ubuntu-latest` will not match the M1 Pro table above.
 
-Successful pushes to `beta` or `main` write the history used as the baseline. Later PRs compare against that.
+Successful pushes to `main` write the history used as the baseline. Later PRs compare against that.

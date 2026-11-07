@@ -1,12 +1,17 @@
 import WSMock from 'vitest-websocket-mock';
 
-import { completeRttHandshake, disableSocketIdleTimeout } from '../../../tests/rtt-handshake';
-import { NetworkTablesTypeInfos } from '../types/types';
+import { completeRttHandshake, disableSocketIdleTimeout } from '../../../tests/rtt-handshake.js';
+import { NetworkTablesTypeInfos } from '../types/types.js';
 
-import { PubSubClient } from './pubsub';
-import { NetworkTablesTopic } from './topic';
+import { PubSubClient } from './pubsub.js';
+import { NetworkTablesTopic } from './topic.js';
 
-import type { AnnounceMessage, PublishMessageParams, PropertiesMessage, SubscribeMessageParams } from '../types/types';
+import type {
+  AnnounceMessage,
+  PublishMessageParams,
+  PropertiesMessage,
+  SubscribeMessageParams,
+} from '../types/types.js';
 
 describe('Topic', () => {
   let topic: NetworkTablesTopic<string>;
