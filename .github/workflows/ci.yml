@@ -93,6 +93,9 @@ jobs:
           package-manager-cache: false
       - run: npm ci
       - uses: changesets/action/version@v2
+        env:
+          # @changesets/changelog-github looks up PR links and authors.
+          GITHUB_TOKEN: ${{ github.token }}
         with:
           # A PAT so CI runs on the Version Packages PR (PRs opened with GITHUB_TOKEN don't trigger workflows).
           github-token: ${{ secrets.RELEASE_GITHUB_TOKEN }}
@@ -109,6 +112,7 @@ jobs:
       cancel-in-progress: true
     permissions:
       contents: read
+      pull-requests: read # PR links in snapshot changelogs
       id-token: write # npm trusted publishing
     steps:
       - uses: actions/checkout@v7
@@ -123,6 +127,8 @@ jobs:
       - run: npx turbo run build --filter='./packages/*'
       # https://changesets.dev/guide/snapshot-releases — the version bump is never committed.
       - run: npx changeset version --snapshot beta
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
       - run: npx changeset publish --tag beta --no-git-tag
 
   pack:
