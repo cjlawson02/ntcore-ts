@@ -45,7 +45,9 @@ const config: RollupOptions = {
     format: 'esm',
     sourcemap: true,
   },
-  external: (id) => externalNames.some((name) => id === name || id.startsWith(`${name}/`)),
+  external: (id) =>
+    id !== 'protobufjs/google/protobuf/descriptor.json' &&
+    externalNames.some((name) => id === name || id.startsWith(`${name}/`)),
   plugins: [
     protobufDescriptorJson(),
     resolve({ preferBuiltins: true, extensions: ['.mjs', '.js', '.json', '.ts'] }),

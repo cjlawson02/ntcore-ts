@@ -1,9 +1,8 @@
 # [@ntcore-ts/mcp-v1.1.0-beta.2](https://github.com/cjlawson02/ntcore-ts/compare/@ntcore-ts/mcp-v1.1.0-beta.1...@ntcore-ts/mcp-v1.1.0-beta.2) (2026-11-07)
 
-
 ### Bug Fixes
 
-* **release:** load each package's release config ([#679](https://github.com/cjlawson02/ntcore-ts/issues/679)) ([2281951](https://github.com/cjlawson02/ntcore-ts/commit/228195144a8cdf52aac4ceaaa636a1889711924b))
+- **release:** load each package's release config ([#679](https://github.com/cjlawson02/ntcore-ts/issues/679)) ([2281951](https://github.com/cjlawson02/ntcore-ts/commit/228195144a8cdf52aac4ceaaa636a1889711924b))
 
 # Changelog
 

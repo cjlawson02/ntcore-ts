@@ -9,13 +9,16 @@
     "url": "https://github.com/cjlawson02/ntcore-ts.git",
     "directory": "packages/react"
   },
+  "main": "./dist/index.esm.js",
+  "module": "./dist/index.esm.js",
+  "types": "./dist/index.d.ts",
   "exports": {
+    "./package.json": "./package.json",
     ".": {
-      "types": "./src/index.ts",
-      "import": "./src/index.ts"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.esm.js"
     }
   },
-  "types": "./src/index.ts",
   "files": [
     "dist",
     "README.md"
@@ -37,17 +40,7 @@
     "@ntcore-ts/client": "*"
   },
   "publishConfig": {
-    "access": "public",
-    "main": "./dist/index.esm.js",
-    "module": "./dist/index.esm.js",
-    "types": "./dist/index.d.ts",
-    "exports": {
-      "./package.json": "./package.json",
-      ".": {
-        "import": "./dist/index.esm.js",
-        "types": "./dist/index.d.ts"
-      }
-    }
+    "access": "public"
   },
   "keywords": [
     "ntcore",
