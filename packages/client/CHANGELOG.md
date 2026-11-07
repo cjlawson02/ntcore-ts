@@ -1,3 +1,10 @@
+# [@ntcore-ts/client-v1.1.0](https://github.com/cjlawson02/ntcore-ts/compare/@ntcore-ts/client-v1.0.0...@ntcore-ts/client-v1.1.0) (2026-11-07)
+
+
+### Features
+
+* release 1.1.0 - structs, publish fixes, and performance ([#684](https://github.com/cjlawson02/ntcore-ts/issues/684)) ([a82a6dc](https://github.com/cjlawson02/ntcore-ts/commit/a82a6dc8addbbe7c0505e332d922f998c4fbd493))
+
 # [@ntcore-ts/client-v1.1.0-beta.4](https://github.com/cjlawson02/ntcore-ts/compare/@ntcore-ts/client-v1.1.0-beta.3...@ntcore-ts/client-v1.1.0-beta.4) (2026-11-07)
 
 
