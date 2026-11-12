@@ -50,7 +50,7 @@
     "lint-staged": "^17.5.1",
     "oxfmt": "0.77.0",
     "oxlint": "1.92.0",
-    "oxlint-tsgolint": "7.0.2006",
+    "oxlint-tsgolint": "7.0.2007",
     "protobufjs": "^8.8.0",
     "publint": "^0.3.25",
     "react": "^19.3.0",
