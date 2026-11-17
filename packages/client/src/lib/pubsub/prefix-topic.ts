@@ -7,8 +7,10 @@ import type { PubSubClient } from './pubsub.js';
 import type {
   AnnounceMessageParams,
   NetworkTablesTypes,
+  PropertiesMessageParams,
   SubscribeMessageParams,
   SubscribeOptions,
+  UnannounceMessageParams,
 } from '../types/types.js';
 
 export class NetworkTablesPrefixTopic extends NetworkTablesBaseTopic<NetworkTablesTypes> {
@@ -17,6 +19,9 @@ export class NetworkTablesPrefixTopic extends NetworkTablesBaseTopic<NetworkTabl
     string,
     { params: AnnounceMessageParams; value: NetworkTablesTypes; serverTime: number }
   >();
+  private readonly _announceListeners = new Set<(params: AnnounceMessageParams) => void>();
+  private readonly _unannounceListeners = new Set<(params: UnannounceMessageParams) => void>();
+  private readonly _propertiesListeners = new Set<(params: PropertiesMessageParams) => void>();
 
   /**
    * Creates a new topic. This should only be done after the
@@ -35,6 +40,82 @@ export class NetworkTablesPrefixTopic extends NetworkTablesBaseTopic<NetworkTabl
 
     pubsubLogger.debug('Prefix topic created', { prefix: name });
     this.client.registerTopic(this);
+  }
+
+  /** */
+  /* SUBTOPIC LIFECYCLE */
+  /** */
+
+  /**
+   * Adds a listener for subtopics being announced, including ones that haven't received a value yet.
+   * @param callback - The callback to call with the subtopic's announce params.
+   * @returns A function to remove the listener.
+   */
+  addAnnounceListener(callback: (params: AnnounceMessageParams) => void) {
+    this._announceListeners.add(callback);
+    return () => {
+      this._announceListeners.delete(callback);
+    };
+  }
+
+  /**
+   * Adds a listener for subtopics being unannounced, ex. when their last publisher goes away.
+   * @param callback - The callback to call with the subtopic's unannounce params.
+   * @returns A function to remove the listener.
+   */
+  addUnannounceListener(callback: (params: UnannounceMessageParams) => void) {
+    this._unannounceListeners.add(callback);
+    return () => {
+      this._unannounceListeners.delete(callback);
+    };
+  }
+
+  /**
+   * Adds a listener for changes to subtopic properties.
+   * @param callback - The callback to call with the properties update. Properties set to `null` were deleted.
+   * @returns A function to remove the listener.
+   */
+  addPropertiesListener(callback: (params: PropertiesMessageParams) => void) {
+    this._propertiesListeners.add(callback);
+    return () => {
+      this._propertiesListeners.delete(callback);
+    };
+  }
+
+  /**
+   * Marks a subtopic as announced. This should only be called by the PubSubClient.
+   * @param params - The parameters of the announcement.
+   */
+  override announce(params: AnnounceMessageParams) {
+    super.announce(params);
+    this.notifyListeners(this._announceListeners, params);
+  }
+
+  /**
+   * Marks a subtopic as unannounced. This should only be called by the PubSubClient.
+   * @param params - The parameters of the unannouncement.
+   */
+  unannounceSubtopic(params: UnannounceMessageParams) {
+    this._lastSubtopicValues.delete(params.name);
+    this.notifyListeners(this._unannounceListeners, params);
+  }
+
+  /**
+   * Applies a properties update for a subtopic. This should only be called by the PubSubClient.
+   * @param params - The parameters of the properties update.
+   */
+  updateSubtopicProperties(params: PropertiesMessageParams) {
+    this.notifyListeners(this._propertiesListeners, params);
+  }
+
+  private notifyListeners<T extends { name: string }>(listeners: Set<(params: T) => void>, params: T) {
+    listeners.forEach((listener) => {
+      try {
+        listener(params);
+      } catch (error: unknown) {
+        pubsubLogger.warn('Prefix topic listener threw', { prefix: this.name, subtopicName: params.name, error });
+      }
+    });
   }
 
   /** */

@@ -136,6 +136,53 @@ describe('Prefix Topic', () => {
     });
   });
 
+  describe('subtopic listeners', () => {
+    const params: AnnounceMessageParams = { id: 1, name: '/foo/a', type: 'string', properties: {} };
+
+    it('notifies listeners when matching subtopics are announced, unannounced, or change properties', () => {
+      const prefixTopic = new NetworkTablesPrefixTopic(client, '/foo/');
+      const onAnnounce = vi.fn();
+      const onUnannounce = vi.fn();
+      const onProperties = vi.fn();
+      prefixTopic.addAnnounceListener(onAnnounce);
+      prefixTopic.addUnannounceListener(onUnannounce);
+      prefixTopic.addPropertiesListener(onProperties);
+
+      client['onTopicAnnounce'](params);
+      client['onTopicProperties']({ name: '/foo/a', update: { retained: true } });
+      client['onTopicUnannounce']({ id: 1, name: '/foo/a' });
+      client['onTopicAnnounce']({ id: 2, name: '/bar/a', type: 'string', properties: {} });
+      client['onTopicProperties']({ name: '/bar/a', update: { retained: true } });
+      client['onTopicUnannounce']({ id: 2, name: '/bar/a' });
+
+      expect(onAnnounce).toHaveBeenCalledExactlyOnceWith(params);
+      expect(onProperties).toHaveBeenCalledExactlyOnceWith({ name: '/foo/a', update: { retained: true } });
+      expect(onUnannounce).toHaveBeenCalledExactlyOnceWith({ id: 1, name: '/foo/a' });
+    });
+
+    it('stops notifying a listener after it is removed', () => {
+      const prefixTopic = new NetworkTablesPrefixTopic(client, '/foo/');
+      const onAnnounce = vi.fn();
+      const removeListener = prefixTopic.addAnnounceListener(onAnnounce);
+      removeListener();
+
+      client['onTopicAnnounce'](params);
+
+      expect(onAnnounce).not.toHaveBeenCalled();
+    });
+
+    it('does not replay values of unannounced subtopics', () => {
+      const prefixTopic = new NetworkTablesPrefixTopic(client, '/foo/');
+      prefixTopic.updateValue(params, 'va', Date.now());
+
+      client['onTopicUnannounce']({ id: 1, name: '/foo/a' });
+      const immediate = vi.fn();
+      prefixTopic.subscribe(immediate, { immediateNotify: true });
+
+      expect(immediate).not.toHaveBeenCalled();
+    });
+  });
+
   describe('unsubscribe', () => {
     it('removes the subscriber from the topic', () => {
       const callback: CallbackFn<NetworkTablesTypes> = (_) => vi.fn();

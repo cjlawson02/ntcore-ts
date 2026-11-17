@@ -84,6 +84,38 @@ describe('Feature: Prefix Topics', () => {
   );
 
   it(
+    '[PFX-4, PFX-6] notifies prefix listeners when a subtopic is announced and unannounced',
+    async () => {
+      const listenerPrefix = nt.getPrefixTopic('/MyTable/PrefixListeners/');
+      listenerPrefix.subscribe(() => {});
+      const name = '/MyTable/PrefixListeners/Target';
+      const waitFor = <T extends { name: string }>(add: (callback: (params: T) => void) => () => void, label: string) =>
+        new Promise<T>((resolve, reject) => {
+          const t = setTimeout(() => reject(new Error(`${label} listener timeout`)), VALUE_WAIT_MS);
+          const remove = add((params) => {
+            if (params.name === name) {
+              clearTimeout(t);
+              remove();
+              resolve(params);
+            }
+          });
+        });
+
+      const topic = nt.getStringTopic(name, 'initial');
+
+      const announced = waitFor((callback) => listenerPrefix.addAnnounceListener(callback), 'Announce');
+      // No value is set, the topic only exists
+      await topic.publish();
+      await expect(announced).resolves.toMatchObject({ name, type: 'string' });
+
+      const unannounced = waitFor((callback) => listenerPrefix.addUnannounceListener(callback), 'Unannounce');
+      topic.unpublish();
+      await expect(unannounced).resolves.toMatchObject({ name });
+    },
+    VALUE_WAIT_MS * 2 + 2_000
+  );
+
+  it(
     '[PFX-9] receives values on a topic created after the prefix subscription covered it',
     async () => {
       // PFX-1 already waited for the prefix subscription to receive X, so the server won't announce it again

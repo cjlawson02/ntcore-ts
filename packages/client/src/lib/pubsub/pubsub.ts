@@ -445,6 +445,11 @@ export class PubSubClient {
    * @param params - The unannounce message parameters.
    */
   private onTopicUnannounce = (params: UnannounceMessageParams) => {
+    this.prefixTopics.forEach((prefixTopic) => {
+      if (params.name.startsWith(prefixTopic.name)) {
+        prefixTopic.unannounceSubtopic(params);
+      }
+    });
     const topic = this.topics.get(params.name);
     this.pendingValueUpdates.delete(params.id);
     if (!topic) {
@@ -476,6 +481,11 @@ export class PubSubClient {
    * @param params - The properties message parameters.
    */
   private onTopicProperties = (params: PropertiesMessageParams) => {
+    this.prefixTopics.forEach((prefixTopic) => {
+      if (params.name.startsWith(prefixTopic.name)) {
+        prefixTopic.updateSubtopicProperties(params);
+      }
+    });
     const topic = this.topics.get(params.name);
     if (params.ack) {
       if (!topic) {
