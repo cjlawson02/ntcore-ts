@@ -50,6 +50,13 @@ describe('schema', () => {
       expect(topicPropertiesSchema.safeParse({ persistent: true, retained: true }).success).toBe(true);
       expect(topicPropertiesSchema.safeParse({}).success).toBe(true);
     });
+
+    it('keeps properties that are not part of the spec', () => {
+      expect(topicPropertiesSchema.parse({ retained: true, unit: 'meters' })).toEqual({
+        retained: true,
+        unit: 'meters',
+      });
+    });
   });
 
   describe('subscriptionOptionsSchema', () => {
