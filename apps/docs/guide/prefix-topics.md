@@ -50,7 +50,7 @@ allTopics.subscribe((value, params) => {
 
 ## Track topics as they come and go
 
-`subscribe` is only called when a topic sends a value. To know about topics that haven't sent a value yet, that go away, or whose properties change, add listeners. Each one returns a function that removes it:
+Subscriber callbacks only run when a topic sends a value. To track topics that haven't sent a value yet, go away, or change properties, add listeners. Each `add*Listener` method returns a function that removes the listener:
 
 ```typescript
 import { NetworkTables } from '@ntcore-ts/client';
@@ -58,16 +58,16 @@ import { NetworkTables } from '@ntcore-ts/client';
 const ntcore = NetworkTables.getInstanceByTeam(973);
 
 const allTopics = ntcore.getPrefixTopic('/');
-const topics = new Map<string, string>();
+const topicTypes = new Map<string, string>();
 
-// The server only announces topics to clients that are subscribed to them
+// The server only announces topics to subscribed clients
 allTopics.subscribe(() => {}, { topicsonly: true });
 
 allTopics.addAnnounceListener((params) => {
-  topics.set(params.name, params.type);
+  topicTypes.set(params.name, params.type);
 });
 allTopics.addUnannounceListener((params) => {
-  topics.delete(params.name);
+  topicTypes.delete(params.name);
 });
 allTopics.addPropertiesListener((params) => {
   console.log(`Properties of ${params.name} changed`, params.update);

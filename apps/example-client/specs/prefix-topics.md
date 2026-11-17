@@ -17,9 +17,9 @@ The client can subscribe to a name prefix and receive values from every topic wh
 | PFX-1 | `getPrefixTopic(prefix)` + `subscribe(cb)` shall deliver values for every topic whose name starts with `prefix`.                                                              |
 | PFX-2 | The prefix subscription callback shall receive the matched topic name in its `params.name` argument so callers can distinguish sub-topics.                                    |
 | PFX-3 | A scalar topic (e.g. `/MyTable/AutoMode`) published by the client shall be readable via a fresh `getStringTopic(...).subscribe(...)` while the prefix subscription is active. |
-| PFX-4 | `addAnnounceListener(cb)` shall be called when a topic matching the prefix is announced, even before it has a value.                                                          |
-| PFX-5 | `addPropertiesListener(cb)` shall be called when the properties of a topic matching the prefix change.                                                                        |
-| PFX-6 | `addUnannounceListener(cb)` shall be called when a topic matching the prefix is unannounced.                                                                                  |
+| PFX-4 | An `addAnnounceListener` callback shall be called when a topic matching the prefix is announced, even before it has a value.                                                  |
+| PFX-5 | An `addPropertiesListener` callback shall be called when the properties of a topic matching the prefix change.                                                                |
+| PFX-6 | An `addUnannounceListener` callback shall be called when a topic matching the prefix is unannounced.                                                                          |
 | PFX-9 | A regular topic created after a prefix subscription already received its announcement shall receive the topic's current value and later updates.                              |
 
 ## Tests
@@ -33,4 +33,4 @@ The client can subscribe to a name prefix and receive values from every topic wh
 
 ## Coverage
 
-PFX-1…PFX-4, PFX-6 and PFX-9 have at least one implemented test. PFX-5 is covered by unit tests only: WPILib's server doesn't set `ack` on its `properties` reply, so `setProperties()` can't be awaited here.
+PFX-1…PFX-4, PFX-6 and PFX-9 have at least one implemented test. PFX-5 has unit tests only, since WPILib's server never sets `ack` on its `properties` reply and `setProperties()` times out against it.

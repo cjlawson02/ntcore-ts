@@ -2,4 +2,4 @@
 '@ntcore-ts/client': minor
 ---
 
-Add `addAnnounceListener`, `addUnannounceListener`, and `addPropertiesListener` to prefix topics, so you can track subtopics that haven't sent a value yet, that go away, or whose properties change
+Add `addAnnounceListener`, `addUnannounceListener`, and `addPropertiesListener` to prefix topics to track subtopics that haven't sent a value yet, go away, or change properties. `immediateNotify` no longer replays values from unannounced subtopics.

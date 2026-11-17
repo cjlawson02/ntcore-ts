@@ -47,8 +47,8 @@ export class NetworkTablesPrefixTopic extends NetworkTablesBaseTopic<NetworkTabl
   /** */
 
   /**
-   * Adds a listener for subtopics being announced, including ones that haven't received a value yet.
-   * @param callback - The callback to call with the subtopic's announce params.
+   * Adds a listener for subtopic announcements, including subtopics that haven't sent a value yet.
+   * @param callback - Called with the subtopic's announce params.
    * @returns A function to remove the listener.
    */
   addAnnounceListener(callback: (params: AnnounceMessageParams) => void) {
@@ -59,8 +59,8 @@ export class NetworkTablesPrefixTopic extends NetworkTablesBaseTopic<NetworkTabl
   }
 
   /**
-   * Adds a listener for subtopics being unannounced, ex. when their last publisher goes away.
-   * @param callback - The callback to call with the subtopic's unannounce params.
+   * Adds a listener for subtopic unannouncements, e.g. when a subtopic's last publisher goes away.
+   * @param callback - Called with the subtopic's unannounce params.
    * @returns A function to remove the listener.
    */
   addUnannounceListener(callback: (params: UnannounceMessageParams) => void) {
@@ -71,8 +71,8 @@ export class NetworkTablesPrefixTopic extends NetworkTablesBaseTopic<NetworkTabl
   }
 
   /**
-   * Adds a listener for changes to subtopic properties.
-   * @param callback - The callback to call with the properties update. Properties set to `null` were deleted.
+   * Adds a listener for subtopic property changes.
+   * @param callback - Called with the properties update. Properties set to `null` were deleted.
    * @returns A function to remove the listener.
    */
   addPropertiesListener(callback: (params: PropertiesMessageParams) => void) {
@@ -93,7 +93,7 @@ export class NetworkTablesPrefixTopic extends NetworkTablesBaseTopic<NetworkTabl
 
   /**
    * Marks a subtopic as unannounced. This should only be called by the PubSubClient.
-   * @param params - The parameters of the unannouncement.
+   * @param params - The unannounce message parameters.
    */
   unannounceSubtopic(params: UnannounceMessageParams) {
     this._lastSubtopicValues.delete(params.name);
@@ -102,7 +102,7 @@ export class NetworkTablesPrefixTopic extends NetworkTablesBaseTopic<NetworkTabl
 
   /**
    * Applies a properties update for a subtopic. This should only be called by the PubSubClient.
-   * @param params - The parameters of the properties update.
+   * @param params - The properties message parameters.
    */
   updateSubtopicProperties(params: PropertiesMessageParams) {
     this.notifyListeners(this._propertiesListeners, params);
