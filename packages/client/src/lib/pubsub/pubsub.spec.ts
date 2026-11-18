@@ -1,6 +1,8 @@
 import { NetworkTablesTypeInfos } from '../types/types.js';
 
+import { NetworkTablesPrefixTopic } from './prefix-topic.js';
 import { PubSubClient } from './pubsub.js';
+import { NetworkTablesTopic } from './topic.js';
 
 describe('PubSubClient', () => {
   let client: PubSubClient;
@@ -13,6 +15,7 @@ describe('PubSubClient', () => {
     client['topics'].clear();
     client['prefixTopics'].clear();
     client['knownTopicParams'].clear();
+    client['lastValues'].clear();
     client['inFlightOperations'].clear();
     client['_isCleaningUp'] = false;
   });
@@ -186,6 +189,37 @@ describe('PubSubClient', () => {
       'early value',
       1000
     );
+  });
+
+  it('replays announcement and latest value to a topic created after a prefix topic received them', () => {
+    new NetworkTablesPrefixTopic(client, '/');
+    client['onTopicAnnounce']({ id: 7, name: '/table/value', type: 'double', properties: {} });
+    client['onTopicUpdate']({ topicId: 7, value: 4.2, typeNum: NetworkTablesTypeInfos.kDouble[0], serverTime: 1000 });
+
+    const topic = new NetworkTablesTopic<number>(client, '/table/value', NetworkTablesTypeInfos.kDouble);
+    const callback = vi.fn();
+    topic.subscribe(callback);
+
+    expect(topic.id).toBe(7);
+    expect(topic.getValue()).toBe(4.2);
+    expect(callback).toHaveBeenCalledWith(4.2, expect.objectContaining({ id: 7 }));
+
+    // Later updates are routed to the topic by id
+    client['onTopicUpdate']({ topicId: 7, value: 5, typeNum: NetworkTablesTypeInfos.kDouble[0], serverTime: 2000 });
+    expect(topic.getValue()).toBe(5);
+  });
+
+  it('replays announcements and latest values to a prefix topic created after a topic received them', () => {
+    const topic = new NetworkTablesTopic<number>(client, '/table/value', NetworkTablesTypeInfos.kDouble);
+    client['onTopicAnnounce']({ id: 7, name: '/table/value', type: 'double', properties: {} });
+    client['onTopicUpdate']({ topicId: 7, value: 4.2, typeNum: NetworkTablesTypeInfos.kDouble[0], serverTime: 1000 });
+    expect(topic.getValue()).toBe(4.2);
+
+    const prefixTopic = new NetworkTablesPrefixTopic(client, '/table/');
+    const callback = vi.fn();
+    prefixTopic.subscribe(callback);
+
+    expect(callback).toHaveBeenCalledWith(4.2, expect.objectContaining({ id: 7, name: '/table/value' }));
   });
 
   it('handles announcements for a topic', () => {

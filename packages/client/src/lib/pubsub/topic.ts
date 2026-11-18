@@ -231,6 +231,7 @@ export class NetworkTablesTopic<
         } as const);
       callback(this.getValue(), params);
     }
+    if (this.subscribers.size === 1) this.client.replayKnownState(this);
     return subuid;
   }
 

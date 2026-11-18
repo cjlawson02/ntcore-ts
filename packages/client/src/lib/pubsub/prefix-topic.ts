@@ -64,6 +64,7 @@ export class NetworkTablesPrefixTopic extends NetworkTablesBaseTopic<NetworkTabl
         }
       });
     }
+    if (this.subscribers.size === 1) this.client.replayKnownState(this);
     return subuid;
   }
 

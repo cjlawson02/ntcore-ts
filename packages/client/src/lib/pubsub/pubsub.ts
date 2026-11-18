@@ -25,6 +25,8 @@ export class PubSubClient {
   private readonly knownTopicParams: Map<number, AnnounceMessageParams>;
   /** Value updates that arrived before the topic announcement (topicId -> latest message). Flushed when announce arrives. */
   private readonly pendingValueUpdates: Map<number, BinaryMessageData>;
+  /** Latest value received for each announced topic (topicId -> message). Replayed to topics created later. */
+  private readonly lastValues: Map<number, BinaryMessageData>;
   private readonly _protobufSchemaManager: ProtobufSchemaManager;
   private readonly _structSchemaManager: StructSchemaManager;
   private static _instances = new Map<string, PubSubClient>();
@@ -59,6 +61,7 @@ export class PubSubClient {
     this.prefixTopics = new Map();
     this.knownTopicParams = new Map();
     this.pendingValueUpdates = new Map();
+    this.lastValues = new Map();
     this._protobufSchemaManager = new ProtobufSchemaManager(this);
     this._structSchemaManager = new StructSchemaManager(this);
 
@@ -91,6 +94,7 @@ export class PubSubClient {
       });
       this.knownTopicParams.clear();
       this.pendingValueUpdates.clear();
+      this.lastValues.clear();
       // Ensure disconnect cleanup never throws.
       this.topics.forEach((topic) => {
         try {
@@ -148,6 +152,7 @@ export class PubSubClient {
     // Clear announcement state so ids are reacquired from the new connection.
     this.knownTopicParams.clear();
     this.pendingValueUpdates.clear();
+    this.lastValues.clear();
     // Ensure reinstantiation cleanup never throws (tests may register lightweight mocks).
     this.topics.forEach((topic) => {
       try {
@@ -207,6 +212,42 @@ export class PubSubClient {
   }
 
   /**
+   * Announces already known matching topics to a topic and delivers their latest values.
+   * The server announces a topic and sends its value only once per connection, so a topic subscribed after
+   * another subscription already covers it would otherwise never hear about it.
+   * @internal Called by topics on their first subscribe.
+   * @param topic - The topic that was subscribed.
+   */
+  replayKnownState<T>(topic: NetworkTablesBaseTopic<T>) {
+    if (topic.isRegular()) {
+      const params = [...this.knownTopicParams.values()].find((known) => known.name === topic.name);
+      if (!params) return;
+      pubsubLogger.debug('Replaying known topic state', { topicName: topic.name, topicId: params.id });
+      topic.announce(params);
+      const message = this.lastValues.get(params.id);
+      if (!message) return;
+      try {
+        topic.updateValue(NetworkTablesTypeInfos.validateData(topic.typeInfo, message.value), message.serverTime);
+      } catch (e) {
+        pubsubLogger.warn('Skipping invalid replayed value for topic', { topicName: topic.name, error: String(e) });
+      }
+    } else if (topic.isPrefix()) {
+      this.knownTopicParams.forEach((params) => {
+        if (!params.name.startsWith(topic.name)) return;
+        pubsubLogger.debug('Replaying known topic state to prefix topic', {
+          topicName: params.name,
+          prefix: topic.name,
+        });
+        topic.announce(params);
+        const message = this.lastValues.get(params.id);
+        if (!message) return;
+        const value = this.topics.get(params.name)?.getValue() ?? message.value;
+        topic.updateValue(params, value, message.serverTime);
+      });
+    }
+  }
+
+  /**
    * Called by the messenger when a topic is updated.
    * @param message - The message data.
    */
@@ -253,6 +294,7 @@ export class PubSubClient {
     const knownTopic = this.getKnownTopicParams(message.topicId);
 
     if (knownTopic) {
+      this.lastValues.set(message.topicId, message);
       // Use topic's value when we have one so protobuf topics pass decoded value to prefix subscribers
       const valueForPrefix = (
         topic != null ? (topic.getValue() ?? message.value) : message.value
@@ -326,6 +368,7 @@ export class PubSubClient {
    * Delivers a value update to the regular topic (if any) and all matching prefix topics.
    */
   private _deliverValueUpdate(knownTopic: AnnounceMessageParams, message: BinaryMessageData): void {
+    this.lastValues.set(knownTopic.id, message);
     const topic = this.topics.get(knownTopic.name);
     if (topic) {
       try {
@@ -362,6 +405,7 @@ export class PubSubClient {
   private onTopicUnannounce = (params: UnannounceMessageParams) => {
     const topic = this.topics.get(params.name);
     this.pendingValueUpdates.delete(params.id);
+    this.lastValues.delete(params.id);
     if (!topic) {
       pubsubLogger.debug('Topic was unannounced but does not exist', { topicName: params.name });
       // Still clean up knownTopicParams even if topic doesn't exist locally
