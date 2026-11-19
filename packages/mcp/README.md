@@ -95,7 +95,7 @@ Full guide (install, tools, write gate, workflow): [MCP server](https://ntcore.c
 
 Topic discovery uses **short-lived prefix snapshots**. Leaving a long-lived `prefix=/` subscription open on the same `@ntcore-ts/client` instance prevents later typed topic subscriptions from receiving values; the MCP layer avoids that by snapshot-then-unsubscribe and by decoding struct bytes from inventory for `nt_get_decoded`.
 
-The MCP process sets the client log level to **silent** so `tslog` never writes to stdout (which would corrupt the MCP JSON-RPC channel). Operational messages from this package go to stderr only, as single lines.
+The MCP process sets the client log level to **silent** so the client's console logging never writes to stdout (which would corrupt the MCP JSON-RPC channel). Operational messages from this package go to stderr only, as single lines.
 
 ## Out of scope (for now)
 

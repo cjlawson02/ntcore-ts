@@ -1,6 +1,6 @@
 # Logging
 
-The library uses [tslog](https://github.com/fullstack-build/tslog). You can set log levels globally or per module (`socket`, `messenger`, `pubsub`) at runtime.
+The library logs through the built-in `console`, prefixed with the module name. `TRACE` and `DEBUG` use `console.debug`, `INFO` uses `console.info`, and `WARN` uses `console.warn`, so browser DevTools can filter them by level (Chrome hides `console.debug` unless "Verbose" is enabled). You can set log levels globally or per module (`socket`, `messenger`, `pubsub`) at runtime.
 
 ## Log levels
 
@@ -59,9 +59,9 @@ By default, the library logs:
 Example output:
 
 ```
-2024.01.15 14:30:25:123	[INFO]	SOCKET	Connected on NT 4.1
-2024.01.15 14:30:25:124	[INFO]	SOCKET	Robot Connected!
-2024.01.15 14:30:30:456	[DEBUG]	PUBSUB	Received update for unknown topic { topicId: 42 }
+[SOCKET] Connected on NT 4.1
+[SOCKET] Robot Connected!
+[PUBSUB] Topic created { topicName: '/SmartDashboard/Gyro', type: 'double' }
 ```
 
 ## Direct logger utilities
