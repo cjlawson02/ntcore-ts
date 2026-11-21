@@ -23,8 +23,46 @@ export enum LogLevel {
  */
 export type LoggerModule = 'socket' | 'messenger' | 'pubsub' | 'default';
 
+/** A log line passed to a handler set with {@link setLogHandler}. */
+export interface LogEntry {
+  /** The level the line was logged at. */
+  level: LogLevel;
+  /** The module that logged the line. */
+  module: LoggerModule;
+  /** The log message, without the module prefix. */
+  message: string;
+  /** Extra arguments passed with the message, usually a context object. */
+  args: unknown[];
+  /** When the line was logged. */
+  time: Date;
+}
+
+/** Receives every log line that passes the level filter. */
+export type LogHandler = (entry: LogEntry) => void;
+
 let globalLevel = LogLevel.INFO;
 const moduleLevels = new Map<LoggerModule, LogLevel>();
+let handler: LogHandler | null = null;
+// Browser DevTools can already show timestamps, so only add them by default outside the browser
+let timestamps = typeof document === 'undefined';
+
+/**
+ * Sends log lines to a custom handler instead of the console, e.g. to forward them to your own logger.
+ * Level filtering still applies before the handler is called.
+ * @param logHandler - The handler, or `null` to log to the console again.
+ */
+export function setLogHandler(logHandler: LogHandler | null): void {
+  handler = logHandler;
+}
+
+/**
+ * Sets whether console log lines start with an ISO timestamp. On by default outside the browser.
+ * Has no effect on lines sent to a handler set with {@link setLogHandler}, which receive `time` instead.
+ * @param enabled - Whether to add timestamps.
+ */
+export function setLogTimestamps(enabled: boolean): void {
+  timestamps = enabled;
+}
 
 /**
  * Sets the log level for all modules, clearing any module-specific levels.
@@ -63,9 +101,13 @@ function createLogger(module: LoggerModule) {
   const method =
     (level: LogLevel, consoleMethod: 'debug' | 'info' | 'warn') =>
     (message: string, ...args: unknown[]): void => {
-      if (level >= getModuleLogLevel(module)) {
-        console[consoleMethod](`${prefix} ${message}`, ...args);
+      if (level < getModuleLogLevel(module)) return;
+      if (handler) {
+        handler({ level, module, message, args, time: new Date() });
+        return;
       }
+      const line = timestamps ? `${new Date().toISOString()} ${prefix} ${message}` : `${prefix} ${message}`;
+      console[consoleMethod](line, ...args);
     };
 
   return {

@@ -3,6 +3,8 @@ import {
   getModuleLogLevel,
   setLogLevel,
   setModuleLogLevel,
+  setLogHandler,
+  setLogTimestamps,
   socketLogger,
   messengerLogger,
 } from './logger.js';
@@ -10,9 +12,11 @@ import {
 describe('logger utilities', () => {
   beforeEach(() => {
     setLogLevel(LogLevel.INFO);
+    setLogTimestamps(false);
   });
 
   afterEach(() => {
+    setLogHandler(null);
     vi.restoreAllMocks();
   });
 
@@ -58,5 +62,45 @@ describe('logger utilities', () => {
     socketLogger.warn('warn');
 
     expect(warn).not.toHaveBeenCalled();
+  });
+
+  it('prefixes console lines with an ISO timestamp when enabled', () => {
+    const info = vi.spyOn(console, 'info').mockImplementation(() => {});
+
+    setLogTimestamps(true);
+    socketLogger.info('info', { id: 1 });
+
+    expect(info).toHaveBeenCalledExactlyOnceWith(
+      expect.stringMatching(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z \[SOCKET\] info$/),
+      { id: 1 }
+    );
+  });
+
+  it('sends lines that pass the level filter to a custom handler instead of the console', () => {
+    const info = vi.spyOn(console, 'info').mockImplementation(() => {});
+    const logHandler = vi.fn();
+
+    setLogHandler(logHandler);
+    socketLogger.debug('hidden');
+    socketLogger.info('shown', { id: 1 });
+
+    expect(info).not.toHaveBeenCalled();
+    expect(logHandler).toHaveBeenCalledExactlyOnceWith({
+      level: LogLevel.INFO,
+      module: 'socket',
+      message: 'shown',
+      args: [{ id: 1 }],
+      time: expect.any(Date),
+    });
+  });
+
+  it('logs to the console again after the handler is cleared', () => {
+    const info = vi.spyOn(console, 'info').mockImplementation(() => {});
+
+    setLogHandler(vi.fn());
+    setLogHandler(null);
+    socketLogger.info('info');
+
+    expect(info).toHaveBeenCalledExactlyOnceWith('[SOCKET] info');
   });
 });

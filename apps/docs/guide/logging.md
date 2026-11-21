@@ -56,11 +56,42 @@ By default, the library logs:
 
 `DEBUG` and `TRACE` messages (reconnection attempts, topic creation, unknown topics) are hidden unless you lower the log level.
 
-Example output at the default level:
+Example output at the default level in the browser:
 
 ```
 [SOCKET] Connected on NT 4.1
 [SOCKET] Robot Connected!
+```
+
+## Timestamps
+
+Outside the browser (Node.js, Deno, Bun), each line starts with an ISO timestamp:
+
+```
+2026-11-21T07:54:18.616Z [SOCKET] Connected on NT 4.1
+```
+
+In the browser, lines have no timestamp because DevTools can add one ("Show timestamps" in the console settings). Turn timestamps on or off anywhere with `setLogTimestamps`:
+
+```typescript
+import { setLogTimestamps } from '@ntcore-ts/client';
+
+setLogTimestamps(false);
+```
+
+## Custom log handler
+
+To send library logs to your own logger, a file, or a remote collector, set a handler. It receives every line that passes the level filter, instead of the console:
+
+```typescript
+import { LogLevel, setLogHandler } from '@ntcore-ts/client';
+
+setLogHandler(({ level, module, message, args, time }) => {
+  myLogger.log({ level: LogLevel[level], module, message, args, time });
+});
+
+// Log to the console again
+setLogHandler(null);
 ```
 
 ## Direct logger utilities
