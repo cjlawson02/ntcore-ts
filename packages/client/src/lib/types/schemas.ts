@@ -49,7 +49,9 @@ export const topicPropertiesSchema = z
     retained: z.boolean(),
     cached: z.boolean(),
   })
-  .partial();
+  .partial()
+  // The NT4 spec allows arbitrary properties, ex. the `unit` property WPILib sets
+  .loose();
 
 /** Schema for a properties update in the NT protocol. A `null` value deletes the property. */
 export const topicPropertiesUpdateSchema = z
@@ -58,7 +60,8 @@ export const topicPropertiesUpdateSchema = z
     retained: z.boolean().nullable(),
     cached: z.boolean().nullable(),
   })
-  .partial();
+  .partial()
+  .loose();
 
 /** Schema for a topic in the NT protocol. */
 export const topicSchema = z.object({

@@ -51,6 +51,13 @@ describe('schema', () => {
       expect(topicPropertiesSchema.safeParse({ persistent: true, retained: true }).success).toBe(true);
       expect(topicPropertiesSchema.safeParse({}).success).toBe(true);
     });
+
+    it('keeps properties that are not part of the spec', () => {
+      expect(topicPropertiesSchema.parse({ retained: true, unit: 'meters' })).toEqual({
+        retained: true,
+        unit: 'meters',
+      });
+    });
   });
 
   describe('subscriptionOptionsSchema', () => {
@@ -215,6 +222,12 @@ describe('schema', () => {
           update: { persistent: true },
         }).success
       ).toBe(true);
+    });
+
+    it('keeps updates to properties that are not part of the spec', () => {
+      expect(
+        propertiesMessageParamsSchema.parse({ name: 'testTopic', update: { unit: 'meters', retained: null } })
+      ).toEqual({ name: 'testTopic', update: { unit: 'meters', retained: null } });
     });
 
     it('accepts null values, which delete the property', () => {
