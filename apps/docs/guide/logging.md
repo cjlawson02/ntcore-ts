@@ -8,8 +8,8 @@ The library logs through the built-in `console`, prefixed with the module name. 
 - `LogLevel.DEBUG` — Detailed debugging information
 - `LogLevel.INFO` — General informational messages (default)
 - `LogLevel.WARN` — Warning messages
-- `LogLevel.ERROR` — Error messages
-- `LogLevel.FATAL` — Fatal error messages
+- `LogLevel.ERROR` — Error messages (the library currently logs nothing at this level, so it behaves like `SILENT`)
+- `LogLevel.FATAL` — Fatal error messages (likewise unused)
 - `LogLevel.SILENT` — Disable all logging
 
 ## Global log level
@@ -52,16 +52,15 @@ console.log(`Socket log level: ${LogLevel[currentLevel]}`);
 By default, the library logs:
 
 - `INFO`: Connection status, protocol version
-- `WARN`: Connection issues, unhandled message types
-- `ERROR`: WebSocket errors, connection failures
-- `DEBUG`: Reconnection attempts, unknown topics (development only)
+- `WARN`: Connection loss, malformed or unhandled messages
 
-Example output:
+`DEBUG` and `TRACE` messages (reconnection attempts, topic creation, unknown topics) are hidden unless you lower the log level.
+
+Example output at the default level:
 
 ```
 [SOCKET] Connected on NT 4.1
 [SOCKET] Robot Connected!
-[PUBSUB] Topic created { topicName: '/SmartDashboard/Gyro', type: 'double' }
 ```
 
 ## Direct logger utilities
