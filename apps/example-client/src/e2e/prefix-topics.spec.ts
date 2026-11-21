@@ -84,7 +84,7 @@ describe('Feature: Prefix Topics', () => {
   );
 
   it(
-    '[PFX-7] receives values on a topic created after the prefix subscription covered it',
+    '[PFX-9] receives values on a topic created after the prefix subscription covered it',
     async () => {
       // PFX-1 already waited for the prefix subscription to receive X, so the server won't announce it again
       expect(prefixAccelValues.X).toBeDefined();

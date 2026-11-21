@@ -49,22 +49,25 @@ export class NetworkTablesPrefixTopic extends NetworkTablesBaseTopic<NetworkTabl
    * @returns The UID of the subscriber.
    */
   subscribe(callback: CallbackFn<NetworkTablesTypes>, options: Omit<SubscribeOptions, 'prefix'> = {}) {
+    // Replay before adding the subscriber so it receives each replayed value exactly once, below
+    const replayed =
+      this.subscribers.size === 0 ? this.client.replayKnownState(this, { values: !options.topicsonly }) : [];
     const subuid = this.subscribeWithId(callback, options, undefined, true);
-    if (options.immediateNotify) {
-      this._lastSubtopicValues.forEach(({ params, value }) => {
-        if (params.name === this.name) return;
-        try {
-          callback(value, params);
-        } catch (error: unknown) {
-          pubsubLogger.warn('Prefix immediateNotify callback threw', {
-            prefix: this.name,
-            subtopicName: params.name,
-            error,
-          });
-        }
-      });
-    }
-    if (this.subscribers.size === 1) this.client.replayKnownState(this);
+    const toDeliver = options.immediateNotify
+      ? [...this._lastSubtopicValues.values()]
+      : replayed.flatMap((params) => this._lastSubtopicValues.get(params.name) ?? []);
+    toDeliver.forEach(({ params, value }) => {
+      if (params.name === this.name) return;
+      try {
+        callback(value, params);
+      } catch (error: unknown) {
+        pubsubLogger.warn('Prefix immediateNotify callback threw', {
+          prefix: this.name,
+          subtopicName: params.name,
+          error,
+        });
+      }
+    });
     return subuid;
   }
 
