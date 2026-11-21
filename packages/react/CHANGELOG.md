@@ -1,5 +1,11 @@
 # @ntcore-ts/react
 
+## 2.0.0
+
+### Major Changes
+
+- [#721](https://github.com/cjlawson02/ntcore-ts/pull/721) [`d6580a8`](https://github.com/cjlawson02/ntcore-ts/commit/d6580a8ccef1044bbc9fc1446073ba37643993e3) Thanks [@cjlawson02](https://github.com/cjlawson02)! - **Breaking (types only):** Values passed to subscriber callbacks, returned by `getValue()`, and returned by the React hooks are now typed as `ReadonlyValue<T>`. Every subscriber of a topic receives the same object, so arrays and decoded struct, protobuf, and JSON values are read-only all the way down; `Uint8Array` values are unchanged. Code that mutated a received value, for example `value.sort()`, no longer compiles. Copy it first (`[...value].sort()`). `setValue()` accepts read-only values, so passing a received value back in still works. Runtime behavior is unchanged.
+
 ## 1.1.1
 
 ### Patch Changes

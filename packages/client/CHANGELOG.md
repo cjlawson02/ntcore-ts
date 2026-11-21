@@ -1,5 +1,36 @@
 # @ntcore-ts/client
 
+## 2.0.0
+
+### Major Changes
+
+- [#714](https://github.com/cjlawson02/ntcore-ts/pull/714) [`64d8958`](https://github.com/cjlawson02/ntcore-ts/commit/64d8958609c92a84751fe74ab2ea79871ad1856a) Thanks [@jonahsnider](https://github.com/jonahsnider)! - **Breaking:** Node.js 22 or newer is now required. The client uses the runtime's built-in `WebSocket` instead of the `isomorphic-ws` and `ws` packages, and Node.js only provides a global `WebSocket` from version 22. Browsers, Deno, and Bun are unaffected.
+  
+  If you run the client on Node.js 20 or older, upgrade Node.js before updating this package.
+  
+  `@ntcore-ts/mcp` runs on Node.js and now declares the same Node.js 22+ requirement.
+
+- [#721](https://github.com/cjlawson02/ntcore-ts/pull/721) [`d6580a8`](https://github.com/cjlawson02/ntcore-ts/commit/d6580a8ccef1044bbc9fc1446073ba37643993e3) Thanks [@cjlawson02](https://github.com/cjlawson02)! - **Breaking (types only):** Values passed to subscriber callbacks, returned by `getValue()`, and returned by the React hooks are now typed as `ReadonlyValue<T>`. Every subscriber of a topic receives the same object, so arrays and decoded struct, protobuf, and JSON values are read-only all the way down; `Uint8Array` values are unchanged. Code that mutated a received value, for example `value.sort()`, no longer compiles. Copy it first (`[...value].sort()`). `setValue()` accepts read-only values, so passing a received value back in still works. Runtime behavior is unchanged.
+
+### Minor Changes
+
+- [#707](https://github.com/cjlawson02/ntcore-ts/pull/707) [`5285456`](https://github.com/cjlawson02/ntcore-ts/commit/5285456e4e460207e5826d14d07261eb983dfac9) Thanks [@jonahsnider](https://github.com/jonahsnider)! - Add `addAnnounceListener`, `addUnannounceListener`, and `addPropertiesListener` to prefix topics to track subtopics that haven't sent a value yet, go away, or change properties. Pass `{ immediateNotify: true }` to `addAnnounceListener` to also hear about subtopics already announced on the connection. Unannounce listeners also run for every subtopic when the connection drops, and properties updates are applied to the subtopic's announce params, with `null` deleting a property. `immediateNotify` on `subscribe` no longer replays values from unannounced subtopics.
+
+### Patch Changes
+
+- [#713](https://github.com/cjlawson02/ntcore-ts/pull/713) [`8120681`](https://github.com/cjlawson02/ntcore-ts/commit/8120681b2a69da7c72fa2101488294d261e57d3a) Thanks [@jonahsnider](https://github.com/jonahsnider)! - Remove the `tslog` dependency (about 23 KB gzipped) and log through the built-in `console` instead. Each level now writes to the matching console method (`console.debug`, `console.info`, `console.warn`) with a `[MODULE]` prefix, so browser DevTools can filter library logs by level. Outside the browser, lines start with an ISO timestamp; turn it on or off with `setLogTimestamps()`. Use `setLogHandler()` to send log lines to your own logger instead of the console.
+
+- [#718](https://github.com/cjlawson02/ntcore-ts/pull/718) [`96f5aa0`](https://github.com/cjlawson02/ntcore-ts/commit/96f5aa05ee3b43ceb824519574519b4716173035) Thanks [@cjlawson02](https://github.com/cjlawson02)! - Fix two NT4 protocol handling bugs:
+  
+  - Subscribing to a topic before publishing it no longer marks the topic as a publisher. Announces sent for a subscription omit `pubuid`, and the client treated that as a match for a topic with no pubuid, so `publish()` was skipped and `setValue()` threw "is not a publisher".
+  - A `properties` update that deletes a property (for example `{ persistent: null }`, sent when robot code calls `setPersistent(false)`) is now accepted. Previously it failed validation and every message in the same text frame was dropped.
+
+- [#706](https://github.com/cjlawson02/ntcore-ts/pull/706) [`aa65b9e`](https://github.com/cjlawson02/ntcore-ts/commit/aa65b9e7ef677c64175999e2da8bd948eef5f38a) Thanks [@jonahsnider](https://github.com/jonahsnider)! - Keep topic properties that aren't part of the NT4 spec, like `unit`, instead of dropping them when parsing announce and properties messages
+  
+  Unknown keys are also kept in `properties` update messages. The `TopicProperties` type accepted by `publish()` and `setProperties()` still lists only `persistent`, `retained`, and `cached`, so misspelled keys remain a compile error.
+
+- [#710](https://github.com/cjlawson02/ntcore-ts/pull/710) [`68d3685`](https://github.com/cjlawson02/ntcore-ts/commit/68d36853dc1b5a67e01773884f9639fccf41bbe6) Thanks [@jonahsnider](https://github.com/jonahsnider)! - Fix topics created after another subscription already covers them never receiving values. The server announces each topic and sends its value only once per client, so a topic created after, for example, a prefix subscription to `/` was never announced and ignored every update. When a topic or prefix topic gets its first subscriber, it now picks up the announcements the client already has and any current value another topic already holds. The new subscriber receives each replayed value once (with or without `immediateNotify`), values the client set itself are never overwritten, and `topicsonly` subscribers get no values.
+
 ## 1.1.1
 
 ### Patch Changes

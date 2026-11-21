@@ -1,5 +1,20 @@
 # @ntcore-ts/mcp
 
+## 2.0.0
+
+### Major Changes
+
+- [#714](https://github.com/cjlawson02/ntcore-ts/pull/714) [`64d8958`](https://github.com/cjlawson02/ntcore-ts/commit/64d8958609c92a84751fe74ab2ea79871ad1856a) Thanks [@jonahsnider](https://github.com/jonahsnider)! - **Breaking:** Node.js 22 or newer is now required. The client uses the runtime's built-in `WebSocket` instead of the `isomorphic-ws` and `ws` packages, and Node.js only provides a global `WebSocket` from version 22. Browsers, Deno, and Bun are unaffected.
+  
+  If you run the client on Node.js 20 or older, upgrade Node.js before updating this package.
+  
+  `@ntcore-ts/mcp` runs on Node.js and now declares the same Node.js 22+ requirement.
+
+### Patch Changes
+
+- Updated dependencies [[`64d8958`](https://github.com/cjlawson02/ntcore-ts/commit/64d8958609c92a84751fe74ab2ea79871ad1856a), [`8120681`](https://github.com/cjlawson02/ntcore-ts/commit/8120681b2a69da7c72fa2101488294d261e57d3a), [`96f5aa0`](https://github.com/cjlawson02/ntcore-ts/commit/96f5aa05ee3b43ceb824519574519b4716173035), [`aa65b9e`](https://github.com/cjlawson02/ntcore-ts/commit/aa65b9e7ef677c64175999e2da8bd948eef5f38a), [`5285456`](https://github.com/cjlawson02/ntcore-ts/commit/5285456e4e460207e5826d14d07261eb983dfac9), [`d6580a8`](https://github.com/cjlawson02/ntcore-ts/commit/d6580a8ccef1044bbc9fc1446073ba37643993e3), [`68d3685`](https://github.com/cjlawson02/ntcore-ts/commit/68d36853dc1b5a67e01773884f9639fccf41bbe6)]:
+  - @ntcore-ts/client@2.0.0
+
 ## 1.1.0 (2026-11-07)
 
 [Compare changes](https://github.com/cjlawson02/ntcore-ts/compare/@ntcore-ts/mcp-v1.0.0...@ntcore-ts/mcp-v1.1.0)
