@@ -219,8 +219,7 @@ export class NetworkTablesTopic<
    */
   subscribe(callback: CallbackFn<TPublic>, options: Omit<SubscribeOptions, 'prefix'> = {}) {
     // Replay before adding the subscriber so it receives the replayed value exactly once, below
-    const replayed =
-      this.subscribers.size === 0 ? this.client.replayKnownState(this, { values: !options.topicsonly }) : [];
+    const replayed = this.subscribers.size === 0 ? this.client.replayKnownState(this) : [];
     const subuid = this.subscribeWithId(callback, options, undefined, true);
     if (options.immediateNotify) {
       const params =
@@ -233,8 +232,8 @@ export class NetworkTablesTopic<
           ...(this._pubuid != null ? { pubuid: this._pubuid } : {}),
         } as const);
       callback(this.getValue(), params);
-    } else if (replayed.length > 0) {
-      callback(this.getValue(), replayed[0]!);
+    } else if (replayed[0] && !options.topicsonly) {
+      callback(this.getValue(), replayed[0]);
     }
     return subuid;
   }

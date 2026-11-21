@@ -25,8 +25,6 @@ export class PubSubClient {
   private readonly knownTopicParams: Map<number, AnnounceMessageParams>;
   /** Value updates that arrived before the topic announcement (topicId -> latest message). Flushed when announce arrives. */
   private readonly pendingValueUpdates: Map<number, BinaryMessageData>;
-  /** Latest value received for each announced topic (topicId -> message). Replayed to topics created later. */
-  private readonly lastValues: Map<number, BinaryMessageData>;
   private readonly _protobufSchemaManager: ProtobufSchemaManager;
   private readonly _structSchemaManager: StructSchemaManager;
   private static _instances = new Map<string, PubSubClient>();
@@ -61,7 +59,6 @@ export class PubSubClient {
     this.prefixTopics = new Map();
     this.knownTopicParams = new Map();
     this.pendingValueUpdates = new Map();
-    this.lastValues = new Map();
     this._protobufSchemaManager = new ProtobufSchemaManager(this);
     this._structSchemaManager = new StructSchemaManager(this);
 
@@ -94,7 +91,6 @@ export class PubSubClient {
       });
       this.knownTopicParams.clear();
       this.pendingValueUpdates.clear();
-      this.lastValues.clear();
       // Ensure disconnect cleanup never throws.
       this.topics.forEach((topic) => {
         try {
@@ -152,7 +148,6 @@ export class PubSubClient {
     // Clear announcement state so ids are reacquired from the new connection.
     this.knownTopicParams.clear();
     this.pendingValueUpdates.clear();
-    this.lastValues.clear();
     // Ensure reinstantiation cleanup never throws (tests may register lightweight mocks).
     this.topics.forEach((topic) => {
       try {
@@ -212,17 +207,15 @@ export class PubSubClient {
   }
 
   /**
-   * Announces already known matching topics to a topic and brings its values up to date.
+   * Brings a topic up to date with the announcements and values the client already has.
    * The server announces a topic and sends its value only once per connection, so a topic subscribed after
-   * another subscription already covers it would otherwise never hear about it.
-   * Subscribers are not notified; the caller delivers the replayed values to its new subscriber.
+   * another subscription already covers it would otherwise never hear about it. Subscribers aren't notified;
+   * the caller delivers the replayed values to its new subscriber.
    * @internal Called by topics before their first subscriber is added.
    * @param topic - The topic about to be subscribed.
-   * @param options - The replay options.
-   * @param options.values - Whether to replay values as well as announcements (false for `topicsonly`).
    * @returns The announce params of the topics whose value was replayed.
    */
-  replayKnownState<T>(topic: NetworkTablesBaseTopic<T>, { values = true }: { values?: boolean } = {}) {
+  replayKnownState<T>(topic: NetworkTablesBaseTopic<T>) {
     const replayed: AnnounceMessageParams[] = [];
     if (topic.isRegular()) {
       const params = [...this.knownTopicParams.values()].find((known) => known.name === topic.name);
@@ -230,11 +223,11 @@ export class PubSubClient {
       pubsubLogger.debug('Replaying known topic state', { topicName: topic.name, topicId: params.id });
       topic.announce(params);
       // A topic that set its value locally or already received one is current, since it gets every update
-      if (!values || topic.publisher || topic.lastChangedTime != null) return replayed;
-      const message = this.getLiveLastValue(params);
-      if (!message) return replayed;
+      if (topic.publisher || topic.lastChangedTime != null) return replayed;
+      const current = this.findCurrentValue(params.name);
+      if (!current) return replayed;
       try {
-        topic.updateValue(NetworkTablesTypeInfos.validateData(topic.typeInfo, message.value), message.serverTime);
+        topic.updateValue(NetworkTablesTypeInfos.validateData(topic.typeInfo, current.value), current.serverTime);
         replayed.push(params);
       } catch (e) {
         pubsubLogger.warn('Skipping invalid replayed value for topic', { topicName: topic.name, error: String(e) });
@@ -247,18 +240,9 @@ export class PubSubClient {
           prefix: topic.name,
         });
         topic.announce(params);
-        if (!values) return;
-        // Prefer the regular topic's value: the server doesn't echo values this client publishes
-        const local = this.topics.get(params.name);
-        if (local && (local.publisher || local.lastChangedTime != null)) {
-          const value = local.getValue();
-          if (value == null) return;
-          topic.updateValue(params, value as NetworkTablesTypes, local.lastChangedTime ?? 0);
-        } else {
-          const message = this.getLiveLastValue(params);
-          if (!message) return;
-          topic.updateValue(params, message.value, message.serverTime);
-        }
+        const current = this.findCurrentValue(params.name);
+        if (!current) return;
+        topic.updateValue(params, current.value, current.serverTime);
         replayed.push(params);
       });
     }
@@ -266,24 +250,45 @@ export class PubSubClient {
   }
 
   /**
-   * Gets the latest value received for a topic, if it is still current. The server only keeps sending a topic's
-   * values while some subscription wants them, so without one the stored value may be stale.
-   * @param params - The topic's announce params.
-   * @returns The latest value message, or undefined if there is none or it may be stale.
+   * Finds a topic's current value among the topics that already track it. Every value the server sends is routed
+   * to the matching regular topic and prefix topics, so one of them holds it, but only while some subscription
+   * keeps the server sending values. Values this client publishes aren't echoed back, so the publisher holds those.
+   * @param name - The topic name.
+   * @returns The value and its server time, or undefined if no topic holds a current value.
    */
-  private getLiveLastValue(params: AnnounceMessageParams) {
-    const message = this.lastValues.get(params.id);
-    if (!message) return undefined;
+  private findCurrentValue(name: string): { value: NetworkTablesTypes; serverTime: number } | undefined {
+    const local = this.topics.get(name);
+    // The stored value is shared and never mutated, so hand it on without the read-only type
+    const localValue = local?.getValue() as NetworkTablesTypes | null | undefined;
+    if (local?.publisher && localValue != null) return { value: localValue, serverTime: local.lastChangedTime ?? 0 };
+    if (!this.hasValueSubscription(name)) return undefined;
+    if (local?.lastChangedTime != null && localValue != null) {
+      return { value: localValue, serverTime: local.lastChangedTime };
+    }
+    for (const prefixTopic of this.prefixTopics.values()) {
+      if (!name.startsWith(prefixTopic.name)) continue;
+      const cached = prefixTopic.getSubtopicValue(name);
+      if (cached) return cached;
+    }
+    return undefined;
+  }
+
+  /**
+   * Whether a subscription other than `topicsonly` currently covers a topic, so the server keeps sending its values.
+   * @param name - The topic name.
+   * @returns Whether the topic's values are being received.
+   */
+  private hasValueSubscription(name: string) {
     const wantsValues = (topic: NetworkTablesBaseTopic<unknown>) =>
       [...topic.subscribers.values()].some((info) => !info.options.topicsonly);
-    const topic = this.topics.get(params.name);
-    const covered =
-      (topic != null && wantsValues(topic as NetworkTablesBaseTopic<unknown>)) ||
+    const local = this.topics.get(name);
+    return (
+      (local != null && wantsValues(local as NetworkTablesBaseTopic<unknown>)) ||
       [...this.prefixTopics.values()].some(
         (prefixTopic) =>
-          params.name.startsWith(prefixTopic.name) && wantsValues(prefixTopic as NetworkTablesBaseTopic<unknown>)
-      );
-    return covered ? message : undefined;
+          name.startsWith(prefixTopic.name) && wantsValues(prefixTopic as NetworkTablesBaseTopic<unknown>)
+      )
+    );
   }
 
   /**
@@ -333,7 +338,6 @@ export class PubSubClient {
     const knownTopic = this.getKnownTopicParams(message.topicId);
 
     if (knownTopic) {
-      this.lastValues.set(message.topicId, message);
       // Use topic's value when we have one so protobuf topics pass decoded value to prefix subscribers
       const valueForPrefix = (
         topic != null ? (topic.getValue() ?? message.value) : message.value
@@ -407,7 +411,6 @@ export class PubSubClient {
    * Delivers a value update to the regular topic (if any) and all matching prefix topics.
    */
   private _deliverValueUpdate(knownTopic: AnnounceMessageParams, message: BinaryMessageData): void {
-    this.lastValues.set(knownTopic.id, message);
     const topic = this.topics.get(knownTopic.name);
     if (topic) {
       try {
@@ -444,7 +447,6 @@ export class PubSubClient {
   private onTopicUnannounce = (params: UnannounceMessageParams) => {
     const topic = this.topics.get(params.name);
     this.pendingValueUpdates.delete(params.id);
-    this.lastValues.delete(params.id);
     if (!topic) {
       pubsubLogger.debug('Topic was unannounced but does not exist', { topicName: params.name });
       // Still clean up knownTopicParams even if topic doesn't exist locally
