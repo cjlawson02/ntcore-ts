@@ -171,10 +171,18 @@ describe('Feature: Prefix Topics', () => {
       try {
         await waitForConnection(other);
         const accelPrefix = other.getPrefixTopic('/MyTable/Accelerometer/');
+        const expected = ['/MyTable/Accelerometer/X', '/MyTable/Accelerometer/Y'];
+        // Wait for every expected announce: X and Y can arrive in separate frames, and only announced
+        // topics can be unannounced
         const announced = new Promise<void>((resolve, reject) => {
-          const t = setTimeout(() => reject(new Error('Announce listener timeout')), VALUE_WAIT_MS);
+          const seen = new Set<string>();
+          const t = setTimeout(
+            () => reject(new Error(`Announce listener timeout (saw ${[...seen].join(', ') || 'none'})`)),
+            VALUE_WAIT_MS
+          );
           const remove = accelPrefix.addAnnounceListener((params) => {
-            if (params.name === '/MyTable/Accelerometer/X') {
+            seen.add(params.name);
+            if (expected.every((name) => seen.has(name))) {
               clearTimeout(t);
               remove();
               resolve();
@@ -189,7 +197,7 @@ describe('Feature: Prefix Topics', () => {
         // Point the instance at a port nothing listens on, which drops the current connection
         other.changeURI('127.0.0.1', 1);
 
-        expect(unannounced).toEqual(expect.arrayContaining(['/MyTable/Accelerometer/X', '/MyTable/Accelerometer/Y']));
+        expect(unannounced).toEqual(expect.arrayContaining(expected));
       } finally {
         other.close();
       }
