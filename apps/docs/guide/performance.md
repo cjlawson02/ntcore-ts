@@ -14,12 +14,12 @@ Measured with `npm run bench` on an Apple M1 Pro, Node 24. React benches run in 
 | Client, 10 messages / frame            |  1.01M frames/s (10.1M msg/s) | 1.1 µs |
 | Client, 100 messages / frame           |   143k frames/s (14.3M msg/s) | 7.1 µs |
 | Client, 100 frames through `onMessage` | 16.1k batches/s (1.61M msg/s) |  63 µs |
-| React `useTopic` (one update)          |                         88k/s |  11 µs |
-| React `usePrefixTopic` (one update)    |                         85k/s |  12 µs |
+| React `useTopic` (100 updates)         |                         980/s | 1.0 ms |
+| React `usePrefixTopic` (100 updates)   |                         950/s | 1.1 ms |
 | React 50-hook dashboard (batched)      |                        4.5k/s | 240 µs |
 | React 50-hook dashboard (unbatched)    |                         800/s | 1.3 ms |
 
-Decode of a double is about 0.4 µs. Applying it through `useTopic` is about 11 µs. Batching 50 hook updates into one React commit stays under 250 µs mean.
+Decode of a double is about 0.4 µs. Applying it through `useTopic` is about 10 µs per update. Batching 50 hook updates into one React commit stays under 250 µs mean.
 
 ## What is measured
 
@@ -57,4 +57,4 @@ Every push to `main` and every pull request runs [`.github/workflows/bench.yml`]
 - CodSpeed comments on each pull request with the change against `main` and reports a status check that flags regressions above the configured threshold.
 - Pushes to `main` record the baseline and history shown on the CodSpeed dashboard.
 
-Simulation runs V8 without its optimizing compilers and with a fixed GC schedule, so it tracks how much work each path does rather than optimized-JIT or GC behaviour. Absolute numbers will not match the M1 Pro table above. The plugin does nothing outside CodSpeed's CI, so `npm run bench` locally is unchanged.
+Simulation runs V8 without its optimizing compilers and with a fixed GC schedule, so it tracks how much work each path does rather than optimized-JIT or GC behaviour. It also measures **a single call** of each bench after warmup, so a bench whose call does very little work (one React commit, for example) picks up whatever one-off work lands in that call and can swing by around 20% between otherwise identical runs. Keep each bench call to roughly a millisecond or more of work, for example by looping 100 updates, as the React hook benches do. Absolute numbers will not match the M1 Pro table above. The plugin does nothing outside CodSpeed's CI, so `npm run bench` locally is unchanged.
