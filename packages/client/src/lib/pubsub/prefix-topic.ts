@@ -7,8 +7,10 @@ import type { PubSubClient } from './pubsub.js';
 import type {
   AnnounceMessageParams,
   NetworkTablesTypes,
+  PropertiesMessageParams,
   SubscribeMessageParams,
   SubscribeOptions,
+  UnannounceMessageParams,
 } from '../types/types.js';
 
 export class NetworkTablesPrefixTopic extends NetworkTablesBaseTopic<NetworkTablesTypes> {
@@ -17,6 +19,9 @@ export class NetworkTablesPrefixTopic extends NetworkTablesBaseTopic<NetworkTabl
     string,
     { params: AnnounceMessageParams; value: NetworkTablesTypes; serverTime: number }
   >();
+  private readonly _announceListeners = new Set<(params: AnnounceMessageParams) => void>();
+  private readonly _unannounceListeners = new Set<(params: UnannounceMessageParams) => void>();
+  private readonly _propertiesListeners = new Set<(params: PropertiesMessageParams) => void>();
 
   /**
    * Creates a new topic. This should only be done after the
@@ -35,6 +40,91 @@ export class NetworkTablesPrefixTopic extends NetworkTablesBaseTopic<NetworkTabl
 
     pubsubLogger.debug('Prefix topic created', { prefix: name });
     this.client.registerTopic(this);
+  }
+
+  /** */
+  /* SUBTOPIC LIFECYCLE */
+  /** */
+
+  /**
+   * Adds a listener for subtopic announcements, including subtopics that haven't sent a value yet.
+   * @param callback - Called with the subtopic's announce params.
+   * @param options - The listener options.
+   * @param options.immediateNotify - Also call the listener right away for every matching subtopic already announced
+   *   on this connection. The server announces each topic to a client only once, so a listener added after another
+   *   subscription covered a subtopic needs this to see it.
+   * @returns A function to remove the listener.
+   */
+  addAnnounceListener(callback: (params: AnnounceMessageParams) => void, options: { immediateNotify?: boolean } = {}) {
+    this._announceListeners.add(callback);
+    if (options.immediateNotify) {
+      const known = this.client.getAllKnownTopicParams().filter((params) => params.name.startsWith(this.name));
+      known.forEach((params) => this.notifyListeners([callback], params));
+    }
+    return () => {
+      this._announceListeners.delete(callback);
+    };
+  }
+
+  /**
+   * Adds a listener for subtopic unannouncements, e.g. when a subtopic's last publisher goes away.
+   * @param callback - Called with the subtopic's unannounce params.
+   * @returns A function to remove the listener.
+   */
+  addUnannounceListener(callback: (params: UnannounceMessageParams) => void) {
+    this._unannounceListeners.add(callback);
+    return () => {
+      this._unannounceListeners.delete(callback);
+    };
+  }
+
+  /**
+   * Adds a listener for subtopic property changes.
+   * @param callback - Called with the properties update. Properties set to `null` were deleted.
+   * @returns A function to remove the listener.
+   */
+  addPropertiesListener(callback: (params: PropertiesMessageParams) => void) {
+    this._propertiesListeners.add(callback);
+    return () => {
+      this._propertiesListeners.delete(callback);
+    };
+  }
+
+  /**
+   * Marks a subtopic as announced. This should only be called by the PubSubClient.
+   * @param params - The parameters of the announcement.
+   */
+  override announce(params: AnnounceMessageParams) {
+    super.announce(params);
+    this.notifyListeners(this._announceListeners, params);
+  }
+
+  /**
+   * Marks a subtopic as unannounced. This should only be called by the PubSubClient.
+   * @param params - The unannounce message parameters.
+   */
+  unannounceSubtopic(params: UnannounceMessageParams) {
+    this._lastSubtopicValues.delete(params.name);
+    this.notifyListeners(this._unannounceListeners, params);
+  }
+
+  /**
+   * Notifies listeners of a subtopic properties update. This should only be called by the PubSubClient,
+   * after it has applied the update to the subtopic's announce params.
+   * @param params - The properties message parameters.
+   */
+  updateSubtopicProperties(params: PropertiesMessageParams) {
+    this.notifyListeners(this._propertiesListeners, params);
+  }
+
+  private notifyListeners<T extends { name: string }>(listeners: Iterable<(params: T) => void>, params: T) {
+    for (const listener of listeners) {
+      try {
+        listener(params);
+      } catch (error: unknown) {
+        pubsubLogger.warn('Prefix topic listener threw', { prefix: this.name, subtopicName: params.name, error });
+      }
+    }
   }
 
   /** */

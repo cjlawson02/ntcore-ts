@@ -48,6 +48,37 @@ allTopics.subscribe((value, params) => {
 });
 ```
 
+## Track topics as they come and go
+
+Subscriber callbacks only run when a topic sends a value. To track topics that haven't sent a value yet, go away, or change properties, add listeners. Each `add*Listener` method returns a function that removes the listener:
+
+```typescript
+import { NetworkTables } from '@ntcore-ts/client';
+
+const ntcore = NetworkTables.getInstanceByTeam(973);
+
+const allTopics = ntcore.getPrefixTopic('/');
+const topicTypes = new Map<string, string>();
+
+// The server only announces topics to subscribed clients
+allTopics.subscribe(() => {}, { topicsonly: true });
+
+// immediateNotify also reports topics already announced on this connection
+allTopics.addAnnounceListener(
+  (params) => {
+    topicTypes.set(params.name, params.type);
+  },
+  { immediateNotify: true }
+);
+// Also called for every topic when the connection drops
+allTopics.addUnannounceListener((params) => {
+  topicTypes.delete(params.name);
+});
+allTopics.addPropertiesListener((params) => {
+  console.log(`Properties of ${params.name} changed`, params.update);
+});
+```
+
 ## React
 
 In React, use `usePrefixTopic` (latest update only) or `usePrefixTopicMap` (map of all topics under the prefix). See the [React guide](/guide/react).

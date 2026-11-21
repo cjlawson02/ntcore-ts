@@ -28,6 +28,7 @@ describe('Prefix Topic', () => {
 
   afterEach(() => {
     topic['client']['prefixTopics'].clear();
+    topic['client']['knownTopicParams'].clear();
     topic.subscribers.clear();
   });
 
@@ -133,6 +134,113 @@ describe('Prefix Topic', () => {
       expect(immediate.mock.calls.every((call: unknown[]) => (call[1] as AnnounceMessageParams).name !== '/foo/')).toBe(
         true
       );
+    });
+  });
+
+  describe('subtopic listeners', () => {
+    const params: AnnounceMessageParams = { id: 1, name: '/foo/a', type: 'string', properties: {} };
+
+    it('notifies listeners when matching subtopics are announced, unannounced, or change properties', () => {
+      const prefixTopic = new NetworkTablesPrefixTopic(client, '/foo/');
+      const onAnnounce = vi.fn();
+      const onUnannounce = vi.fn();
+      const onProperties = vi.fn();
+      prefixTopic.addAnnounceListener(onAnnounce);
+      prefixTopic.addUnannounceListener(onUnannounce);
+      prefixTopic.addPropertiesListener(onProperties);
+
+      client['onTopicAnnounce'](params);
+      client['onTopicProperties']({ name: '/foo/a', update: { retained: true } });
+      client['onTopicUnannounce']({ id: 1, name: '/foo/a' });
+      client['onTopicAnnounce']({ id: 2, name: '/bar/a', type: 'string', properties: {} });
+      client['onTopicProperties']({ name: '/bar/a', update: { retained: true } });
+      client['onTopicUnannounce']({ id: 2, name: '/bar/a' });
+
+      expect(onAnnounce).toHaveBeenCalledExactlyOnceWith(params);
+      expect(onProperties).toHaveBeenCalledExactlyOnceWith({ name: '/foo/a', update: { retained: true } });
+      expect(onUnannounce).toHaveBeenCalledExactlyOnceWith({ id: 1, name: '/foo/a' });
+    });
+
+    it('stops notifying a listener after it is removed', () => {
+      const prefixTopic = new NetworkTablesPrefixTopic(client, '/foo/');
+      const onAnnounce = vi.fn();
+      const removeListener = prefixTopic.addAnnounceListener(onAnnounce);
+      removeListener();
+
+      client['onTopicAnnounce'](params);
+
+      expect(onAnnounce).not.toHaveBeenCalled();
+    });
+
+    it('does not replay values of unannounced subtopics', () => {
+      const prefixTopic = new NetworkTablesPrefixTopic(client, '/foo/');
+      prefixTopic.updateValue(params, 'va', Date.now());
+
+      client['onTopicUnannounce']({ id: 1, name: '/foo/a' });
+      const immediate = vi.fn();
+      prefixTopic.subscribe(immediate, { immediateNotify: true });
+
+      expect(immediate).not.toHaveBeenCalled();
+    });
+
+    it('sees the subtopic as already unannounced inside an unannounce listener', () => {
+      const prefixTopic = new NetworkTablesPrefixTopic(client, '/foo/');
+      client['onTopicAnnounce']({ ...params, properties: {} });
+      const seen: boolean[] = [];
+      prefixTopic.addUnannounceListener(() => {
+        seen.push(client.getAllKnownTopicParams().some((known) => known.name === '/foo/a'));
+      });
+
+      client['onTopicUnannounce']({ id: 1, name: '/foo/a' });
+
+      expect(seen).toEqual([false]);
+    });
+
+    it('notifies unannounce listeners and drops cached values when the connection drops', () => {
+      const prefixTopic = new NetworkTablesPrefixTopic(client, '/foo/');
+      const known = { ...params, properties: {} };
+      client['onTopicAnnounce'](known);
+      prefixTopic.updateValue(known, 'va', Date.now());
+      const onUnannounce = vi.fn();
+      prefixTopic.addUnannounceListener(onUnannounce);
+
+      client.messenger.socket['connectionListeners'].forEach((listener) => listener(false));
+
+      expect(onUnannounce).toHaveBeenCalledExactlyOnceWith({ id: 1, name: '/foo/a' });
+      const immediate = vi.fn();
+      prefixTopic.subscribe(immediate, { immediateNotify: true });
+      expect(immediate).not.toHaveBeenCalled();
+    });
+
+    it('applies properties updates to the subtopic params before notifying, deleting null properties', () => {
+      const prefixTopic = new NetworkTablesPrefixTopic(client, '/foo/');
+      const known: AnnounceMessageParams = { ...params, properties: { persistent: true } };
+      client['onTopicAnnounce'](known);
+      prefixTopic.updateValue(known, 'va', Date.now());
+      const seen: unknown[] = [];
+      prefixTopic.addPropertiesListener(() => seen.push({ ...known.properties }));
+
+      client['onTopicProperties']({ name: '/foo/a', update: { persistent: null, retained: true } });
+
+      expect(seen).toEqual([{ retained: true }]);
+      const immediate = vi.fn();
+      prefixTopic.subscribe(immediate, { immediateNotify: true });
+      expect(immediate).toHaveBeenCalledWith('va', expect.objectContaining({ properties: { retained: true } }));
+    });
+
+    it('replays already-announced subtopics to an announce listener with immediateNotify', () => {
+      const prefixTopic = new NetworkTablesPrefixTopic(client, '/foo/');
+      const known = { ...params, properties: {} };
+      client['onTopicAnnounce'](known);
+      client['onTopicAnnounce']({ id: 2, name: '/bar/a', type: 'string', properties: {} });
+
+      const onAnnounce = vi.fn();
+      const onAnnounceLater = vi.fn();
+      prefixTopic.addAnnounceListener(onAnnounce, { immediateNotify: true });
+      prefixTopic.addAnnounceListener(onAnnounceLater);
+
+      expect(onAnnounce).toHaveBeenCalledExactlyOnceWith(known);
+      expect(onAnnounceLater).not.toHaveBeenCalled();
     });
   });
 

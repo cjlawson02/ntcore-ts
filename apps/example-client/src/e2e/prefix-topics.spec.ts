@@ -9,6 +9,7 @@
  */
 /// <reference types="vitest/globals" />
 import { NetworkTables } from '@ntcore-ts/client';
+import type { PropertiesMessageParams } from '@ntcore-ts/client';
 
 import {
   CONNECTION_WAIT_MS,
@@ -81,6 +82,119 @@ describe('Feature: Prefix Topics', () => {
       expect(autoModeRead).toBe(autoModeValue);
     },
     VALUE_WAIT_MS + 5_000
+  );
+
+  it(
+    '[PFX-4, PFX-6] notifies prefix listeners when a subtopic is announced and unannounced',
+    async () => {
+      const listenerPrefix = nt.getPrefixTopic('/MyTable/PrefixListeners/');
+      listenerPrefix.subscribe(() => {});
+      const name = '/MyTable/PrefixListeners/Target';
+      const waitFor = <T extends { name: string }>(add: (callback: (params: T) => void) => () => void, label: string) =>
+        new Promise<T>((resolve, reject) => {
+          const t = setTimeout(() => reject(new Error(`${label} listener timeout`)), VALUE_WAIT_MS);
+          const remove = add((params) => {
+            if (params.name === name) {
+              clearTimeout(t);
+              remove();
+              resolve(params);
+            }
+          });
+        });
+
+      const topic = nt.getStringTopic(name, 'initial');
+
+      const announced = waitFor((callback) => listenerPrefix.addAnnounceListener(callback), 'Announce');
+      // No value is set, the topic only exists
+      await topic.publish();
+      await expect(announced).resolves.toMatchObject({ name, type: 'string' });
+
+      const unannounced = waitFor((callback) => listenerPrefix.addUnannounceListener(callback), 'Unannounce');
+      topic.unpublish();
+      await expect(unannounced).resolves.toMatchObject({ name });
+    },
+    VALUE_WAIT_MS * 2 + 2_000
+  );
+
+  it(
+    "[PFX-5] notifies prefix listeners when a subtopic's properties change",
+    async () => {
+      const listenerPrefix = nt.getPrefixTopic('/MyTable/PrefixProperties/');
+      listenerPrefix.subscribe(() => {}, { topicsonly: true });
+      const name = '/MyTable/PrefixProperties/Target';
+      const topic = nt.getStringTopic(name, 'initial');
+      await topic.publish();
+
+      const changed = new Promise<PropertiesMessageParams>((resolve, reject) => {
+        const t = setTimeout(() => reject(new Error('Properties listener timeout')), VALUE_WAIT_MS);
+        const remove = listenerPrefix.addPropertiesListener((params) => {
+          if (params.name === name) {
+            clearTimeout(t);
+            remove();
+            resolve(params);
+          }
+        });
+      });
+      // Only the listener is under test, so don't fail on the setProperties response
+      topic.setProperties({ retained: true }).catch(() => {});
+
+      await expect(changed).resolves.toMatchObject({ name, update: { retained: true } });
+      topic.unpublish();
+    },
+    VALUE_WAIT_MS + 2_000
+  );
+
+  it(
+    '[PFX-7] replays already-announced subtopics to a new announce listener',
+    async () => {
+      // beforeAll's /MyTable/Accelerometer/ subscription has the X and Y announcements, and the server
+      // announces each topic to a client only once, so this new prefix topic can only learn of them by replay
+      expect(prefixAccelValues.X).toBeDefined();
+      const accelPrefix = nt.getPrefixTopic('/MyTable/Accel');
+      const announced: string[] = [];
+
+      const remove = accelPrefix.addAnnounceListener((params) => announced.push(params.name), {
+        immediateNotify: true,
+      });
+      remove();
+
+      expect(announced).toEqual(expect.arrayContaining(['/MyTable/Accelerometer/X', '/MyTable/Accelerometer/Y']));
+    },
+    VALUE_WAIT_MS
+  );
+
+  it(
+    '[PFX-8] notifies prefix unannounce listeners when the client disconnects from the server',
+    async () => {
+      // A second instance so disconnecting it doesn't disturb the shared one
+      const other = NetworkTables.getInstanceByURI('127.0.0.1', NT_SERVER_PORT);
+      try {
+        await waitForConnection(other);
+        const accelPrefix = other.getPrefixTopic('/MyTable/Accelerometer/');
+        const announced = new Promise<void>((resolve, reject) => {
+          const t = setTimeout(() => reject(new Error('Announce listener timeout')), VALUE_WAIT_MS);
+          const remove = accelPrefix.addAnnounceListener((params) => {
+            if (params.name === '/MyTable/Accelerometer/X') {
+              clearTimeout(t);
+              remove();
+              resolve();
+            }
+          });
+        });
+        accelPrefix.subscribe(() => {}, { topicsonly: true });
+        await announced;
+
+        const unannounced: string[] = [];
+        accelPrefix.addUnannounceListener((params) => unannounced.push(params.name));
+        // Point the instance at a port nothing listens on, which drops the current connection
+        other.changeURI('127.0.0.1', 1);
+
+        expect(unannounced).toEqual(expect.arrayContaining(['/MyTable/Accelerometer/X', '/MyTable/Accelerometer/Y']));
+      } finally {
+        other.close();
+      }
+    },
+    CONNECTION_WAIT_MS + VALUE_WAIT_MS + 2_000
   );
 
   it(
