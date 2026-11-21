@@ -224,6 +224,12 @@ describe('schema', () => {
       ).toBe(true);
     });
 
+    it('keeps updates to properties that are not part of the spec', () => {
+      expect(
+        propertiesMessageParamsSchema.parse({ name: 'testTopic', update: { unit: 'meters', retained: null } })
+      ).toEqual({ name: 'testTopic', update: { unit: 'meters', retained: null } });
+    });
+
     it('accepts null values, which delete the property', () => {
       expect(
         propertiesMessageParamsSchema.safeParse({

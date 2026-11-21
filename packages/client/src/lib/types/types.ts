@@ -60,7 +60,13 @@ export type PropertiesMessageParams = PropertiesMessage['params'];
 
 export type NetworkTablesTypes = z.infer<typeof msgPackValueSchema>;
 export type BinaryMessage = z.infer<typeof msgPackSchema>;
-export type TopicProperties = z.infer<typeof topicPropertiesSchema>;
+/**
+ * Properties a client can set when publishing a topic or calling `setProperties`.
+ *
+ * Received properties keep unknown keys (see `topicPropertiesSchema`), but this input type lists only the
+ * spec-defined keys so that misspellings such as `retaind` fail to compile.
+ */
+export type TopicProperties = Pick<z.infer<typeof topicPropertiesSchema>, 'persistent' | 'retained' | 'cached'>;
 
 function describeRejectedValue(value: unknown): string {
   if (

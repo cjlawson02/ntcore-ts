@@ -4,6 +4,7 @@ import type {
   AnnounceMessage,
   NetworkTablesTypeInfo,
   NetworkTablesTypes,
+  TopicProperties,
   PropertiesMessage,
   SetPropertiesMessage,
   SubscribeMessage,
@@ -328,5 +329,14 @@ describe('NetworkTablesTypes', () => {
     const array: NetworkTablesTypes = new Uint8Array(10);
 
     expect(array).toEqual(expect.any(Uint8Array));
+  });
+});
+
+describe('TopicProperties', () => {
+  it('rejects misspelled property names at compile time', () => {
+    const valid: TopicProperties = { persistent: true, retained: false, cached: true };
+    // @ts-expect-error -- `retaind` is not a topic property
+    const misspelled: TopicProperties = { retaind: true };
+    expect([valid, misspelled]).toHaveLength(2);
   });
 });

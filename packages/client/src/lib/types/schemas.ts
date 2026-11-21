@@ -60,7 +60,8 @@ export const topicPropertiesUpdateSchema = z
     retained: z.boolean().nullable(),
     cached: z.boolean().nullable(),
   })
-  .partial();
+  .partial()
+  .loose();
 
 /** Schema for a topic in the NT protocol. */
 export const topicSchema = z.object({
