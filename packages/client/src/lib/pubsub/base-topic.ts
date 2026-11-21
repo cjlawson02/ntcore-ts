@@ -7,12 +7,13 @@ import type {
   AnnounceMessageParams,
   NetworkTablesTypes,
   PropertiesMessage,
+  ReadonlyValue,
   SetPropertiesMessageParams,
   SubscribeOptions,
   TopicProperties,
 } from '../types/types.js';
 
-export type CallbackFn<T> = (value: T | null, params: AnnounceMessageParams) => void;
+export type CallbackFn<T> = (value: ReadonlyValue<T> | null, params: AnnounceMessageParams) => void;
 
 export abstract class NetworkTablesBaseTopic<T> {
   protected abstract readonly type: 'regular' | 'prefix';

@@ -23,7 +23,7 @@ Once a topic has been created, subscribe with:
 
 ```typescript
 subscribe(
-  callback: (value: T | null, params: AnnounceMessageParams) => void,
+  callback: (value: ReadonlyValue<T> | null, params: AnnounceMessageParams) => void,
   options?: SubscribeOptions
 )
 ```
@@ -51,6 +51,22 @@ gyroTopic.subscribe((value, params) => {
   console.log(`Got Gyro Value: ${value} at from topic id ${params.id}`);
 });
 ```
+
+### Values are shared and read-only
+
+Every subscriber of a topic, `getValue()`, and the React hooks receive the same value object, so arrays and decoded struct, protobuf, and JSON values are typed as read-only (`ReadonlyValue<T>`). Mutating one would change it for every other subscriber, and React wouldn't re-render. Copy before changing it:
+
+```typescript
+const anglesTopic = ntcore.getDoubleArrayTopic('/MyTable/Angles');
+
+anglesTopic.subscribe((angles) => {
+  if (!angles) return;
+  const sorted = [...angles].sort((a, b) => a - b); // angles.sort() is a type error
+  console.log(sorted);
+});
+```
+
+Subscribing more than once to the same topic, with any options, shares this one value. The server sends each value to the client once, at the rate and filtering of the most demanding subscription, and every callback receives it.
 
 ## Publish example
 

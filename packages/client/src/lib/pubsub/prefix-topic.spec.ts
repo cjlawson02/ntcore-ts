@@ -138,7 +138,7 @@ describe('Prefix Topic', () => {
 
   describe('unsubscribe', () => {
     it('removes the subscriber from the topic', () => {
-      const callback: CallbackFn<NetworkTablesTypes> = (_: NetworkTablesTypes | null) => vi.fn();
+      const callback: CallbackFn<NetworkTablesTypes> = (_) => vi.fn();
       topic.subscribe(callback);
       expect(topic.subscribers.size).toBe(1);
 
@@ -155,7 +155,7 @@ describe('Prefix Topic', () => {
 
   describe('unsubscribeAll', () => {
     it('removes all subscribers from the topic', () => {
-      const callback: CallbackFn<NetworkTablesTypes> = (_: NetworkTablesTypes | null) => vi.fn();
+      const callback: CallbackFn<NetworkTablesTypes> = (_) => vi.fn();
       topic.subscribe(callback);
       topic.subscribe(callback);
       expect(topic.subscribers.size).toBe(2);
@@ -166,7 +166,7 @@ describe('Prefix Topic', () => {
 
   describe('resubscribeAll', () => {
     it('resubscribes all subscribers to the topic', () => {
-      const callback: CallbackFn<NetworkTablesTypes> = (_: NetworkTablesTypes | null) => vi.fn();
+      const callback: CallbackFn<NetworkTablesTypes> = (_) => vi.fn();
       topic.subscribe(callback);
       topic.subscribe(callback);
       expect(topic.subscribers.size).toBe(2);

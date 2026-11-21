@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
   isStructTypeDescriptor,
+  type ReadonlyValue,
   type StructTypeDescriptor,
   type SubscribeOptions,
   type TopicProperties,
@@ -35,8 +36,9 @@ export type UseStructTopicTypeOptions<T extends object> = Omit<UseStructTopicOpt
  * wait for isReadyToWrite before calling it.
  */
 export type UseStructTopicResult<T extends object | object[]> = {
-  value: T | null;
-  setValue: ((value: T) => void) | undefined;
+  /** Shared with every subscriber of the topic, so it is read-only. */
+  value: ReadonlyValue<T> | null;
+  setValue: ((value: ReadonlyValue<T>) => void) | undefined;
   /** True once the server has acknowledged our publish request. */
   isReadyToWrite: boolean;
   error: Error | null;
@@ -89,7 +91,9 @@ export function useStructTopic<T extends object | object[]>(
     : (typeOrOptions ?? {});
 
   const nt = useNtcore();
-  const [state, setState] = useState<T | null>(resolved.defaultValue ?? null);
+  const [state, setState] = useState<ReadonlyValue<T> | null>(
+    (resolved.defaultValue ?? null) as ReadonlyValue<T> | null
+  );
   const [isReadyToWrite, setIsReadyToWrite] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const [identity, setIdentity] = useState({ nt, name, typeName: resolved.typeName });
@@ -99,7 +103,7 @@ export function useStructTopic<T extends object | object[]>(
 
   if (nt !== identity.nt || name !== identity.name || resolved.typeName !== identity.typeName) {
     setIdentity({ nt, name, typeName: resolved.typeName });
-    setState(resolved.defaultValue ?? null);
+    setState((resolved.defaultValue ?? null) as ReadonlyValue<T> | null);
     setIsReadyToWrite(false);
     setError(null);
   }
@@ -118,7 +122,7 @@ export function useStructTopic<T extends object | object[]>(
     const subuid = topic.subscribe((v) => {
       if (cancelled) return;
       try {
-        setState((v ?? null) as T | null);
+        setState((v ?? null) as ReadonlyValue<T> | null);
       } catch (e) {
         setError(toError(e));
       }
@@ -152,7 +156,7 @@ export function useStructTopic<T extends object | object[]>(
   }, [nt, name, resolved.typeName, getTopic, optionsRef]);
 
   const setValueCb = useCallback(
-    (value: T) => {
+    (value: ReadonlyValue<T>) => {
       const publish = optionsRef.current.publish;
       if (publish !== undefined && !isReadyToWrite) return;
       try {

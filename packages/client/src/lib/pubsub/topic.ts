@@ -5,6 +5,7 @@ import { NetworkTablesBaseTopic } from './base-topic.js';
 import type { CallbackFn } from './base-topic.js';
 import type { PubSubClient } from './pubsub.js';
 import type {
+  ReadonlyValue,
   AnnounceMessage,
   AnnounceMessageParams,
   NetworkTablesTypeInfo,
@@ -89,7 +90,7 @@ export class NetworkTablesTopic<
    * The client must be the publisher of the topic to set the value.
    * @param value - The value to set.
    */
-  setValue(value: TPublic) {
+  setValue(value: ReadonlyValue<TPublic>) {
     if (!this.publisher) {
       pubsubLogger.debug('Publisher check failed before setValue', { topicName: this.name });
       throw new Error('Cannot set value on topic without being the publisher');
@@ -157,8 +158,8 @@ export class NetworkTablesTopic<
    * Gets the value of the topic.
    * @returns The value of the topic.
    */
-  getValue(): TPublic | null {
-    return this._wireValue as TPublic | null;
+  getValue(): ReadonlyValue<TPublic> | null {
+    return this._wireValue as ReadonlyValue<TPublic> | null;
   }
 
   /**

@@ -7,7 +7,7 @@
  */
 import { z as zod } from 'zod';
 
-import type { NetworkTables } from '@ntcore-ts/client';
+import type { NetworkTables, ReadonlyValue } from '@ntcore-ts/client';
 
 export const NT_SERVER_HOST = 'localhost';
 export const NT_SERVER_PORT = 5810;
@@ -49,17 +49,17 @@ export function waitForConnection(nt: NetworkTables, timeoutMs = CONNECTION_WAIT
  * Rejects after `timeoutMs` with `message` if no matching value arrives.
  */
 export function waitForValue<T>(
-  topic: { subscribe: (cb: (value: T | null) => void) => void },
-  predicate: (value: T) => boolean,
+  topic: { subscribe: (cb: (value: ReadonlyValue<T> | null) => void) => void },
+  predicate: (value: ReadonlyValue<T>) => boolean,
   message: string,
   timeoutMs = VALUE_WAIT_MS
-): Promise<T> {
-  return new Promise<T>((resolve, reject) => {
+): Promise<ReadonlyValue<T>> {
+  return new Promise<ReadonlyValue<T>>((resolve, reject) => {
     const timer = setTimeout(() => reject(new Error(`${message} (after ${timeoutMs}ms)`)), timeoutMs);
     topic.subscribe((value) => {
-      if (value != null && predicate(value as T)) {
+      if (value != null && predicate(value)) {
         clearTimeout(timer);
-        resolve(value as T);
+        resolve(value);
       }
     });
   });

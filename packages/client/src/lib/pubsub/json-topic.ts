@@ -1,4 +1,4 @@
-import { NetworkTablesTypeInfos } from '../types/types.js';
+import { type ReadonlyValue, NetworkTablesTypeInfos } from '../types/types.js';
 
 import { pubsubLogger } from '../util/logger.js';
 
@@ -57,15 +57,16 @@ export class NetworkTablesJsonTopic<T extends object> extends NetworkTablesTopic
    * Gets the parsed JSON value of the topic.
    * @returns The parsed JSON object, or null if no value has been set.
    */
-  override getValue(): T | null {
-    return this.decodedValue;
+  override getValue(): ReadonlyValue<T> | null {
+    // Shared with every subscriber; the read-only type keeps callers from mutating it
+    return this.decodedValue as ReadonlyValue<T> | null;
   }
 
   /**
    * Sets the JSON value of the topic. The value is serialized with JSON.stringify for the wire.
    * @param value - The object to publish.
    */
-  override setValue(value: T): void {
+  override setValue(value: ReadonlyValue<T>): void {
     if (!this.publisher) {
       pubsubLogger.debug('Publisher check failed before setValue', { topicName: this.name });
       throw new Error('Cannot set value on topic without being the publisher');
