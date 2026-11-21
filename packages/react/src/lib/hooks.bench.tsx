@@ -12,6 +12,7 @@ import { usePrefixTopic } from './use-prefix-topic.js';
 type TopicCallback = (value: unknown, params?: { name: string; type: string }) => void;
 
 const DASHBOARD_HOOK_COUNT = 50;
+const UPDATES_PER_CALL = 100;
 const kDouble = NetworkTablesTypeInfos.kDouble;
 
 function makeNt(onSubscribe: (name: string, cb: TopicCallback) => void): NetworkTables {
@@ -167,35 +168,32 @@ test('react hook processing', async ({ bench }) => {
   const dashRoot = dashboardContainer;
   let seq = 0;
 
+  // CodSpeed's simulation mode measures one call of each bench, so a bench that does a single React commit
+  // reports whatever one-off work (allocation, scheduling) lands in that call and flaps by ~20% between runs.
+  // Committing many updates per call averages that out.
   await bench.compare(
-    bench('useTopic: 1 value update', () => {
-      const value = ++seq;
-      commit(() => {
-        topicCb(value);
-      });
-      if (gyroRoot.textContent !== String(value)) {
-        throw new Error(`useTopic DOM mismatch: ${gyroRoot.textContent}`);
-      }
-    }),
-    bench('usePrefixTopic: 1 value update', () => {
-      const value = ++seq;
-      commit(() => {
-        prefix(value, { name: '/SmartDashboard/x', type: 'double' });
-      });
-      if (prefixRoot.textContent !== String(value)) {
-        throw new Error(`usePrefixTopic DOM mismatch: ${prefixRoot.textContent}`);
-      }
-    }),
-    bench('useTopic: 10 unbatched value updates', () => {
+    bench(`useTopic: ${UPDATES_PER_CALL} value updates`, () => {
       let value = 0;
-      for (let i = 0; i < 10; i++) {
+      for (let i = 0; i < UPDATES_PER_CALL; i++) {
         value = ++seq;
         commit(() => {
           topicCb(value);
         });
       }
       if (gyroRoot.textContent !== String(value)) {
-        throw new Error(`useTopic x10 DOM mismatch: ${gyroRoot.textContent}`);
+        throw new Error(`useTopic DOM mismatch: ${gyroRoot.textContent}`);
+      }
+    }),
+    bench(`usePrefixTopic: ${UPDATES_PER_CALL} value updates`, () => {
+      let value = 0;
+      for (let i = 0; i < UPDATES_PER_CALL; i++) {
+        value = ++seq;
+        commit(() => {
+          prefix(value, { name: '/SmartDashboard/x', type: 'double' });
+        });
+      }
+      if (prefixRoot.textContent !== String(value)) {
+        throw new Error(`usePrefixTopic DOM mismatch: ${prefixRoot.textContent}`);
       }
     })
   );

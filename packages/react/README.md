@@ -59,11 +59,11 @@ Hook update benches measure `useTopic` / `usePrefixTopic` from callback to a jsd
 
 On an Apple M1 Pro (jsdom):
 
-| Workload                      |   Rate |   Mean |
-| ----------------------------- | -----: | -----: |
-| `useTopic` (one update)       |  88k/s |  11 µs |
-| `usePrefixTopic` (one update) |  85k/s |  12 µs |
-| 50 hooks, one batched update  | 4.5k/s | 240 µs |
-| 50 hooks, unbatched           |  800/s | 1.3 ms |
+| Workload                       |   Rate |   Mean |
+| ------------------------------ | -----: | -----: |
+| `useTopic` (100 updates)       |  980/s | 1.0 ms |
+| `usePrefixTopic` (100 updates) |  950/s | 1.1 ms |
+| 50 hooks, one batched update   | 4.5k/s | 240 µs |
+| 50 hooks, unbatched            |  800/s | 1.3 ms |
 
 CI re-runs these benches on every PR and fails if throughput drops to half of `main`. See the [performance guide](https://ntcore.chrislawson.dev/guide/performance).
