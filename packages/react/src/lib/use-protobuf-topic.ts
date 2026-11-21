@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import type { SubscribeOptions, TopicProperties } from '@ntcore-ts/client';
+import type { ReadonlyValue, SubscribeOptions, TopicProperties } from '@ntcore-ts/client';
 import { toError, useNtcore } from './context.js';
 import { trackPublish, unpublishWhenDone, claimPublishOwner, type TrackedPublish } from './unpublish-when-done.js';
 import { useLatestRef } from './use-latest-ref.js';
@@ -32,8 +32,9 @@ export type UseProtobufTopicOptions<T extends object> = {
  * wait for isReadyToWrite before calling it.
  */
 export type UseProtobufTopicResult<T extends object> = {
-  value: T | null;
-  setValue: ((value: T) => void) | undefined;
+  /** Shared with every subscriber of the topic, so it is read-only. */
+  value: ReadonlyValue<T> | null;
+  setValue: ((value: ReadonlyValue<T>) => void) | undefined;
   /** True once the server has acknowledged our publish request. Only check this when you passed `publish`. */
   isReadyToWrite: boolean;
   error: Error | null;
@@ -59,7 +60,9 @@ export function useProtobufTopic<T extends object>(
   options?: UseProtobufTopicOptions<T>
 ): UseProtobufTopicResult<T> {
   const nt = useNtcore();
-  const [state, setState] = useState<T | null>(options?.defaultValue ?? null);
+  const [state, setState] = useState<ReadonlyValue<T> | null>(
+    (options?.defaultValue ?? null) as ReadonlyValue<T> | null
+  );
   const [isReadyToWrite, setIsReadyToWrite] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const [identity, setIdentity] = useState({ nt, name });
@@ -67,7 +70,7 @@ export function useProtobufTopic<T extends object>(
 
   if (nt !== identity.nt || name !== identity.name) {
     setIdentity({ nt, name });
-    setState(options?.defaultValue ?? null);
+    setState((options?.defaultValue ?? null) as ReadonlyValue<T> | null);
     setIsReadyToWrite(false);
     setError(null);
   }
@@ -112,7 +115,7 @@ export function useProtobufTopic<T extends object>(
   }, [nt, name, optionsRef]);
 
   const setValueCb = useCallback(
-    (value: T) => {
+    (value: ReadonlyValue<T>) => {
       const publish = optionsRef.current?.publish;
       if (publish !== undefined && !isReadyToWrite) return;
       try {

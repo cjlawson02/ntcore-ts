@@ -1,4 +1,5 @@
 import {
+  type ReadonlyValue,
   type AnnounceMessage,
   type AnnounceMessageParams,
   type PublishMessageParams,
@@ -127,11 +128,12 @@ export class NetworkTablesStructTopic<T extends object | object[]> extends Netwo
     return (this._validator ? this._validator.parse(value) : value) as T;
   }
 
-  override getValue(): T | null {
-    return this.decodedValue;
+  override getValue(): ReadonlyValue<T> | null {
+    // Shared with every subscriber; the read-only type keeps callers from mutating it
+    return this.decodedValue as ReadonlyValue<T> | null;
   }
 
-  override setValue(value: T): void {
+  override setValue(value: ReadonlyValue<T>): void {
     if (!this.publisher) {
       pubsubLogger.debug('Publisher check failed before setValue', { topicName: this.name });
       throw new Error('Cannot set value on topic without being the publisher');

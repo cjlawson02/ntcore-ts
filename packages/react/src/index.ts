@@ -13,6 +13,7 @@ export { useConnectionStatus } from './lib/use-connection-status.js';
 export type {
   NetworkTablesTypeInfo,
   NetworkTablesTypes,
+  ReadonlyValue,
   SubscribeOptions,
   TopicProperties,
   RobotPlatform,

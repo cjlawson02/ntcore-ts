@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import type { NetworkTablesTypes, SubscribeOptions } from '@ntcore-ts/client';
+import type { NetworkTablesTypes, ReadonlyValue, SubscribeOptions } from '@ntcore-ts/client';
 import { useNtcore } from './context.js';
 import { useLatestRef } from './use-latest-ref.js';
 
@@ -8,17 +8,17 @@ import { useLatestRef } from './use-latest-ref.js';
  */
 export type PrefixTopicUpdate = {
   name: string;
-  value: NetworkTablesTypes | null;
+  value: ReadonlyValue<NetworkTablesTypes> | null;
   type: string;
 };
 
 /** Entry in the map returned by {@link usePrefixTopicMap}. */
 export type PrefixTopicMapEntry = {
-  value: NetworkTablesTypes | null;
+  value: ReadonlyValue<NetworkTablesTypes> | null;
   type: string;
 };
 
-type PrefixTopicUpdateCallback = (name: string, value: NetworkTablesTypes | null, type: string) => void;
+type PrefixTopicUpdateCallback = (name: string, value: ReadonlyValue<NetworkTablesTypes> | null, type: string) => void;
 
 /**
  * Shared subscription to a prefix topic. Calls onUpdate for each announcement.

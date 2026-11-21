@@ -4,6 +4,7 @@ import type {
   AnnounceMessage,
   NetworkTablesTypeInfo,
   NetworkTablesTypes,
+  ReadonlyValue,
   TopicProperties,
   PropertiesMessage,
   SetPropertiesMessage,
@@ -338,5 +339,24 @@ describe('TopicProperties', () => {
     // @ts-expect-error -- `retaind` is not a topic property
     const misspelled: TopicProperties = { retaind: true };
     expect([valid, misspelled]).toHaveLength(2);
+  });
+});
+
+describe('ReadonlyValue', () => {
+  it('rejects mutating shared array and object values at compile time', () => {
+    const mutate = (angles: ReadonlyValue<number[]>, pose: ReadonlyValue<{ translation: { x: number } }>) => {
+      // @ts-expect-error -- shared arrays are read-only
+      angles.push(1);
+      // @ts-expect-error -- shared arrays are read-only
+      angles[0] = 1;
+      // @ts-expect-error -- nested fields of shared objects are read-only
+      pose.translation.x = 1;
+    };
+    const raw: ReadonlyValue<Uint8Array> = new Uint8Array(1);
+    raw[0] = 1; // raw values stay a plain Uint8Array
+    const copy: number[] = [...([1, 2] as ReadonlyValue<number[]>)];
+
+    expect(mutate).toBeTypeOf('function');
+    expect(copy).toEqual([1, 2]);
   });
 });

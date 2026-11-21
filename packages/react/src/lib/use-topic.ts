@@ -4,6 +4,7 @@ import {
   type NetworkTables,
   type NetworkTablesTypeInfo,
   type NetworkTablesTypes,
+  type ReadonlyValue,
   type SubscribeOptions,
   type TopicProperties,
 } from '@ntcore-ts/client';
@@ -39,8 +40,9 @@ export type UseTopicOptions<T = NetworkTablesTypes> = {
  * wait for isReadyToWrite before calling it.
  */
 export type UseTopicResult<T = NetworkTablesTypes> = {
-  value: T | null;
-  setValue: ((value: T) => void) | undefined;
+  /** Shared with every subscriber of the topic, so it is read-only. */
+  value: ReadonlyValue<T> | null;
+  setValue: ((value: ReadonlyValue<T>) => void) | undefined;
   /** True once the server has acknowledged our publish request. Only check this when you passed `publish`. */
   isReadyToWrite: boolean;
   /** Last publish or setValue error, if any. */
@@ -60,7 +62,7 @@ type TopicStore<T> = {
   options: UseTopicOptions<T> | undefined;
   meta: TopicMeta;
   bumpMeta: () => void;
-  setValue: (value: T) => void;
+  setValue: (value: ReadonlyValue<T>) => void;
 };
 
 /**
@@ -101,7 +103,9 @@ export function useTopic<T>(
 
   // Value updates are the hot path and only touch this state. Publish ready/error live in the
   // store ref and bump a rarely-used reducer, so read-only dashboards stay near one useState.
-  const [state, setState] = useState<T | null>(options?.defaultValue ?? null);
+  const [state, setState] = useState<ReadonlyValue<T> | null>(
+    (options?.defaultValue ?? null) as ReadonlyValue<T> | null
+  );
   const [, bumpMeta] = useReducer((n: number) => n + 1, 0);
 
   // Mutable bag for publish meta + stable setValue. Touched during render on purpose so
@@ -118,7 +122,7 @@ export function useTopic<T>(
       options,
       meta: { ...INITIAL_META },
       bumpMeta,
-      setValue: (value: T) => {
+      setValue: (value: ReadonlyValue<T>) => {
         const s = storeRef.current!;
         if (s.options?.publish === undefined || !s.meta.isReadyToWrite) return;
         try {
@@ -147,7 +151,7 @@ export function useTopic<T>(
     store.typeNum = typeNum;
     store.typeStr = typeStr;
     store.meta = { ...INITIAL_META };
-    setState(options?.defaultValue ?? null);
+    setState((options?.defaultValue ?? null) as ReadonlyValue<T> | null);
   }
 
   useEffect(() => {
@@ -157,7 +161,7 @@ export function useTopic<T>(
         ? nt.getJsonTopic(name, store.options?.defaultValue as object | undefined)
         : nt.createTopic(name, typeInfo, store.options?.defaultValue as NetworkTablesTypes | undefined);
     const subuid = topic.subscribe((v) => {
-      if (!cancelled) setState(v as T);
+      if (!cancelled) setState(v as ReadonlyValue<T> | null);
     }, store.options?.subscribeOptions ?? undefined);
     const publish = store.options?.publish;
     const unpublishOnUnmount = store.options?.unpublishOnUnmount ?? publish !== undefined;

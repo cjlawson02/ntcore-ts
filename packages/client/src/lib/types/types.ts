@@ -66,6 +66,20 @@ export type BinaryMessage = z.infer<typeof msgPackSchema>;
  * Received properties keep unknown keys (see `topicPropertiesSchema`), but this input type lists only the
  * spec-defined keys so that misspellings such as `retaind` fail to compile.
  */
+/**
+ * A topic value as handed to subscribers and returned by `getValue()`. Every subscriber of a topic receives the same
+ * object, so arrays and decoded objects are read-only all the way down. `Uint8Array` (raw) values are left as is.
+ */
+export type ReadonlyValue<T> = T extends Uint8Array
+  ? T
+  : T extends readonly (infer U)[]
+    ? readonly ReadonlyValue<U>[]
+    : T extends (...args: never[]) => unknown
+      ? T
+      : T extends object
+        ? { readonly [K in keyof T]: ReadonlyValue<T[K]> }
+        : T;
+
 export type TopicProperties = Pick<z.infer<typeof topicPropertiesSchema>, 'persistent' | 'retained' | 'cached'>;
 
 function describeRejectedValue(value: unknown): string {

@@ -254,7 +254,9 @@ export class PubSubClient {
 
     if (knownTopic) {
       // Use topic's value when we have one so protobuf topics pass decoded value to prefix subscribers
-      const valueForPrefix = topic != null ? (topic.getValue() ?? message.value) : message.value;
+      const valueForPrefix = (
+        topic != null ? (topic.getValue() ?? message.value) : message.value
+      ) as NetworkTablesTypes;
       let matchedPrefixCount = 0;
       this.prefixTopics.forEach((prefixTopic) => {
         if (knownTopic.name.startsWith(prefixTopic.name)) {

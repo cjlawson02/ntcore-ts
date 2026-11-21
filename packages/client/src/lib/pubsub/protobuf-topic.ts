@@ -1,4 +1,5 @@
 import {
+  type ReadonlyValue,
   NetworkTablesTypeInfos,
   type AnnounceMessage,
   type AnnounceMessageParams,
@@ -168,12 +169,13 @@ export class NetworkTablesProtobufTopic<T extends object> extends NetworkTablesT
    * Gets the value of the topic.
    * @returns The value of the topic.
    */
-  override getValue(): T | null {
-    return this.decodedValue;
+  override getValue(): ReadonlyValue<T> | null {
+    // Shared with every subscriber; the read-only type keeps callers from mutating it
+    return this.decodedValue as ReadonlyValue<T> | null;
   }
 
-  override setValue(value: T): void {
-    const validatedValue = this._validator ? this._validator.parse(value) : value;
+  override setValue(value: ReadonlyValue<T>): void {
+    const validatedValue = (this._validator ? this._validator.parse(value) : value) as T;
     // Encode first so schema load errors (e.g. bad protoFilePath) are thrown before publisher check
     const encoded = this.encodeValue(validatedValue);
     if (!this.publisher) {
