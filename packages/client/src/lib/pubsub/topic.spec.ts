@@ -36,6 +36,7 @@ describe('Topic', () => {
 
   afterEach(() => {
     topic['client']['topics'].clear();
+    topic['client']['knownTopicParams'].clear();
     topic.subscribers.clear();
     topic['_publisher'] = false;
     topic['_pubuid'] = undefined;

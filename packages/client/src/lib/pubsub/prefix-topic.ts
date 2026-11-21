@@ -15,7 +15,7 @@ export class NetworkTablesPrefixTopic extends NetworkTablesBaseTopic<NetworkTabl
   readonly type = 'prefix';
   private readonly _lastSubtopicValues = new Map<
     string,
-    { params: AnnounceMessageParams; value: NetworkTablesTypes }
+    { params: AnnounceMessageParams; value: NetworkTablesTypes; serverTime: number }
   >();
 
   /**
@@ -49,21 +49,27 @@ export class NetworkTablesPrefixTopic extends NetworkTablesBaseTopic<NetworkTabl
    * @returns The UID of the subscriber.
    */
   subscribe(callback: CallbackFn<NetworkTablesTypes>, options: Omit<SubscribeOptions, 'prefix'> = {}) {
+    // Replay before adding the subscriber so it receives each replayed value exactly once, below
+    const replayed = this.subscribers.size === 0 ? this.client.replayKnownState(this) : [];
     const subuid = this.subscribeWithId(callback, options, undefined, true);
+    let toDeliver: { params: AnnounceMessageParams; value: NetworkTablesTypes }[] = [];
     if (options.immediateNotify) {
-      this._lastSubtopicValues.forEach(({ params, value }) => {
-        if (params.name === this.name) return;
-        try {
-          callback(value, params);
-        } catch (error: unknown) {
-          pubsubLogger.warn('Prefix immediateNotify callback threw', {
-            prefix: this.name,
-            subtopicName: params.name,
-            error,
-          });
-        }
-      });
+      toDeliver = [...this._lastSubtopicValues.values()];
+    } else if (!options.topicsonly) {
+      toDeliver = replayed.flatMap((params) => this._lastSubtopicValues.get(params.name) ?? []);
     }
+    toDeliver.forEach(({ params, value }) => {
+      if (params.name === this.name) return;
+      try {
+        callback(value, params);
+      } catch (error: unknown) {
+        pubsubLogger.warn('Prefix immediateNotify callback threw', {
+          prefix: this.name,
+          subtopicName: params.name,
+          error,
+        });
+      }
+    });
     return subuid;
   }
 
@@ -131,10 +137,19 @@ export class NetworkTablesPrefixTopic extends NetworkTablesBaseTopic<NetworkTabl
     if (value == null) {
       this._lastSubtopicValues.delete(params.name);
     } else {
-      this._lastSubtopicValues.set(params.name, { params, value });
+      this._lastSubtopicValues.set(params.name, { params, value, serverTime });
     }
     this._lastChangedTime = serverTime;
     this.notifySubscribers(params, value);
+  }
+
+  /**
+   * Gets the latest value received for a subtopic.
+   * @param name - The subtopic's name.
+   * @returns The value and its server time, or undefined if none is cached.
+   */
+  getSubtopicValue(name: string) {
+    return this._lastSubtopicValues.get(name);
   }
 
   private notifySubscribers(params: AnnounceMessageParams, value: NetworkTablesTypes | null) {

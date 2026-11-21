@@ -1,6 +1,8 @@
 import { NetworkTablesTypeInfos } from '../types/types.js';
 
+import { NetworkTablesPrefixTopic } from './prefix-topic.js';
 import { PubSubClient } from './pubsub.js';
+import { NetworkTablesTopic } from './topic.js';
 
 describe('PubSubClient', () => {
   let client: PubSubClient;
@@ -186,6 +188,143 @@ describe('PubSubClient', () => {
       'early value',
       1000
     );
+  });
+
+  const kDouble = NetworkTablesTypeInfos.kDouble[0];
+
+  it('replays announcement and latest value to a topic created after a prefix topic received them', () => {
+    new NetworkTablesPrefixTopic(client, '/').subscribe(() => {});
+    client['onTopicAnnounce']({ id: 7, name: '/table/value', type: 'double', properties: {} });
+    client['onTopicUpdate']({ topicId: 7, value: 4.2, typeNum: kDouble, serverTime: 1000 });
+
+    const topic = new NetworkTablesTopic<number>(client, '/table/value', NetworkTablesTypeInfos.kDouble);
+    const callback = vi.fn();
+    topic.subscribe(callback, { immediateNotify: true });
+
+    expect(topic.id).toBe(7);
+    expect(topic.getValue()).toBe(4.2);
+    expect(callback).toHaveBeenCalledExactlyOnceWith(4.2, expect.objectContaining({ id: 7 }));
+
+    // Later updates are routed to the topic by id
+    client['onTopicUpdate']({ topicId: 7, value: 5, typeNum: kDouble, serverTime: 2000 });
+    expect(topic.getValue()).toBe(5);
+  });
+
+  it('replays announcements and latest values to a prefix topic created after a topic received them', () => {
+    const topic = new NetworkTablesTopic<number>(client, '/table/value', NetworkTablesTypeInfos.kDouble);
+    topic.subscribe(() => {});
+    client['onTopicAnnounce']({ id: 7, name: '/table/value', type: 'double', properties: {} });
+    client['onTopicUpdate']({ topicId: 7, value: 4.2, typeNum: kDouble, serverTime: 1000 });
+
+    const prefixTopic = new NetworkTablesPrefixTopic(client, '/table/');
+    const callback = vi.fn();
+    prefixTopic.subscribe(callback, { immediateNotify: true });
+
+    expect(callback).toHaveBeenCalledExactlyOnceWith(4.2, expect.objectContaining({ id: 7, name: '/table/value' }));
+  });
+
+  describe('known state replay', () => {
+    const announce = () => client['onTopicAnnounce']({ id: 7, name: '/table/value', type: 'double', properties: {} });
+    const update = (value: number, serverTime: number) =>
+      client['onTopicUpdate']({ topicId: 7, value, typeNum: kDouble, serverTime });
+
+    it('delivers the replayed value once to the first subscriber without immediateNotify', () => {
+      new NetworkTablesPrefixTopic(client, '/').subscribe(() => {});
+      announce();
+      update(4.2, 1000);
+
+      const topic = new NetworkTablesTopic<number>(client, '/table/value', NetworkTablesTypeInfos.kDouble);
+      const callback = vi.fn();
+      topic.subscribe(callback);
+
+      expect(callback).toHaveBeenCalledExactlyOnceWith(4.2, expect.objectContaining({ id: 7 }));
+    });
+
+    it('does not deliver replayed values to a topicsonly subscriber', () => {
+      new NetworkTablesPrefixTopic(client, '/').subscribe(() => {});
+      announce();
+      update(4.2, 1000);
+
+      const callback = vi.fn();
+      new NetworkTablesPrefixTopic(client, '/table/').subscribe(callback, { topicsonly: true });
+
+      expect(callback).not.toHaveBeenCalled();
+    });
+
+    it('does not overwrite a value the client set itself', () => {
+      new NetworkTablesPrefixTopic(client, '/').subscribe(() => {});
+      announce();
+      update(3, 1000);
+      const topic = new NetworkTablesTopic<number>(client, '/table/value', NetworkTablesTypeInfos.kDouble);
+      topic['_publisher'] = true;
+      topic['_wireValue'] = 5;
+
+      topic.subscribe(() => {});
+
+      expect(topic.getValue()).toBe(5);
+    });
+
+    it('replays a value this client published to a new prefix topic', () => {
+      const topic = new NetworkTablesTopic<number>(client, '/table/value', NetworkTablesTypeInfos.kDouble);
+      announce();
+      topic['_publisher'] = true;
+      topic['_wireValue'] = 5;
+
+      const callback = vi.fn();
+      new NetworkTablesPrefixTopic(client, '/table/').subscribe(callback, { immediateNotify: true });
+
+      expect(callback).toHaveBeenCalledExactlyOnceWith(5, expect.objectContaining({ name: '/table/value' }));
+    });
+
+    it('does not replay values held only by topicsonly subscriptions', () => {
+      new NetworkTablesPrefixTopic(client, '/').subscribe(() => {}, { topicsonly: true });
+      announce();
+      update(4.2, 1000);
+
+      const topic = new NetworkTablesTopic<number>(client, '/table/value', NetworkTablesTypeInfos.kDouble);
+      topic.subscribe(() => {});
+
+      expect(topic.id).toBe(7);
+      expect(topic.getValue()).toBeNull();
+    });
+
+    it('does not replay a value no subscription is keeping current', () => {
+      const prefixTopic = new NetworkTablesPrefixTopic(client, '/');
+      const subuid = prefixTopic.subscribe(() => {});
+      announce();
+      update(4.2, 1000);
+      prefixTopic.unsubscribe(subuid);
+
+      const topic = new NetworkTablesTopic<number>(client, '/table/value', NetworkTablesTypeInfos.kDouble);
+      topic.subscribe(() => {});
+
+      expect(topic.id).toBe(7);
+      expect(topic.getValue()).toBeNull();
+    });
+
+    it('delivers each replayed value once when a prefix topic is resubscribed with immediateNotify', () => {
+      new NetworkTablesPrefixTopic(client, '/').subscribe(() => {});
+      const prefixTopic = new NetworkTablesPrefixTopic(client, '/table/');
+      prefixTopic.subscribe(() => {});
+      announce();
+      update(4.2, 1000);
+      prefixTopic.unsubscribeAll();
+
+      const callback = vi.fn();
+      prefixTopic.subscribe(callback, { immediateNotify: true });
+
+      expect(callback).toHaveBeenCalledExactlyOnceWith(4.2, expect.objectContaining({ name: '/table/value' }));
+    });
+
+    it('still lets a topic publish after the replay announces it', () => {
+      new NetworkTablesPrefixTopic(client, '/').subscribe(() => {});
+      announce();
+
+      const topic = new NetworkTablesTopic<number>(client, '/table/value', NetworkTablesTypeInfos.kDouble);
+      topic.subscribe(() => {});
+
+      expect(topic.publisher).toBe(false);
+    });
   });
 
   it('handles announcements for a topic', () => {

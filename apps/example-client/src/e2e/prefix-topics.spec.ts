@@ -10,7 +10,14 @@
 /// <reference types="vitest/globals" />
 import { NetworkTables } from '@ntcore-ts/client';
 
-import { CONNECTION_WAIT_MS, NT_SERVER_HOST, NT_SERVER_PORT, VALUE_WAIT_MS, waitForConnection } from './_support';
+import {
+  CONNECTION_WAIT_MS,
+  NT_SERVER_HOST,
+  NT_SERVER_PORT,
+  VALUE_WAIT_MS,
+  waitForConnection,
+  waitForValue,
+} from './_support';
 
 describe('Feature: Prefix Topics', () => {
   const nt = NetworkTables.getInstanceByURI(NT_SERVER_HOST, NT_SERVER_PORT);
@@ -74,5 +81,19 @@ describe('Feature: Prefix Topics', () => {
       expect(autoModeRead).toBe(autoModeValue);
     },
     VALUE_WAIT_MS + 5_000
+  );
+
+  it(
+    '[PFX-9] receives values on a topic created after the prefix subscription covered it',
+    async () => {
+      // PFX-1 already waited for the prefix subscription to receive X, so the server won't announce it again
+      expect(prefixAccelValues.X).toBeDefined();
+
+      const xTopic = nt.getDoubleTopic('/MyTable/Accelerometer/X');
+      const value = await waitForValue(xTopic, Number.isFinite, 'Accelerometer X value timeout');
+
+      expect(Number.isFinite(value)).toBe(true);
+    },
+    VALUE_WAIT_MS + 2_000
   );
 });

@@ -207,6 +207,91 @@ export class PubSubClient {
   }
 
   /**
+   * Brings a topic up to date with the announcements and values the client already has.
+   * The server announces a topic and sends its value only once per connection, so a topic subscribed after
+   * another subscription already covers it would otherwise never hear about it. Subscribers aren't notified;
+   * the caller delivers the replayed values to its new subscriber.
+   * @internal Called by topics before their first subscriber is added.
+   * @param topic - The topic about to be subscribed.
+   * @returns The announce params of the topics whose value was replayed.
+   */
+  replayKnownState<T>(topic: NetworkTablesBaseTopic<T>) {
+    const replayed: AnnounceMessageParams[] = [];
+    if (topic.isRegular()) {
+      const params = [...this.knownTopicParams.values()].find((known) => known.name === topic.name);
+      if (!params) return replayed;
+      pubsubLogger.debug('Replaying known topic state', { topicName: topic.name, topicId: params.id });
+      topic.announce(params);
+      // A topic that set its value locally or already received one is current, since it gets every update
+      if (topic.publisher || topic.lastChangedTime != null) return replayed;
+      const current = this.findCurrentValue(params.name);
+      if (!current) return replayed;
+      try {
+        topic.updateValue(NetworkTablesTypeInfos.validateData(topic.typeInfo, current.value), current.serverTime);
+        replayed.push(params);
+      } catch (e) {
+        pubsubLogger.warn('Skipping invalid replayed value for topic', { topicName: topic.name, error: String(e) });
+      }
+    } else if (topic.isPrefix()) {
+      this.knownTopicParams.forEach((params) => {
+        if (!params.name.startsWith(topic.name)) return;
+        pubsubLogger.debug('Replaying known topic state to prefix topic', {
+          topicName: params.name,
+          prefix: topic.name,
+        });
+        topic.announce(params);
+        const current = this.findCurrentValue(params.name);
+        if (!current) return;
+        topic.updateValue(params, current.value, current.serverTime);
+        replayed.push(params);
+      });
+    }
+    return replayed;
+  }
+
+  /**
+   * Finds a topic's current value among the topics that already track it. Every value the server sends is routed
+   * to the matching regular topic and prefix topics, so one of them holds it, but only while some subscription
+   * keeps the server sending values. Values this client publishes aren't echoed back, so the publisher holds those.
+   * @param name - The topic name.
+   * @returns The value and its server time, or undefined if no topic holds a current value.
+   */
+  private findCurrentValue(name: string): { value: NetworkTablesTypes; serverTime: number } | undefined {
+    const local = this.topics.get(name);
+    // The stored value is shared and never mutated, so hand it on without the read-only type
+    const localValue = local?.getValue() as NetworkTablesTypes | null | undefined;
+    if (local?.publisher && localValue != null) return { value: localValue, serverTime: local.lastChangedTime ?? 0 };
+    if (!this.hasValueSubscription(name)) return undefined;
+    if (local?.lastChangedTime != null && localValue != null) {
+      return { value: localValue, serverTime: local.lastChangedTime };
+    }
+    for (const prefixTopic of this.prefixTopics.values()) {
+      if (!name.startsWith(prefixTopic.name)) continue;
+      const cached = prefixTopic.getSubtopicValue(name);
+      if (cached) return cached;
+    }
+    return undefined;
+  }
+
+  /**
+   * Whether a subscription other than `topicsonly` currently covers a topic, so the server keeps sending its values.
+   * @param name - The topic name.
+   * @returns Whether the topic's values are being received.
+   */
+  private hasValueSubscription(name: string) {
+    const wantsValues = (topic: NetworkTablesBaseTopic<unknown>) =>
+      [...topic.subscribers.values()].some((info) => !info.options.topicsonly);
+    const local = this.topics.get(name);
+    return (
+      (local != null && wantsValues(local as NetworkTablesBaseTopic<unknown>)) ||
+      [...this.prefixTopics.values()].some(
+        (prefixTopic) =>
+          name.startsWith(prefixTopic.name) && wantsValues(prefixTopic as NetworkTablesBaseTopic<unknown>)
+      )
+    );
+  }
+
+  /**
    * Called by the messenger when a topic is updated.
    * @param message - The message data.
    */
