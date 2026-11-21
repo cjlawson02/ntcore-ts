@@ -19,6 +19,7 @@ import {
   announceMessageSchema,
   unannounceMessageSchema,
   propertiesMessageSchema,
+  messageSchema,
 } from './schemas.js';
 
 describe('schema', () => {
@@ -214,6 +215,24 @@ describe('schema', () => {
           update: { persistent: true },
         }).success
       ).toBe(true);
+    });
+
+    it('accepts null values, which delete the property', () => {
+      expect(
+        propertiesMessageParamsSchema.safeParse({
+          name: 'testTopic',
+          update: { persistent: null, retained: null, cached: null },
+        }).success
+      ).toBe(true);
+    });
+
+    it('rejects non-boolean, non-null values for known properties', () => {
+      expect(
+        propertiesMessageParamsSchema.safeParse({
+          name: 'testTopic',
+          update: { persistent: 'yes' },
+        }).success
+      ).toBe(false);
     });
 
     it('rejects objects without the required properties', () => {
@@ -501,6 +520,18 @@ describe('schema', () => {
           params: { ack: true },
         }).success
       ).toBe(false);
+    });
+  });
+
+  describe('messageSchema', () => {
+    it('parses a frame that deletes a property alongside an announce', () => {
+      // WPILib servers relay `setPersistent(false)` as `{ persistent: null }`
+      expect(
+        messageSchema.safeParse([
+          { method: 'announce', params: { id: 1, name: '/foo', type: 'double', properties: {} } },
+          { method: 'properties', params: { name: '/foo', update: { persistent: null } } },
+        ]).success
+      ).toBe(true);
     });
   });
 });
