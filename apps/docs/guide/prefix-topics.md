@@ -63,9 +63,14 @@ const topicTypes = new Map<string, string>();
 // The server only announces topics to subscribed clients
 allTopics.subscribe(() => {}, { topicsonly: true });
 
-allTopics.addAnnounceListener((params) => {
-  topicTypes.set(params.name, params.type);
-});
+// immediateNotify also reports topics already announced on this connection
+allTopics.addAnnounceListener(
+  (params) => {
+    topicTypes.set(params.name, params.type);
+  },
+  { immediateNotify: true }
+);
+// Also called for every topic when the connection drops
 allTopics.addUnannounceListener((params) => {
   topicTypes.delete(params.name);
 });

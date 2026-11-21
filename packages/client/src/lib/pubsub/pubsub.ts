@@ -35,6 +35,14 @@ export class PubSubClient {
     this.cleanup();
   };
 
+  /**
+   * Gets the announce params of every topic announced on the current connection.
+   * @returns The announce params of the known topics.
+   */
+  getAllKnownTopicParams(): AnnounceMessageParams[] {
+    return [...this.knownTopicParams.values()];
+  }
+
   get messenger() {
     return this._messenger;
   }
@@ -89,6 +97,7 @@ export class PubSubClient {
         prefixTopicCount: this.prefixTopics.size,
         knownTopicParams: this.knownTopicParams.size,
       });
+      const knownTopics = [...this.knownTopicParams.values()];
       this.knownTopicParams.clear();
       this.pendingValueUpdates.clear();
       // Ensure disconnect cleanup never throws.
@@ -109,6 +118,7 @@ export class PubSubClient {
           });
         }
       });
+      this.notifyPrefixTopicsOfUnannounce(knownTopics);
     });
 
     // In the DOM, auto-cleanup without overwriting an existing beforeunload handler
@@ -146,6 +156,7 @@ export class PubSubClient {
     this._messenger.reinstantiate(url);
 
     // Clear announcement state so ids are reacquired from the new connection.
+    const knownTopics = [...this.knownTopicParams.values()];
     this.knownTopicParams.clear();
     this.pendingValueUpdates.clear();
     // Ensure reinstantiation cleanup never throws (tests may register lightweight mocks).
@@ -166,6 +177,7 @@ export class PubSubClient {
         });
       }
     });
+    this.notifyPrefixTopicsOfUnannounce(knownTopics);
 
     // Re-subscribe and re-publish local state for the new connection.
     this.topics.forEach((topic) => {
@@ -445,42 +457,66 @@ export class PubSubClient {
    * @param params - The unannounce message parameters.
    */
   private onTopicUnannounce = (params: UnannounceMessageParams) => {
-    this.prefixTopics.forEach((prefixTopic) => {
-      if (params.name.startsWith(prefixTopic.name)) {
-        prefixTopic.unannounceSubtopic(params);
-      }
-    });
     const topic = this.topics.get(params.name);
     this.pendingValueUpdates.delete(params.id);
-    if (!topic) {
+    if (topic) {
+      pubsubLogger.debug('Topic unannounced', { topicName: params.name, topicId: topic.id });
+      topic.unannounce();
+    } else {
       pubsubLogger.debug('Topic was unannounced but does not exist', { topicName: params.name });
-      // Still clean up knownTopicParams even if topic doesn't exist locally
-      pubsubLogger.trace('Map operation: knownTopicParams.delete', {
-        topicId: params.id,
-        mapSizeBefore: this.knownTopicParams.size,
-      });
-      this.knownTopicParams.delete(params.id);
-      pubsubLogger.trace('Map operation: knownTopicParams.delete complete', {
-        mapSizeAfter: this.knownTopicParams.size,
-      });
-      return;
     }
-    pubsubLogger.debug('Topic unannounced', { topicName: params.name, topicId: topic.id });
-    topic.unannounce();
-    // Clean up knownTopicParams when topic is unannounced
+    // Clean up knownTopicParams even if the topic doesn't exist locally
     pubsubLogger.trace('Map operation: knownTopicParams.delete', {
       topicId: params.id,
       mapSizeBefore: this.knownTopicParams.size,
     });
     this.knownTopicParams.delete(params.id);
     pubsubLogger.trace('Map operation: knownTopicParams.delete complete', { mapSizeAfter: this.knownTopicParams.size });
+
+    // Notify prefix listeners last so they observe the topic as already unannounced
+    this.notifyPrefixTopicsOfUnannounce([params]);
   };
+
+  /**
+   * Tells every matching prefix topic that subtopics were unannounced.
+   * @param subtopics - The unannounced subtopics.
+   */
+  private notifyPrefixTopicsOfUnannounce(subtopics: UnannounceMessageParams[]) {
+    subtopics.forEach(({ id, name }) => {
+      this.prefixTopics.forEach((prefixTopic) => {
+        if (!name.startsWith(prefixTopic.name)) return;
+        try {
+          prefixTopic.unannounceSubtopic({ id, name });
+        } catch (error: unknown) {
+          pubsubLogger.warn('Failed to unannounce prefix subtopic', {
+            prefix: prefixTopic.name,
+            topicName: name,
+            error,
+          });
+        }
+      });
+    });
+  }
 
   /**
    * Called by the messenger when a topic's properties are updated.
    * @param params - The properties message parameters.
    */
   private onTopicProperties = (params: PropertiesMessageParams) => {
+    // Announce params are shared by the topic, prefix caches, and knownTopicParams, so updating
+    // them in place keeps every copy current. A null value deletes the property.
+    this.knownTopicParams.forEach((known) => {
+      if (known.name !== params.name) return;
+      const properties = known.properties as Record<string, unknown>;
+      Object.entries(params.update).forEach(([key, value]) => {
+        if (value === null) {
+          delete properties[key];
+        } else {
+          properties[key] = value;
+        }
+      });
+    });
+
     this.prefixTopics.forEach((prefixTopic) => {
       if (params.name.startsWith(prefixTopic.name)) {
         prefixTopic.updateSubtopicProperties(params);

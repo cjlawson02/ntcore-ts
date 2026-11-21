@@ -49,10 +49,18 @@ export class NetworkTablesPrefixTopic extends NetworkTablesBaseTopic<NetworkTabl
   /**
    * Adds a listener for subtopic announcements, including subtopics that haven't sent a value yet.
    * @param callback - Called with the subtopic's announce params.
+   * @param options - The listener options.
+   * @param options.immediateNotify - Also call the listener right away for every matching subtopic already announced
+   *   on this connection. The server announces each topic to a client only once, so a listener added after another
+   *   subscription covered a subtopic needs this to see it.
    * @returns A function to remove the listener.
    */
-  addAnnounceListener(callback: (params: AnnounceMessageParams) => void) {
+  addAnnounceListener(callback: (params: AnnounceMessageParams) => void, options: { immediateNotify?: boolean } = {}) {
     this._announceListeners.add(callback);
+    if (options.immediateNotify) {
+      const known = this.client.getAllKnownTopicParams().filter((params) => params.name.startsWith(this.name));
+      known.forEach((params) => this.notifyListeners([callback], params));
+    }
     return () => {
       this._announceListeners.delete(callback);
     };
@@ -101,21 +109,22 @@ export class NetworkTablesPrefixTopic extends NetworkTablesBaseTopic<NetworkTabl
   }
 
   /**
-   * Applies a properties update for a subtopic. This should only be called by the PubSubClient.
+   * Notifies listeners of a subtopic properties update. This should only be called by the PubSubClient,
+   * after it has applied the update to the subtopic's announce params.
    * @param params - The properties message parameters.
    */
   updateSubtopicProperties(params: PropertiesMessageParams) {
     this.notifyListeners(this._propertiesListeners, params);
   }
 
-  private notifyListeners<T extends { name: string }>(listeners: Set<(params: T) => void>, params: T) {
-    listeners.forEach((listener) => {
+  private notifyListeners<T extends { name: string }>(listeners: Iterable<(params: T) => void>, params: T) {
+    for (const listener of listeners) {
       try {
         listener(params);
       } catch (error: unknown) {
         pubsubLogger.warn('Prefix topic listener threw', { prefix: this.name, subtopicName: params.name, error });
       }
-    });
+    }
   }
 
   /** */
