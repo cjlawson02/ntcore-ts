@@ -191,7 +191,9 @@ export class NetworkTablesTopic<
   override announce(params: AnnounceMessageParams) {
     super.announce(params);
     const wasPublisher = this._publisher;
-    if (params.pubuid === this._pubuid) {
+    // Announces not sent in response to our publish omit pubuid (NT4 spec), so an
+    // unpublished topic must not match `undefined === undefined`.
+    if (params.pubuid != null && params.pubuid === this._pubuid) {
       this._publisher = true;
       pubsubLogger.debug('Publisher status updated', {
         topicName: this.name,
