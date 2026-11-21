@@ -4,6 +4,8 @@ Install the client and connect to a NetworkTables server.
 
 ## Installation
 
+Running in Node.js requires Node.js 22 or newer, which provides the built-in `WebSocket` the client uses. Browsers, Deno, and Bun are unaffected.
+
 ```bash
 npm install --save @ntcore-ts/client
 ```

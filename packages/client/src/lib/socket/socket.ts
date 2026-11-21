@@ -1,5 +1,4 @@
 import { encode, decodeMulti } from '@msgpack/msgpack';
-import WebSocket from 'isomorphic-ws';
 
 import { messageSchema } from '../types/schemas.js';
 import { NetworkTablesTypeInfos } from '../types/types.js';
@@ -16,7 +15,6 @@ import type {
   NetworkTablesTypeInfo,
   BinaryMessageData,
 } from '../types/types.js';
-import type { CloseEvent as WS_CloseEvent, MessageEvent as WS_MessageEvent, ErrorEvent as WS_ErrorEvent } from 'ws';
 
 /** NT binary type numbers — keep in sync with `typeNumSchema`. */
 const VALID_TYPE_NUMS: ReadonlySet<number> = new Set([0, 1, 2, 3, 4, 5, 16, 17, 18, 19, 20]);
@@ -211,7 +209,7 @@ export class NetworkTablesSocket {
       };
 
       // Close handler
-      this._websocket.onclose = (e: CloseEvent | WS_CloseEvent) => {
+      this._websocket.onclose = (e: CloseEvent) => {
         if (this._websocket !== ws) return;
         // Notify client and cancel heartbeat
         this.resetClockSync();
@@ -261,11 +259,11 @@ export class NetworkTablesSocket {
       this._websocket.binaryType = 'arraybuffer';
 
       // Set up event listeners for messages and errors
-      this._websocket.onmessage = (event: MessageEvent | WS_MessageEvent) => {
+      this._websocket.onmessage = (event: MessageEvent) => {
         if (this._websocket !== ws) return;
         this.onMessage(event);
       };
-      this._websocket.onerror = (event: Event | WS_ErrorEvent) => {
+      this._websocket.onerror = (event: Event) => {
         if (this._websocket !== ws) return;
         this.onError(event);
       };
@@ -436,7 +434,7 @@ export class NetworkTablesSocket {
    * Handle a message from the websocket.
    * @param event - The message event.
    */
-  private onMessage(event: MessageEvent | WS_MessageEvent) {
+  private onMessage(event: MessageEvent) {
     this.markActivity();
 
     if (event.data instanceof ArrayBuffer || event.data instanceof Uint8Array) {
@@ -450,7 +448,7 @@ export class NetworkTablesSocket {
    * Handle an error from the websocket.
    * @param event - The error event.
    */
-  private onError(event: Event | WS_ErrorEvent) {
+  private onError(event: Event) {
     // WebSocket errors typically precede close events, so we check if we should log
     // The close handler will log the main connection failure message
     // We only log error details if we haven't logged recently to avoid duplicate messages

@@ -172,6 +172,34 @@ describe('Topic', () => {
       expect(topic.announced).toBe(true);
       expect(topic.id).toEqual(1);
     });
+
+    it('does not mark an unpublished topic as publisher when the announce has no pubuid', () => {
+      topic.announce({ id: 1, name: 'test', type: 'string', properties: {} });
+      expect(topic.publisher).toBe(false);
+    });
+
+    it('marks the topic as publisher when the announce pubuid matches', () => {
+      topic['_pubuid'] = 7;
+      topic.announce({ id: 1, name: 'test', type: 'string', properties: {}, pubuid: 7 });
+      expect(topic.publisher).toBe(true);
+    });
+
+    it('still publishes after a subscription announce without pubuid', async () => {
+      topic.announce({ id: 1, name: 'test', type: 'string', properties: {} });
+      const publishSpy = vi.spyOn(client.messenger, 'publish').mockResolvedValue({
+        method: 'announce',
+        params: { id: 1, name: 'test', type: 'string', properties: {} },
+      } as AnnounceMessage);
+
+      try {
+        await topic.publish();
+
+        expect(publishSpy).toHaveBeenCalledOnce();
+        expect(topic.pubuid).toBeDefined();
+      } finally {
+        publishSpy.mockRestore();
+      }
+    });
   });
 
   describe('unannounce', () => {

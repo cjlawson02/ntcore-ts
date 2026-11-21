@@ -21,7 +21,6 @@ import type {
   AnnounceMessage,
   PropertiesMessage,
 } from '../types/types.js';
-import type { MessageEvent as WS_MessageEvent } from 'ws';
 
 /** NetworkTables client. */
 export class Messenger {
@@ -134,10 +133,7 @@ export class Messenger {
 
   onSocketClose = () => {};
 
-  private parseAndFilterMessage<T extends Message>(
-    event: MessageEvent | WS_MessageEvent,
-    method: Message['method']
-  ): T[] {
+  private parseAndFilterMessage<T extends Message>(event: MessageEvent, method: Message['method']): T[] {
     if (typeof event.data === 'string') {
       messengerLogger.trace('Raw message received', { data: event.data });
       const messageData = JSON.parse(event.data);
@@ -225,7 +221,7 @@ export class Messenger {
         reject(error);
       };
 
-      const wsHandler = (event: MessageEvent | WS_MessageEvent) => {
+      const wsHandler = (event: MessageEvent) => {
         const messages = this.parseAndFilterMessage<AnnounceMessage>(event, 'announce');
         messengerLogger.debug('Messages filtered for announce', { count: messages.length });
         for (const message of messages) {
@@ -412,7 +408,7 @@ export class Messenger {
         reject(error);
       };
 
-      const wsHandler = (event: MessageEvent | WS_MessageEvent) => {
+      const wsHandler = (event: MessageEvent) => {
         const messages = this.parseAndFilterMessage<PropertiesMessage>(event, 'properties');
         messengerLogger.debug('Messages filtered for properties', { count: messages.length });
         for (const message of messages) {

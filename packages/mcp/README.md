@@ -6,6 +6,8 @@ Exposes connect/discover/get/decode/subscribe tools to MCP hosts (Cursor, Claude
 
 ## Install
 
+Requires Node.js 22 or newer.
+
 ```bash
 npm install -g @ntcore-ts/mcp
 # or use npx

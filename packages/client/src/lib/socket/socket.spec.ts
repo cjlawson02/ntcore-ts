@@ -1,5 +1,4 @@
 import { decode, encode } from '@msgpack/msgpack';
-import WebSocket from 'isomorphic-ws';
 import WSMock from 'vitest-websocket-mock';
 
 import { completeRttHandshake } from '../../../tests/rtt-handshake.js';
@@ -447,13 +446,7 @@ describe('NetworkTablesSocket', () => {
         // Don't actually schedule anything; we only want to observe that it would.
         .mockImplementation(((_fn: any, _ms?: any) => 1 as any) as any);
 
-      socket.websocket.onclose?.({
-        code: 1000,
-        reason: 'test',
-        target: socket.websocket,
-        wasClean: true,
-        type: 'close',
-      });
+      socket.websocket.onclose?.(new CloseEvent('close', { code: 1000, reason: 'test', wasClean: true }));
 
       expect(setTimeoutSpy).toHaveBeenCalled();
       const reconnectCall = setTimeoutSpy.mock.calls.find((c: [unknown, number?, ...unknown[]]) => c[1] === 1000);
@@ -466,13 +459,7 @@ describe('NetworkTablesSocket', () => {
         .spyOn(globalThis, 'setTimeout')
         .mockImplementation(((_fn: any, _ms?: any) => 1 as any) as any);
 
-      socket.websocket.onclose?.({
-        code: 1000,
-        reason: 'test',
-        target: socket.websocket,
-        wasClean: true,
-        type: 'close',
-      });
+      socket.websocket.onclose?.(new CloseEvent('close', { code: 1000, reason: 'test', wasClean: true }));
 
       const reconnectCall = setTimeoutSpy.mock.calls.find((c: [unknown, number?, ...unknown[]]) => c[1] === 1000);
       expect(reconnectCall).toBeUndefined();
@@ -485,13 +472,7 @@ describe('NetworkTablesSocket', () => {
         .mockImplementation(((_fn: any, _ms?: any) => 1 as any) as any);
 
       socket.close();
-      onClose?.({
-        code: 1000,
-        reason: 'test',
-        target: socket.websocket,
-        wasClean: true,
-        type: 'close',
-      });
+      onClose?.call(socket.websocket, new CloseEvent('close', { code: 1000, reason: 'test', wasClean: true }));
 
       const reconnectCall = setTimeoutSpy.mock.calls.find((c: [unknown, number?, ...unknown[]]) => c[1] === 1000);
       expect(reconnectCall).toBeUndefined();
@@ -505,13 +486,7 @@ describe('NetworkTablesSocket', () => {
         .spyOn(globalThis, 'setTimeout')
         .mockImplementation(((_fn: any, _ms?: any) => 1 as any) as any);
 
-      previousOnClose?.({
-        code: 1000,
-        reason: 'stale',
-        target: previous,
-        wasClean: true,
-        type: 'close',
-      });
+      previousOnClose?.call(previous, new CloseEvent('close', { code: 1000, reason: 'stale', wasClean: true }));
 
       const reconnectCall = setTimeoutSpy.mock.calls.find((c: [unknown, number?, ...unknown[]]) => c[1] === 1000);
       expect(reconnectCall).toBeUndefined();
