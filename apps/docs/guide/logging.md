@@ -1,6 +1,6 @@
 # Logging
 
-The library uses [tslog](https://github.com/fullstack-build/tslog). You can set log levels globally or per module (`socket`, `messenger`, `pubsub`) at runtime.
+The library logs through the built-in `console`, prefixed with the module name. `TRACE` and `DEBUG` use `console.debug`, `INFO` uses `console.info`, and `WARN` uses `console.warn`, so browser DevTools can filter them by level (Chrome hides `console.debug` unless "Verbose" is enabled). You can set log levels globally or per module (`socket`, `messenger`, `pubsub`) at runtime.
 
 ## Log levels
 
@@ -8,8 +8,8 @@ The library uses [tslog](https://github.com/fullstack-build/tslog). You can set 
 - `LogLevel.DEBUG` — Detailed debugging information
 - `LogLevel.INFO` — General informational messages (default)
 - `LogLevel.WARN` — Warning messages
-- `LogLevel.ERROR` — Error messages
-- `LogLevel.FATAL` — Fatal error messages
+- `LogLevel.ERROR` — Error messages (the library currently logs nothing at this level, so it behaves like `SILENT`)
+- `LogLevel.FATAL` — Fatal error messages (likewise unused)
 - `LogLevel.SILENT` — Disable all logging
 
 ## Global log level
@@ -52,16 +52,46 @@ console.log(`Socket log level: ${LogLevel[currentLevel]}`);
 By default, the library logs:
 
 - `INFO`: Connection status, protocol version
-- `WARN`: Connection issues, unhandled message types
-- `ERROR`: WebSocket errors, connection failures
-- `DEBUG`: Reconnection attempts, unknown topics (development only)
+- `WARN`: Connection loss, malformed or unhandled messages
 
-Example output:
+`DEBUG` and `TRACE` messages (reconnection attempts, topic creation, unknown topics) are hidden unless you lower the log level.
+
+Example output at the default level in the browser:
 
 ```
-2024.01.15 14:30:25:123	[INFO]	SOCKET	Connected on NT 4.1
-2024.01.15 14:30:25:124	[INFO]	SOCKET	Robot Connected!
-2024.01.15 14:30:30:456	[DEBUG]	PUBSUB	Received update for unknown topic { topicId: 42 }
+[SOCKET] Connected on NT 4.1
+[SOCKET] Robot Connected!
+```
+
+## Timestamps
+
+Outside the browser (Node.js, Deno, Bun), each line starts with an ISO timestamp:
+
+```
+2026-11-21T07:54:18.616Z [SOCKET] Connected on NT 4.1
+```
+
+In the browser, lines have no timestamp because DevTools can add one ("Show timestamps" in the console settings). Turn timestamps on or off anywhere with `setLogTimestamps`:
+
+```typescript
+import { setLogTimestamps } from '@ntcore-ts/client';
+
+setLogTimestamps(false);
+```
+
+## Custom log handler
+
+To send library logs to your own logger, a file, or a remote collector, set a handler. It receives every line that passes the level filter, instead of the console:
+
+```typescript
+import { LogLevel, setLogHandler } from '@ntcore-ts/client';
+
+setLogHandler(({ level, module, message, args, time }) => {
+  myLogger.log({ level: LogLevel[level], module, message, args, time });
+});
+
+// Log to the console again
+setLogHandler(null);
 ```
 
 ## Direct logger utilities

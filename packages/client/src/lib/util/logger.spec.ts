@@ -1,9 +1,10 @@
 import {
   LogLevel,
-  getLogger,
   getModuleLogLevel,
   setLogLevel,
   setModuleLogLevel,
+  setLogHandler,
+  setLogTimestamps,
   socketLogger,
   messengerLogger,
 } from './logger.js';
@@ -11,53 +12,95 @@ import {
 describe('logger utilities', () => {
   beforeEach(() => {
     setLogLevel(LogLevel.INFO);
+    setLogTimestamps(false);
   });
 
-  it('setLogLevel should recreate existing module loggers', () => {
-    const socket1 = getLogger('socket');
-    const messenger1 = getLogger('messenger');
+  afterEach(() => {
+    setLogHandler(null);
+    vi.restoreAllMocks();
+  });
+
+  it('setLogLevel should clear module-specific levels', () => {
+    setModuleLogLevel('socket', LogLevel.DEBUG);
 
     setLogLevel(LogLevel.ERROR);
 
-    const socket2 = getLogger('socket');
-    const messenger2 = getLogger('messenger');
-
-    expect(socket2).not.toBe(socket1);
-    expect(messenger2).not.toBe(messenger1);
     expect(getModuleLogLevel('socket')).toBe(LogLevel.ERROR);
     expect(getModuleLogLevel('messenger')).toBe(LogLevel.ERROR);
   });
 
   it('setModuleLogLevel should only affect the specified module', () => {
-    // Create modules first so we can observe changes.
-    getLogger('socket');
-    getLogger('messenger');
+    const debug = vi.spyOn(console, 'debug').mockImplementation(() => {});
 
-    setLogLevel(LogLevel.INFO);
     setModuleLogLevel('socket', LogLevel.DEBUG);
+    socketLogger.debug('socket message', { id: 1 });
+    messengerLogger.debug('messenger message');
 
-    expect(getModuleLogLevel('socket')).toBe(LogLevel.DEBUG);
     expect(getModuleLogLevel('messenger')).toBe(LogLevel.INFO);
+    expect(debug).toHaveBeenCalledExactlyOnceWith('[SOCKET] socket message', { id: 1 });
   });
 
-  it('getModuleLogLevel should map minLevel=0 (tslog silly) to TRACE', () => {
-    const logger = getLogger('socket');
-    (logger.settings as unknown as { minLevel: number }).minLevel = 0;
+  it('should write each level to the matching console method and skip levels below the minimum', () => {
+    const debug = vi.spyOn(console, 'debug').mockImplementation(() => {});
+    const info = vi.spyOn(console, 'info').mockImplementation(() => {});
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
-    expect(getModuleLogLevel('socket')).toBe(LogLevel.TRACE);
+    socketLogger.trace('trace');
+    socketLogger.debug('debug');
+    socketLogger.info('info');
+    socketLogger.warn('warn');
+
+    expect(debug).not.toHaveBeenCalled();
+    expect(info).toHaveBeenCalledExactlyOnceWith('[SOCKET] info');
+    expect(warn).toHaveBeenCalledExactlyOnceWith('[SOCKET] warn');
   });
 
-  it('proxy loggers should bind methods and reflect updated settings', () => {
-    // Method binding: extracting the method should still work.
-    // oxlint-disable-next-line typescript/unbound-method -- the test checks that the proxy binds `this`
-    const info = socketLogger.info;
-    expect(() => info('hello')).not.toThrow();
+  it('SILENT should suppress warnings', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
-    setModuleLogLevel('socket', LogLevel.FATAL);
-    expect(socketLogger.settings.minLevel).toBe(LogLevel.FATAL);
+    setLogLevel(LogLevel.SILENT);
+    socketLogger.warn('warn');
 
-    // Ensure other proxies are also functional and can access values.
-    expect(typeof messengerLogger.debug).toBe('function');
-    expect(messengerLogger.settings).toBeDefined();
+    expect(warn).not.toHaveBeenCalled();
+  });
+
+  it('prefixes console lines with an ISO timestamp when enabled', () => {
+    const info = vi.spyOn(console, 'info').mockImplementation(() => {});
+
+    setLogTimestamps(true);
+    socketLogger.info('info', { id: 1 });
+
+    expect(info).toHaveBeenCalledExactlyOnceWith(
+      expect.stringMatching(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z \[SOCKET\] info$/),
+      { id: 1 }
+    );
+  });
+
+  it('sends lines that pass the level filter to a custom handler instead of the console', () => {
+    const info = vi.spyOn(console, 'info').mockImplementation(() => {});
+    const logHandler = vi.fn();
+
+    setLogHandler(logHandler);
+    socketLogger.debug('hidden');
+    socketLogger.info('shown', { id: 1 });
+
+    expect(info).not.toHaveBeenCalled();
+    expect(logHandler).toHaveBeenCalledExactlyOnceWith({
+      level: LogLevel.INFO,
+      module: 'socket',
+      message: 'shown',
+      args: [{ id: 1 }],
+      time: expect.any(Date),
+    });
+  });
+
+  it('logs to the console again after the handler is cleared', () => {
+    const info = vi.spyOn(console, 'info').mockImplementation(() => {});
+
+    setLogHandler(vi.fn());
+    setLogHandler(null);
+    socketLogger.info('info');
+
+    expect(info).toHaveBeenCalledExactlyOnceWith('[SOCKET] info');
   });
 });
