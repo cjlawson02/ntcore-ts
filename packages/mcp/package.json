@@ -22,6 +22,9 @@
       "import": "./dist/index.esm.js"
     }
   },
+  "engines": {
+    "node": ">=22"
+  },
   "files": [
     "dist",
     "README.md"

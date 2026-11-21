@@ -13,12 +13,6 @@ export default defineConfig(() => ({
   plugins: [codspeedPlugin()],
   resolve: {
     tsconfigPaths: true,
-    // One mock-socket instance: WSMock's Server and the isomorphic-ws alias must share it.
-    dedupe: ['mock-socket'],
-    alias: {
-      'isomorphic-ws': path.resolve(__dirname, 'src/__mocks__/isomorphic-ws.ts'),
-      'mock-socket': path.resolve(__dirname, '../../node_modules/mock-socket'),
-    },
   },
   test: {
     name: 'client',
